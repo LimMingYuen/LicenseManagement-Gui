@@ -1,0 +1,112 @@
+<app-page-header
+  title="Backup &amp; Restore"
+  icon="backup"
+  subtitle="Export the license register, or restore it from an archive"
+/>
+
+<div class="page-scroll">
+  <div class="page">
+    @if (error(); as message) {
+      <p class="alert alert-error" role="alert">{{ message }}</p>
+    }
+
+    <section class="card">
+      <h2 class="section-title">Export</h2>
+      <p class="muted">
+        Downloads every license record as a <span class="mono">.licdb</span> archive.
+        @if (recordCount() !== null) {
+          The register currently holds <strong>{{ recordCount() }}</strong> record(s).
+        }
+      </p>
+      <p class="alert alert-warn">
+        The signing key is <strong>never</strong> included in an export. Back it up separately.
+      </p>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" [disabled]="exporting()" (click)="exportBackup()">
+          {{ exporting() ? 'Preparing…' : 'Download backup' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Import</h2>
+      <p class="muted">
+        Accepts an archive from this system, or a <span class="mono">.licdb</span> exported by
+        the Qynix License desktop app — that is the migration path off the desktop tool.
+      </p>
+
+      <label class="field">
+        <span class="field-label">Backup file</span>
+        <input
+          #fileInput
+          type="file"
+          accept=".licdb,.zip"
+          (change)="onFileSelected($event)"
+        />
+        <span class="field-hint">Maximum 50 MB.</span>
+      </label>
+
+      @if (selectedFile(); as file) {
+        <p class="selected-file">
+          <span class="mono">{{ file.name }}</span>
+          <span class="muted">{{ formatSize(file.size) }}</span>
+          <button type="button" class="btn btn-sm" (click)="clearFile(fileInput)">Remove</button>
+        </p>
+      }
+
+      <fieldset class="modes">
+        <legend class="field-label">Import mode</legend>
+
+        <label class="mode" [class.mode--on]="mode() === 'Merge'">
+          <input
+            type="radio"
+            name="mode"
+            [checked]="mode() === 'Merge'"
+            (change)="setMode('Merge')"
+          />
+          <span>
+            <strong>Merge</strong>
+            <em>Keep existing licenses and add unknown ones. Duplicates are skipped.</em>
+          </span>
+        </label>
+
+        <label class="mode" [class.mode--on]="mode() === 'Replace'">
+          <input
+            type="radio"
+            name="mode"
+            [checked]="mode() === 'Replace'"
+            (change)="setMode('Replace')"
+          />
+          <span>
+            <strong>Replace</strong>
+            <em>Delete the current register, then restore from the archive.</em>
+          </span>
+        </label>
+      </fieldset>
+
+      @if (mode() === 'Replace') {
+        <p class="alert alert-error">
+          <strong>This overwrites every current record.</strong> Export a backup first.
+        </p>
+      }
+
+      @if (result(); as r) {
+        <p class="alert alert-success">
+          Imported <strong>{{ r.imported }}</strong>, skipped
+          <strong>{{ r.skipped }}</strong> of {{ r.totalInArchive }} record(s) in the archive.
+        </p>
+      }
+
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!selectedFile() || importing()"
+          (click)="runImport()"
+        >
+          {{ importing() ? 'Importing…' : 'Import' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,529 @@
+// Color Palette — pulls from the shared brand theme in src/styles.scss
+$sidebar-bg: var(--mat-sys-surface-container);
+$sidebar-border: var(--mat-sys-outline-variant);
+$icon-color: var(--mat-sys-on-surface-variant);
+$action-button-bg: var(--brand-primary);
+$status-online: var(--brand-success);
+$status-degraded: var(--brand-warning);
+$status-offline: var(--brand-danger);
+$status-unknown: var(--brand-text-subtle);
+// Primary-tinted elevations are shared tokens now: --shadow-primary /
+// --shadow-primary-strong (:root in src/styles.scss).
+$success-glow: rgba(42, 143, 102, 0.45); // one-off: online status dot
+
+// Dimensions
+$sidebar-width-collapsed: 72px;
+$sidebar-width-expanded: 240px;
+$icon-size: 24px;
+$action-button-size: 48px;
+$nav-item-size: 48px;
+
+// Sidebar Container
+.sidebar-container {
+  width: 100%;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 0 !important;
+}
+
+// Sidebar
+.sidebar {
+  width: $sidebar-width-collapsed;
+  background-color: $sidebar-bg;
+  border-right: 1px solid $sidebar-border;
+  border-radius: 0 !important;
+  display: flex;
+  flex-direction: column;
+  transition: width var(--dur-slow) var(--ease-standard);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 999;
+
+  &.sidebar--expanded {
+    width: $sidebar-width-expanded;
+  }
+
+  &.sidebar--collapsed {
+    width: $sidebar-width-collapsed;
+  }
+}
+
+// Sidebar Content
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--mat-sys-outline-variant);
+    border-radius: 2px;
+  }
+}
+
+// Toggle Button
+.sidebar-action {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0 24px 0;
+  transition: justify-content var(--dur-slow) var(--ease-standard);
+
+  .sidebar--expanded & {
+    justify-content: space-between;
+    padding-left: 16px;
+    padding-right: 12px;
+  }
+
+  .sidebar--collapsed & {
+    justify-content: center;
+  }
+
+  .action-button {
+    width: $action-button-size;
+    height: $action-button-size;
+    min-width: $action-button-size;
+    background-color: $action-button-bg;
+    color: var(--mat-sys-on-primary);
+    box-shadow: var(--shadow-primary);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 50% !important;
+
+    &:hover {
+      box-shadow: var(--shadow-primary-strong);
+    }
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  // Mark + wordmark travel together, so the fab gets the spacing, not the text.
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin-right: 12px;
+  }
+
+  .sidebar-brand__mark {
+    filter: drop-shadow(0 1px 2px rgba(0, 116, 190, 0.35));
+  }
+
+  .sidebar-title {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-semibold);
+    color: var(--mat-sys-on-surface);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Navigation Items
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+
+  .nav-item-wrapper {
+    margin-bottom: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  // border-box, because app.scss's global `*` reset is scoped to the app
+  // component's own template and never reaches this one — without it the
+  // 16px side padding pushes the pill past the sidebar's overflow-x: hidden
+  // edge and squares off its right corners.
+  box-sizing: border-box;
+  width: 100%;
+  min-height: $nav-item-size;
+  padding: 8px 16px;
+  border-radius: 24px;
+  text-decoration: none;
+  color: $icon-color;
+  transition: all 0.2s var(--ease-standard);
+  position: relative;
+  cursor: pointer;
+
+  .nav-item__icon {
+    margin-right: 12px;
+  }
+
+  &:hover {
+    background-color: var(--mat-sys-primary);
+    color: white;
+
+    .nav-item__icon {
+      color: white;
+    }
+  }
+
+  &.nav-item--active {
+    background-color: var(--mat-sys-primary);
+    color: white;
+    box-shadow: var(--shadow-primary);
+
+    .nav-item__icon {
+      color: white;
+    }
+
+    .nav-item__label {
+      color: white;
+    }
+  }
+
+  .sidebar--collapsed & {
+    justify-content: center;
+    padding: 0;
+    width: $nav-item-size;
+    height: $nav-item-size;
+    border-radius: 50%;
+
+    .nav-item__icon {
+      margin-right: 0;
+    }
+  }
+}
+
+.nav-item__icon {
+  font-size: $icon-size;
+  width: $icon-size;
+  height: $icon-size;
+  flex-shrink: 0;
+  color: inherit;
+  transition: color 0.2s var(--ease-standard);
+}
+
+.nav-item__label {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-regular);
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.3;
+  flex: 1;
+  color: inherit;
+}
+
+// Sidebar Footer
+.sidebar-footer {
+  border-top: 1px solid $sidebar-border;
+  padding: 16px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: $sidebar-bg;
+}
+
+.user-profile-button {
+  position: relative;
+  overflow: visible !important;
+  background: var(--mat-sys-primary) !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 0 !important;
+  width: $action-button-size !important;
+  height: $action-button-size !important;
+  min-width: $action-button-size !important;
+  border-radius: 50% !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-primary);
+
+  &:hover {
+    box-shadow: var(--shadow-primary-strong);
+  }
+}
+
+.user-avatar-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .user-initials {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: white;
+    letter-spacing: 0.5px;
+  }
+}
+
+.user-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+
+  // Mirrors the connection banner, so the shell still shows the state once the banner
+  // has been read. Colour alone is not the only signal — the dot carries a tooltip.
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50% !important;
+    background-color: $status-unknown;
+    transition: background-color var(--dur-base) var(--ease-standard);
+  }
+
+  .status-indicator--online {
+    background-color: $status-online;
+    box-shadow: 0 0 8px #{$success-glow};
+  }
+
+  .status-indicator--degraded {
+    background-color: $status-degraded;
+  }
+
+  .status-indicator--unhealthy,
+  .status-indicator--unreachable {
+    background-color: $status-offline;
+    animation: status-pulse 1.6s var(--ease-standard) infinite;
+  }
+
+  @keyframes status-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-indicator--unhealthy,
+    .status-indicator--unreachable {
+      animation: none;
+    }
+  }
+}
+
+// Profile Menu
+::ng-deep .mat-mdc-menu-panel {
+  background-color: white !important;
+  border-radius: var(--r-xl) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+
+  .mat-mdc-menu-content {
+    padding: var(--sp-2) !important;
+  }
+
+  .mat-mdc-menu-item {
+    border-radius: 24px !important;
+    margin: 4px 0 !important;
+
+    &:hover {
+      background-color: var(--brand-primary-tint) !important;
+    }
+  }
+}
+
+.profile-menu-header {
+  padding: var(--sp-4);
+
+  .profile-info {
+    display: flex;
+    align-items: center;
+
+    .profile-avatar {
+      margin-right: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--mat-sys-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-primary);
+
+      .profile-initials {
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-semibold);
+        color: white;
+      }
+    }
+
+    .profile-text {
+      flex: 1;
+
+      .profile-name {
+        font-size: var(--fs-base);
+        font-weight: var(--fw-medium);
+        color: var(--mat-sys-on-surface);
+        margin-bottom: 2px;
+      }
+
+      // The role, not a status. It used to carry a green dot, which read as "connected"
+      // no matter what the server was doing — the connection row below owns that now.
+      .profile-status {
+        font-size: var(--fs-sm);
+        color: var(--brand-text-muted);
+      }
+    }
+  }
+}
+
+// Connection state, in words. Sits under the avatar row in the profile menu.
+.profile-connection {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  background-color: var(--brand-neutral-tint);
+  color: var(--brand-neutral-text);
+
+  .profile-connection__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    flex: none;
+  }
+
+  &.profile-connection--online {
+    background-color: var(--brand-success-tint);
+    color: var(--brand-success-text);
+  }
+
+  &.profile-connection--degraded {
+    background-color: var(--brand-warning-tint);
+    color: var(--brand-warning-text);
+  }
+
+  &.profile-connection--unhealthy,
+  &.profile-connection--unreachable {
+    background-color: var(--brand-danger-tint);
+    color: var(--brand-danger-text);
+  }
+}
+
+// Main Content Area
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  border-radius: 0 !important;
+  transition: margin-left var(--dur-slow) var(--ease-standard);
+
+  &.main-content--sidebar-collapsed {
+    margin-left: $sidebar-width-collapsed !important;
+  }
+
+  &.main-content--sidebar-expanded {
+    margin-left: $sidebar-width-expanded !important;
+  }
+}
+
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  background-color: var(--mat-sys-surface-container-lowest);
+  border-radius: 0 !important;
+
+  router-outlet {
+    display: none;
+  }
+
+  > *:not(router-outlet) {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+  }
+}
+
+// Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-item {
+  animation: slideIn var(--dur-slow) var(--ease-standard) backwards;
+}
+
+// Tooltip
+::ng-deep {
+  .mat-mdc-tooltip {
+    pointer-events: none !important;
+
+    .mdc-tooltip__surface {
+      background-color: var(--brand-surface) !important;
+      color: var(--brand-text-strong) !important;
+      font-size: var(--fs-sm);
+      padding: 8px 14px;
+      border-radius: var(--r-sm);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      pointer-events: none !important;
+    }
+  }
+}
+
+// Focus states
+.nav-item:focus-visible,
+.user-profile-button:focus-visible,
+.action-button:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+// Override Material rounded corners
+::ng-deep {
+  .mat-drawer-container,
+  .mat-drawer,
+  .mat-drawer-content,
+  .mat-sidenav-container,
+  .mat-sidenav,
+  .mat-sidenav-content {
+    border-radius: 0 !important;
+  }
+}

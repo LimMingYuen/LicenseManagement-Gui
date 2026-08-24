@@ -1,0 +1,239 @@
+/**
+ * The catalog tree. Depth is carried by an indented rule down the left of each branch
+ * rather than by padding alone, so a deep customer with many machines still reads as one
+ * subtree when it scrolls past the header.
+ */
+@use '../../page-scroll';
+
+.page {
+  max-width: 84rem;
+}
+
+/* Filter bar --------------------------------------------------------------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.filters__search {
+  flex: 1 1 22rem;
+}
+
+.filters__status {
+  flex: 0 0 11rem;
+}
+
+.filters__result {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--control-h);
+}
+
+/* Nodes -------------------------------------------------------------------- */
+
+.app {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-2);
+  background: none;
+  border: 0;
+  border-radius: var(--r-md);
+  font: inherit;
+  color: var(--brand-text);
+  text-align: left;
+}
+
+button.node {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--brand-primary-wash);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--brand-primary-pale);
+  }
+}
+
+.node__chevron {
+  flex: 0 0 auto;
+  color: var(--brand-text-subtle);
+}
+
+.node__icon {
+  flex: 0 0 auto;
+  color: var(--brand-primary);
+}
+
+.node__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: var(--fw-medium);
+  color: var(--brand-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.node__sub {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  color: var(--brand-text-subtle);
+}
+
+.node--app .node__label {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.node--machine {
+  /* Not a button: a machine has nothing to expand, its licenses are always shown. */
+  gap: var(--sp-2);
+  font-size: var(--fs-base);
+
+  .node__icon {
+    color: var(--brand-text-muted);
+  }
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+
+/* Branches ----------------------------------------------------------------- */
+
+.branch {
+  /* The guide rule that makes depth legible. */
+  border-left: 2px solid var(--brand-border-soft);
+}
+
+.branch--customer {
+  margin-left: var(--sp-4);
+  padding-left: var(--sp-3);
+}
+
+.branch--machine {
+  margin: var(--sp-2) 0 var(--sp-3) var(--sp-5);
+  padding-left: var(--sp-3);
+}
+
+.branch--unassigned {
+  border-left-style: dashed;
+  border-left-color: var(--brand-border-strong);
+}
+
+.empty-branch {
+  margin: 0 0 var(--sp-2) var(--sp-6);
+  font-size: var(--fs-md);
+  color: var(--brand-text-subtle);
+}
+
+/* Leaves ------------------------------------------------------------------- */
+
+.leaves {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0 0 0 var(--sp-5);
+  list-style: none;
+}
+
+.leaf {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 110px 175px 92px;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--brand-bg-alt);
+  border: 1px solid var(--brand-border-soft);
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: var(--fs-md);
+  color: var(--brand-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--brand-primary-wash);
+    border-color: var(--brand-primary-soft);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px var(--brand-primary-pale);
+  }
+
+  .pill {
+    justify-self: start;
+  }
+}
+
+/* Revoked licenses stay on record — they read back rather than disappearing. */
+.leaf--muted {
+  opacity: 0.6;
+}
+
+.leaf__target {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--brand-text-strong);
+}
+
+.leaf__tier,
+.leaf__expiry {
+  color: var(--brand-text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Below the grid's natural width the columns stack rather than crush. */
+@media (max-width: 900px) {
+  .leaf {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: var(--sp-1);
+  }
+}
+
+/* Empty state -------------------------------------------------------------- */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--brand-text-muted);
+
+  mat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    color: var(--brand-text-subtle);
+  }
+
+  p {
+    margin: 0;
+  }
+}

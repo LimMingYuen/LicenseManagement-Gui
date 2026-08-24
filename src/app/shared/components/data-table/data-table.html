@@ -1,0 +1,383 @@
+<mat-card class="dt-card" [class.dt-card--compact]="config.compact">
+  <!-- Header: the shared bar, same as every page -->
+  <app-page-header
+      *ngIf="config.title || config.filter?.enabled || config.headerActions?.length"
+      [title]="config.title"
+      [icon]="config.icon"
+      [subtitle]="config.subtitle"
+      [count]="headerCount">
+
+    <!-- Additional filters projected from the parent page -->
+    <ng-content select="[dtAdditionalFilters]"></ng-content>
+
+    <mat-form-field appearance="outline" class="dt-search" *ngIf="config.filter?.enabled">
+      <input matInput
+             [placeholder]="config.filter?.placeholder ?? 'Search'"
+             [ngModel]="globalFilter"
+             (input)="onGlobalFilterInput($event)">
+      <button mat-icon-button matSuffix
+              type="button"
+              [disabled]="!globalFilter"
+              (click)="clearGlobalFilter()"
+              [attr.aria-label]="globalFilter ? 'Clear search' : 'Search'">
+        <mat-icon>{{ globalFilter ? 'close' : 'search' }}</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <ng-container *ngFor="let a of config.headerActions">
+      <button *ngIf="a.type === 'icon'"
+              mat-icon-button
+              [color]="a.color"
+              [disabled]="a.loading"
+              [matTooltip]="a.tooltip || a.label"
+              (click)="onHeaderActionClick(a)">
+        <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
+      </button>
+      <button *ngIf="a.type === 'raised'"
+              mat-raised-button
+              [color]="a.color || 'primary'"
+              [disabled]="a.loading"
+              (click)="onHeaderActionClick(a)">
+        <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
+        <span>{{ a.label }}</span>
+      </button>
+      <button *ngIf="a.type === 'stroked'"
+              mat-stroked-button
+              [color]="a.color"
+              [disabled]="a.loading"
+              (click)="onHeaderActionClick(a)">
+        <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
+        <span>{{ a.label }}</span>
+      </button>
+      <button *ngIf="a.type === 'button' || !a.type"
+              mat-button
+              [color]="a.color"
+              [disabled]="a.loading"
+              (click)="onHeaderActionClick(a)">
+        <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
+        <span>{{ a.label }}</span>
+      </button>
+    </ng-container>
+  </app-page-header>
+
+  <!-- Loading -->
+  <div class="dt-loading" *ngIf="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+    <span>Loading…</span>
+  </div>
+
+  <!-- Empty -->
+  <div class="dt-empty" *ngIf="!loading && isEmpty()">
+    <mat-icon>{{ config.empty?.icon || 'inbox' }}</mat-icon>
+    <h3>{{ config.empty?.message }}</h3>
+  </div>
+
+  <!-- Table -->
+  <div class="dt-table-wrap" *ngIf="!loading && !isEmpty()">
+    <div class="dt-table-scroll">
+      <table mat-table
+             [dataSource]="dataSource"
+             matSort
+             (matSortChange)="onSortChange($event)"
+             class="dt-table">
+
+        <!-- Row number -->
+        <ng-container matColumnDef="__row" *ngIf="config.showRowNumbers">
+          <th mat-header-cell *matHeaderCellDef class="dt-rownum">#</th>
+          <td mat-cell *matCellDef="let r; let i = index" class="dt-rownum tnum">{{ rowNumber(i) }}</td>
+        </ng-container>
+
+        <!-- Selection -->
+        <ng-container matColumnDef="__select" *ngIf="config.selection?.enabled">
+          <th mat-header-cell *matHeaderCellDef class="dt-select">
+            <mat-checkbox
+              (click)="$event.stopPropagation()"
+              [checked]="isAllCurrentPageSelected()"
+              [indeterminate]="isSomeCurrentPageSelected() && !isAllCurrentPageSelected()"
+              (change)="onMasterCheckboxChange($event.checked)">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="dt-select">
+            <mat-checkbox
+              (click)="$event.stopPropagation()"
+              [checked]="isRowSelected(row)"
+              (change)="onRowCheckboxChange(row, $event.checked)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Data columns -->
+        <ng-container *ngFor="let col of config.columns" [matColumnDef]="columnKey(col)">
+          <th mat-header-cell *matHeaderCellDef
+              mat-sort-header
+              [disabled]="!col.sortable"
+              [class]="col.headerClass"
+              [class.dt-th--filtered]="hasAppliedFilter(columnKey(col))"
+              [style.width]="col.width || ''">
+            <div class="dt-th" #thContent>
+              <span class="dt-th__label">{{ col.header }}</span>
+              <ng-container *ngIf="col.columnFilter">
+                <button mat-icon-button
+                        class="dt-filter-icon"
+                        [class.dt-filter-icon--active]="hasAppliedFilter(columnKey(col))"
+                        (click)="filterTrigger.openMenu(); $event.stopPropagation()"
+                        [matTooltip]="'Filter ' + col.header">
+                  <mat-icon>filter_alt</mat-icon>
+                </button>
+                <!-- The popover hangs off this cell-sized anchor, not off the
+                     little icon button, so it lines up with its own column. -->
+                <span class="dt-th__anchor"
+                      #filterTrigger="matMenuTrigger"
+                      [matMenuTriggerFor]="filterMenu"
+                      (menuOpened)="onPopoverOpened(col); sizePopoverToColumn(thContent)"></span>
+              </ng-container>
+            </div>
+
+            <mat-menu #filterMenu="matMenu" class="dt-filter-menu" xPosition="after">
+              <div class="dt-popover"
+                   (click)="$event.stopPropagation()"
+                   (keydown)="$event.stopPropagation()"
+                   [ngSwitch]="col.columnFilterType || 'text'">
+
+                <div class="dt-popover__head">
+                  <span class="dt-popover__title">Filter · {{ col.header }}</span>
+                  <button mat-button
+                          *ngIf="hasAppliedFilter(columnKey(col))"
+                          class="dt-popover__clear"
+                          (click)="clearColumnFilter(columnKey(col))">Clear</button>
+                </div>
+
+                <!-- TEXT -->
+                <div *ngSwitchCase="'text'" class="dt-popover__body">
+                  <mat-form-field appearance="outline" class="dt-popover__field">
+                    <mat-icon matPrefix>search</mat-icon>
+                    <input matInput
+                           [placeholder]="'Contains ' + col.header"
+                           [(ngModel)]="draftFor(col).text"
+                           (ngModelChange)="onDraftChanged(col)">
+                  </mat-form-field>
+                </div>
+
+                <!-- OPTION -->
+                <div *ngSwitchCase="'option'" class="dt-popover__body">
+                  <mat-form-field appearance="outline" class="dt-popover__field">
+                    <mat-icon matPrefix>search</mat-icon>
+                    <input matInput
+                           placeholder="Search options…"
+                           [(ngModel)]="draftFor(col).selectSearch">
+                  </mat-form-field>
+                  <div class="dt-popover__option-list">
+                    <button type="button"
+                            class="dt-popover__option"
+                            *ngFor="let opt of filteredOptionList(col); trackBy: trackOptionByValue"
+                            [class.dt-popover__option--selected]="isDraftOptionChecked(col, opt.value)"
+                            (click)="toggleDraftOption(col, opt.value)">
+                      <span class="dt-popover__option-check"
+                            [class.dt-popover__option-check--on]="isDraftOptionChecked(col, opt.value)">
+                        <mat-icon *ngIf="isDraftOptionChecked(col, opt.value)">check</mat-icon>
+                      </span>
+                      <span class="dt-popover__option-dot"
+                            *ngIf="opt.tone"
+                            [attr.data-tone]="opt.tone"></span>
+                      <span class="dt-popover__option-label">{{ opt.label }}</span>
+                    </button>
+                    <div class="dt-popover__option-empty" *ngIf="filteredOptionList(col).length === 0">
+                      No matches
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RANGE -->
+                <div *ngSwitchCase="'range'" class="dt-popover__body">
+                  <ng-container *ngIf="getRangeBounds(col) as bounds">
+                    <div class="dt-popover__histogram">
+                      <div class="dt-popover__hbar"
+                           *ngFor="let b of histogramBins(col)"
+                           [class.dt-popover__hbar--in]="b.inRange"
+                           [style.height.%]="b.height"></div>
+                    </div>
+                    <div class="dt-popover__track">
+                      <div class="dt-popover__track-rail"></div>
+                      <div class="dt-popover__track-fill"
+                           [style.left.%]="rangeFillPct(col).lo"
+                           [style.right.%]="100 - rangeFillPct(col).hi"></div>
+                      <div class="dt-popover__track-handle"
+                           [style.left]="'calc(' + rangeFillPct(col).lo + '% - 7px)'"></div>
+                      <div class="dt-popover__track-handle"
+                           [style.left]="'calc(' + rangeFillPct(col).hi + '% - 7px)'"></div>
+                    </div>
+                    <div class="dt-popover__range">
+                      <div class="dt-popover__range-field">
+                        <label [for]="'dt-min-' + columnKey(col)">Min</label>
+                        <div class="dt-popover__range-input">
+                          <input type="number"
+                                 [id]="'dt-min-' + columnKey(col)"
+                                 [min]="bounds.min"
+                                 [max]="bounds.max"
+                                 [step]="col.rangeStep || 1"
+                                 class="tnum"
+                                 [(ngModel)]="draftFor(col).min"
+                                 (ngModelChange)="onDraftChanged(col)"
+                                 [placeholder]="bounds.min.toString()">
+                          <span class="dt-popover__range-unit" *ngIf="col.rangeUnit">{{ col.rangeUnit }}</span>
+                        </div>
+                      </div>
+                      <span class="dt-popover__range-sep">—</span>
+                      <div class="dt-popover__range-field">
+                        <label [for]="'dt-max-' + columnKey(col)">Max</label>
+                        <div class="dt-popover__range-input">
+                          <input type="number"
+                                 [id]="'dt-max-' + columnKey(col)"
+                                 [min]="bounds.min"
+                                 [max]="bounds.max"
+                                 [step]="col.rangeStep || 1"
+                                 class="tnum"
+                                 [(ngModel)]="draftFor(col).max"
+                                 (ngModelChange)="onDraftChanged(col)"
+                                 [placeholder]="bounds.max.toString()">
+                          <span class="dt-popover__range-unit" *ngIf="col.rangeUnit">{{ col.rangeUnit }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+
+                <!-- DATE -->
+                <div *ngSwitchCase="'date'" class="dt-popover__body">
+                  <div class="dt-popover__datetime">
+                    <div class="dt-popover__datetime-label">From</div>
+                    <div class="dt-popover__datetime-row">
+                      <mat-form-field appearance="outline" class="dt-popover__field dt-popover__field--date">
+                        <input matInput
+                               [matDatepicker]="dpFrom"
+                               placeholder="YYYY-MM-DD"
+                               [(ngModel)]="draftFor(col).from"
+                               (ngModelChange)="onDraftChanged(col)">
+                        <mat-datepicker-toggle matIconSuffix [for]="dpFrom"></mat-datepicker-toggle>
+                        <mat-datepicker #dpFrom [calendarHeaderComponent]="calendarHeaderComponent"></mat-datepicker>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="dt-popover__field dt-popover__field--time">
+                        <input matInput
+                               [matTimepicker]="tpFrom"
+                               [disabled]="!draftFor(col).from"
+                               placeholder="--:--"
+                               [(ngModel)]="draftFor(col).fromTime"
+                               (ngModelChange)="onDraftChanged(col)">
+                        <mat-timepicker-toggle matIconSuffix [for]="tpFrom" [disabled]="!draftFor(col).from"></mat-timepicker-toggle>
+                        <mat-timepicker #tpFrom interval="15min"></mat-timepicker>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="dt-popover__datetime-label">To</div>
+                    <div class="dt-popover__datetime-row">
+                      <mat-form-field appearance="outline" class="dt-popover__field dt-popover__field--date">
+                        <input matInput
+                               [matDatepicker]="dpTo"
+                               [min]="dateMinForTo(col)"
+                               placeholder="YYYY-MM-DD"
+                               [(ngModel)]="draftFor(col).to"
+                               (ngModelChange)="onDraftChanged(col)">
+                        <mat-datepicker-toggle matIconSuffix [for]="dpTo"></mat-datepicker-toggle>
+                        <mat-datepicker #dpTo [calendarHeaderComponent]="calendarHeaderComponent"></mat-datepicker>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="dt-popover__field dt-popover__field--time">
+                        <input matInput
+                               [matTimepicker]="tpTo"
+                               [matTimepickerMin]="timeMinForTo(col)"
+                               [disabled]="!draftFor(col).to"
+                               placeholder="--:--"
+                               [(ngModel)]="draftFor(col).toTime"
+                               (ngModelChange)="onDraftChanged(col)">
+                        <mat-timepicker-toggle matIconSuffix [for]="tpTo" [disabled]="!draftFor(col).to"></mat-timepicker-toggle>
+                        <mat-timepicker #tpTo interval="15min"></mat-timepicker>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-menu>
+          </th>
+
+          <td mat-cell *matCellDef="let row"
+              [class]="col.cellClass"
+              [style.width]="col.width || ''">
+
+            <ng-container *ngIf="col.template; else builtIn">
+              <ng-container *ngTemplateOutlet="col.template; context: { $implicit: row, column: col }"></ng-container>
+            </ng-container>
+
+            <ng-template #builtIn>
+              <ng-container [ngSwitch]="col.cellType || 'text'">
+                <span *ngSwitchCase="'badge'"
+                      class="dt-badge"
+                      [attr.data-tone]="badgeTone(row, col)">
+                  <span class="dt-badge__dot"></span>
+                  <span class="dt-badge__label">{{ cellDisplay(row, col) }}</span>
+                </span>
+                <span *ngSwitchCase="'tnum'" class="tnum">{{ cellDisplay(row, col) }}</span>
+                <span *ngSwitchCase="'mono'" class="mono">{{ cellDisplay(row, col) }}</span>
+                <span *ngSwitchDefault
+                      [matTooltip]="cellDisplay(row, col)"
+                      matTooltipShowDelay="500">{{ cellDisplay(row, col) }}</span>
+              </ng-container>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="__actions" *ngIf="config.actions?.length">
+          <th mat-header-cell *matHeaderCellDef class="dt-actions-th">Actions</th>
+          <td mat-cell *matCellDef="let row; let i = index" class="dt-actions-cell">
+            <ng-container *ngFor="let a of config.actions">
+              <button *ngIf="(!a.hidden || !a.hidden(row)) && a.type === 'icon'"
+                      mat-icon-button
+                      [disabled]="a.disabled ? a.disabled(row) : false"
+                      [matTooltip]="a.tooltip || a.label"
+                      (click)="onActionClick(a, row, i)">
+                <mat-icon>{{ a.icon }}</mat-icon>
+              </button>
+              <button *ngIf="(!a.hidden || !a.hidden(row)) && (a.type === 'button' || !a.type)"
+                      mat-button
+                      [color]="a.color"
+                      [disabled]="a.disabled ? a.disabled(row) : false"
+                      (click)="onActionClick(a, row, i)">
+                <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
+                <span>{{ a.label }}</span>
+              </button>
+            </ng-container>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row
+            *matRowDef="let row; columns: displayedColumns; let i = index;"
+            class="dt-row"
+            [class.dt-row--muted]="rowMuted(row)"
+            [class.dt-row--clickable]="config.rowClickable"
+            (click)="onRowClick($event, row, i)"></tr>
+
+        <tr class="mat-mdc-row dt-no-results" *matNoDataRow>
+          <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+            <div class="dt-no-results__inner">
+              <mat-icon>search_off</mat-icon>
+              <div>
+                <h3>No results</h3>
+                <p>No rows match your filters.</p>
+              </div>
+              <button mat-stroked-button color="primary" (click)="clearAllFilters()">Clear all</button>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="paginatorLength()"
+      [pageSizeOptions]="config.pagination?.pageSizeOptions || [50, 100, 150, 200]"
+      [pageSize]="config.pagination?.pageSize || 50"
+      [showFirstLastButtons]="config.pagination?.showFirstLastButtons"
+      [class.dt-pag--hidden]="!config.pagination?.enabled"
+      (page)="onPageChange($event)">
+    </mat-paginator>
+  </div>
+</mat-card>

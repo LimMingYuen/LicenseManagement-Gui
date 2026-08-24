@@ -1,0 +1,19 @@
+<div class="page-fill">
+  <app-data-table
+    [data]="rows()"
+    [config]="tableConfig"
+    [loading]="loading()"
+    [globalFilter]="initialSearch()"
+    (action)="handleAction($event)"
+    (rowClick)="openDetail($event.row)"
+  >
+  </app-data-table>
+</div>
+
+@if (detail(); as license) {
+  <app-license-detail
+    [license]="license"
+    (closed)="detail.set(null)"
+    (revoked)="revoke($event)"
+  />
+}

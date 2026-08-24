@@ -1,0 +1,46 @@
+<div class="server-unavailable" role="alert" aria-live="assertive">
+  <app-logo class="server-unavailable__brand" [size]="40" />
+
+  <mat-icon class="server-unavailable__icon">{{ icon() }}</mat-icon>
+
+  <h1 class="server-unavailable__title">{{ title() }}</h1>
+  <p class="server-unavailable__detail">{{ detail() }}</p>
+
+  @if (failures().length) {
+    <ul class="server-unavailable__failures">
+      @for (failure of failures(); track failure) {
+        <li>{{ failure }}</li>
+      }
+    </ul>
+  }
+
+  <button
+    mat-flat-button
+    class="server-unavailable__retry"
+    type="button"
+    [disabled]="isRetrying()"
+    (click)="retry()"
+  >
+    <!-- One root node per branch: a bare mat-icon here would be claimed by MatButton's
+         icon slot, which a multi-node control-flow branch cannot fill. -->
+    @if (isRetrying()) {
+      <span class="server-unavailable__label">
+        <mat-spinner diameter="18" />
+        Checking…
+      </span>
+    } @else {
+      <span class="server-unavailable__label">
+        <mat-icon>refresh</mat-icon>
+        Retry now
+      </span>
+    }
+  </button>
+
+  <!-- Says the quiet part out loud: nobody needs to sit here refreshing the page. -->
+  <p class="server-unavailable__hint">
+    Retrying automatically.
+    @if (lastCheckedLabel()) {
+      <span class="server-unavailable__timestamp">{{ lastCheckedLabel() }}</span>
+    }
+  </p>
+</div>

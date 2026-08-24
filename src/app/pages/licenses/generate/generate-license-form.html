@@ -1,0 +1,310 @@
+<!-- The page scrolls inside this element rather than in the shared .page-scroll wrapper,
+     so the action bar below it can sit against the bottom of the window at every scroll
+     position without the sticky-inside-padding games a shared wrapper would need. -->
+<div class="gen-scroll">
+  <div class="gen-page">
+    @if (error(); as message) {
+      <p class="alert alert-error" role="alert">{{ message }}</p>
+    }
+
+    <form class="card details-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="card-head">
+        <h2 class="card-title">License details</h2>
+        <p class="card-note">{{ config().banner }}</p>
+      </div>
+
+      <!-- Four groups rather than one flat grid: the fields fall into four questions —
+           what does it bind to, who is it for, how long does it last, and what should the
+           register remember — and grouping them lets the form use the full window width
+           without stretching any single control. -->
+      <div class="group-grid">
+        <fieldset class="group">
+          <legend class="group-legend">Binding</legend>
+
+          @for (field of config().fields; track field.key) {
+            <label class="field">
+              <span class="field-label">{{ field.label }}</span>
+              <input
+                type="text"
+                [formControlName]="field.key"
+                [placeholder]="field.placeholder"
+                [class.mono]="field.mono"
+                [maxlength]="field.maxLength"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              @if (field.hint) {
+                <span class="field-hint">{{ field.hint }}</span>
+              }
+            </label>
+          }
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group-legend">Assignment</legend>
+
+          <!-- Which product this license belongs to. Only applications that issue this page's
+               license type are offered, so the API cannot refuse the pick. -->
+          <label class="field">
+            <span class="field-label">Application</span>
+            <select formControlName="applicationId" [attr.aria-busy]="applicationsLoading()">
+              <option [ngValue]="0" disabled>
+                {{ applicationsLoading() ? 'Loading applications…' : 'Select an application…' }}
+              </option>
+              @for (application of applications(); track application.id) {
+                <option [ngValue]="application.id">{{ application.name }}</option>
+              }
+            </select>
+            @if (!applicationsLoading() && applications().length === 0) {
+              <span class="field-hint">
+                No active application issues {{ config().kind }} licenses. Add or
+                adjust one on the <a routerLink="/applications">Applications</a> page.
+              </span>
+            }
+          </label>
+
+          <!-- The customer picker carries its own create-inline so an operator who finds the
+               customer missing is not sent away mid-form. -->
+          <div class="field">
+            <span class="field-label">Customer</span>
+            <div class="customer-row">
+              <select formControlName="customerId" [attr.aria-busy]="customersLoading()">
+                <option [ngValue]="0" disabled>
+                  {{ customersLoading() ? 'Loading customers…' : 'Select a customer…' }}
+                </option>
+                @for (customer of customers(); track customer.id) {
+                  <option [ngValue]="customer.id">{{ customer.name }}</option>
+                }
+              </select>
+              <button type="button" class="btn" (click)="creatingCustomer.set(true)">
+                New
+              </button>
+            </div>
+            @if (!customersLoading() && customers().length === 0) {
+              <span class="field-hint">
+                No active customers yet — create one to issue a license against.
+              </span>
+            } @else {
+              <span class="field-hint">
+                The registered name is written into the signed file. Manage the list on the
+                <a routerLink="/customers">Customers</a> page.
+              </span>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group-legend">Term</legend>
+
+          <label class="field">
+            <span class="field-label">License type</span>
+            <select formControlName="licenseType">
+              @for (tier of config().tiers; track tier) {
+                <option [value]="tier">{{ tier }}</option>
+              }
+            </select>
+          </label>
+
+          <!-- A perpetual license has no expiry, so the control is not just disabled: it is
+               absent, and the group says why rather than leaving a hole. -->
+          @if (!isPerpetual()) {
+            <label class="field">
+              <span class="field-label">Expiration date</span>
+              <input type="date" formControlName="expiresAt" />
+              <span class="field-hint">Required for {{ form.controls.licenseType.value }} licenses.</span>
+            </label>
+          } @else {
+            <p class="group-note">
+              A perpetual license carries no expiry date. Pick another tier to set one.
+            </p>
+          }
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group-legend">Notes</legend>
+
+          <label class="field field--fill">
+            <span class="field-label">Internal notes</span>
+            <textarea
+              formControlName="notes"
+              maxlength="500"
+              placeholder="Internal notes (optional)…"
+            ></textarea>
+            <span class="field-hint">Kept in the register only — never written into the signed file.</span>
+          </label>
+        </fieldset>
+      </div>
+    </form>
+
+    <!-- Below the form: the signed result once there is one, and until then the licenses
+         this application issued most recently — the question an operator on this page asks
+         next, and the reason the space under a short form is worth filling. -->
+    @if (result(); as generated) {
+      <section class="card result-card">
+        <p class="alert alert-success">
+          <strong>License generated and signed.</strong> RSA-SHA256 signature applied with the
+          server's private key.
+        </p>
+
+        <dl class="pairs">
+          <dt>License ID</dt>
+          <dd class="mono">{{ generated.license.licenseId }}</dd>
+
+          <dt>{{ config().targetLabel }}</dt>
+          <dd class="mono">{{ generated.license.targetId }}</dd>
+
+          <dt>Application</dt>
+          <dd>{{ generated.license.applicationName }}</dd>
+
+          <dt>Customer</dt>
+          <dd>{{ generated.license.customerName }}</dd>
+
+          <dt>File name</dt>
+          <dd class="mono">{{ generated.fileName }}</dd>
+        </dl>
+
+        <pre class="code-block mono">{{ generated.licenseFileContent }}</pre>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" (click)="download()">
+            Download {{ generated.fileName }}
+          </button>
+          <button type="button" class="btn" (click)="copy()">
+            {{ copied() ? 'Copied' : 'Copy to clipboard' }}
+          </button>
+          <a class="btn" routerLink="/licenses">View register</a>
+        </div>
+      </section>
+    } @else {
+      <section class="card recent-card">
+        <div class="card-head">
+          <h2 class="card-title">
+            Recently issued
+            @if (selectedApplication(); as application) {
+              <span class="card-title-sub">· {{ application.name }}</span>
+            }
+          </h2>
+          <a class="link" routerLink="/licenses">View full register →</a>
+        </div>
+
+        @if (recentLoading()) {
+          <p class="empty-note">Loading the register…</p>
+        } @else if (recent().length === 0) {
+          <p class="empty-note">
+            No {{ config().kind }} licenses issued yet. The ones you sign here will be listed
+            in this panel.
+          </p>
+        } @else {
+          <div class="recent-scroll">
+            <table class="recent-table">
+              <thead>
+                <tr>
+                  <th>License ID</th>
+                  <th>{{ config().targetLabel }}</th>
+                  <th>Customer</th>
+                  <th>Tier</th>
+                  <th>Issued</th>
+                  <th>Expires</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (license of recent(); track license.id) {
+                  <tr>
+                    <td class="mono">{{ license.licenseId }}</td>
+                    <td class="mono">{{ license.targetId }}</td>
+                    <td>{{ license.customerName }}</td>
+                    <td>{{ license.licenseType }}</td>
+                    <td class="tnum">{{ shortDate(license.issuedAt) }}</td>
+                    <td class="tnum">{{ shortDate(license.expiresAt) }}</td>
+                    <td>
+                      <span
+                        class="pill"
+                        [class.pill--active]="license.status === 'Active'"
+                        [class.pill--expiring]="license.status === 'Expiring'"
+                        [class.pill--expired]="license.status === 'Expired'"
+                        [class.pill--revoked]="license.status === 'Revoked'"
+                      >{{ license.status }}</span>
+                    </td>
+                    <td class="recent-action">
+                      <button
+                        type="button"
+                        class="link"
+                        [disabled]="downloadingId() === license.id"
+                        (click)="downloadRecent(license)"
+                      >
+                        {{ downloadingId() === license.id ? 'Fetching…' : 'Download' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</div>
+
+<!-- The action bar is pinned to the bottom of the window: it is the live preview of what
+     will be signed and the only place the primary action lives, so it stays put however
+     long the form or the register below it grows. -->
+<div class="action-bar">
+  <dl class="bar-summary">
+    <div class="bar-item">
+      <dt>Application</dt>
+      <dd>{{ selectedApplication()?.name || '—' }}</dd>
+    </div>
+    <div class="bar-item">
+      <dt>{{ config().targetLabel }}</dt>
+      <dd class="mono">{{ targetPreview() || '—' }}</dd>
+    </div>
+    <div class="bar-item">
+      <dt>Customer</dt>
+      <dd>{{ selectedCustomer()?.name || '—' }}</dd>
+    </div>
+    <div class="bar-item">
+      <dt>Tier</dt>
+      <dd>{{ form.controls.licenseType.value }}</dd>
+    </div>
+    <div class="bar-item">
+      <dt>Expires</dt>
+      <dd class="tnum">
+        {{ isPerpetual() ? 'Never' : (form.controls.expiresAt.value || '—') }}
+      </dd>
+    </div>
+    <div class="bar-item bar-item--sig">
+      <dt>Signature</dt>
+      <dd class="mono">RSA-2048 · SHA-256</dd>
+    </div>
+  </dl>
+
+  @if (result(); as generated) {
+    <span class="bar-status bar-status--done">Signed · {{ generated.license.licenseId }}</span>
+    <button type="button" class="btn btn-primary btn-action" (click)="issueAnother()">
+      Issue another
+    </button>
+  } @else {
+    <span class="bar-status" [class.bar-status--ready]="ready()">
+      {{ ready() ? 'Ready to sign' : 'Fill in the required fields' }}
+    </span>
+    <button
+      type="button"
+      class="btn btn-primary btn-action"
+      [disabled]="saving() || !ready()"
+      (click)="submit()"
+    >
+      {{ saving() ? 'Signing…' : config().submitLabel }}
+    </button>
+  }
+</div>
+
+<!-- Create-inline. Mounted outside the form element so its own <form> is not nested. -->
+@if (creatingCustomer()) {
+  <app-customer-form
+    (saved)="onCustomerCreated($event)"
+    (cancelled)="creatingCustomer.set(false)"
+  />
+}

@@ -1,0 +1,207 @@
+<app-page-header
+  title="License Catalog"
+  icon="account_tree"
+  subtitle="Licenses by application, customer and machine"
+  [count]="catalog()?.totals?.total ?? null"
+>
+  <button type="button" class="btn btn-sm" (click)="expandAll()">Expand all</button>
+  <button type="button" class="btn btn-sm" (click)="collapseAll()">Collapse all</button>
+  <button type="button" class="btn btn-sm" (click)="load()" [disabled]="loading()">
+    {{ loading() ? 'Loading…' : 'Refresh' }}
+  </button>
+</app-page-header>
+
+<div class="page-scroll">
+  <div class="page">
+    <section class="card filters">
+      <label class="field filters__search">
+        <span class="field-label">Search</span>
+        <input
+          type="search"
+          [value]="search()"
+          (input)="onSearch($event)"
+          placeholder="Customer, machine, target or license ID…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </label>
+
+      <label class="field filters__status">
+        <span class="field-label">Status</span>
+        <select [value]="statusFilter()" (change)="onStatus($event)">
+          @for (option of statusOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+
+      @if (filtered()) {
+        <div class="filters__result">
+          <span class="pill pill--info">{{ matchCount() }} matching</span>
+          <button type="button" class="btn btn-sm" (click)="clearFilters()">Clear</button>
+        </div>
+      }
+    </section>
+
+    @if (loading() && !catalog()) {
+      <p class="muted">Loading the catalog…</p>
+    } @else {
+      @for (app of view(); track app.key) {
+        <section class="card app">
+          <!-- Level 1 — application -->
+          <button
+            type="button"
+            class="node node--app"
+            (click)="toggle(appKey(app))"
+            [attr.aria-expanded]="isOpen(appKey(app))"
+          >
+            <mat-icon class="node__chevron">
+              {{ isOpen(appKey(app)) ? 'expand_more' : 'chevron_right' }}
+            </mat-icon>
+            <mat-icon class="node__icon">{{ app.icon }}</mat-icon>
+
+            <span class="node__label">
+              {{ app.name }}
+              <span class="node__sub mono">{{ app.key }}</span>
+            </span>
+
+            <span class="counts">
+              @if (app.counts.active) {
+                <span class="pill pill--success">{{ app.counts.active }} active</span>
+              }
+              @if (app.counts.expiring) {
+                <span class="pill pill--warning">{{ app.counts.expiring }} expiring</span>
+              }
+              @if (app.counts.expired) {
+                <span class="pill pill--danger">{{ app.counts.expired }} expired</span>
+              }
+              @if (app.counts.revoked) {
+                <span class="pill pill--danger">{{ app.counts.revoked }} revoked</span>
+              }
+              <span class="pill pill--neutral">{{ app.counts.total }} total</span>
+            </span>
+          </button>
+
+          @if (isOpen(appKey(app))) {
+            @if (app.customers.length === 0) {
+              <p class="empty-branch">
+                @if (filtered()) {
+                  No licenses in this application match the filter.
+                } @else {
+                  No licenses issued for this application yet.
+                }
+              </p>
+            }
+
+            @for (customer of app.customers; track customer.customerName) {
+              <div class="branch branch--customer">
+                <!-- Level 2 — customer -->
+                <button
+                  type="button"
+                  class="node node--customer"
+                  (click)="toggle(customerKey(app, customer))"
+                  [attr.aria-expanded]="isOpen(customerKey(app, customer))"
+                >
+                  <mat-icon class="node__chevron">
+                    {{ isOpen(customerKey(app, customer)) ? 'expand_more' : 'chevron_right' }}
+                  </mat-icon>
+                  <mat-icon class="node__icon">business</mat-icon>
+
+                  <span class="node__label">{{ customer.customerName }}</span>
+
+                  <span class="counts">
+                    <span class="pill pill--neutral">
+                      {{ customer.machines.length }}
+                      {{ customer.machines.length === 1 ? 'machine' : 'machines' }}
+                    </span>
+                    <span class="pill pill--neutral">{{ customer.counts.total }} licenses</span>
+                  </span>
+                </button>
+
+                @if (isOpen(customerKey(app, customer))) {
+                  @for (machine of customer.machines; track machine.machineId) {
+                    <!-- Level 3 — machine -->
+                    <div
+                      class="branch branch--machine"
+                      [class.branch--unassigned]="machine.isUnassigned"
+                    >
+                      <div class="node node--machine">
+                        <mat-icon class="node__icon">
+                          {{ machine.isUnassigned ? 'help_outline' : 'memory' }}
+                        </mat-icon>
+
+                        <span class="node__label mono">{{ machineLabel(machine) }}</span>
+
+                        @if (machine.isOrphaned) {
+                          <span
+                            class="pill pill--warning"
+                            title="Licenses name this machine, but no machine license was ever issued for it."
+                          >
+                            No machine license
+                          </span>
+                        }
+                        @if (machine.isUnassigned) {
+                          <span
+                            class="pill pill--neutral"
+                            title="These licenses name no machine. Set a machine ID when issuing to file them here."
+                          >
+                            Unfiled
+                          </span>
+                        }
+                      </div>
+
+                      <!-- Leaves — the licenses themselves -->
+                      <ul class="leaves">
+                        @for (license of machine.licenses; track license.id) {
+                          <li>
+                            <button
+                              type="button"
+                              class="leaf"
+                              [class.leaf--muted]="license.isRevoked"
+                              (click)="detail.set(license)"
+                            >
+                              <span class="pill" [class]="'pill--' + typeTone(license.type)">
+                                {{ license.type }}
+                              </span>
+                              <span class="leaf__target mono">{{ license.targetId }}</span>
+                              <span class="leaf__tier">{{ license.licenseType }}</span>
+                              <span class="leaf__expiry tnum">
+                                {{ expiryLabel(license.expiresAt) }}
+                              </span>
+                              <span class="pill" [class]="'pill--' + statusTone(license.status)">
+                                {{ license.status }}
+                              </span>
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          }
+        </section>
+      }
+
+      @if (catalog()?.totals?.total === 0) {
+        <section class="card empty-state">
+          <mat-icon>account_tree</mat-icon>
+          <p>No licenses issued yet.</p>
+          <div class="actions">
+            <a class="btn btn-primary" routerLink="/licenses/machine">Issue a machine license</a>
+            <a class="btn" routerLink="/licenses/gateway">Issue a gateway license</a>
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>
+
+@if (detail(); as license) {
+  <app-license-detail
+    [license]="license"
+    (closed)="detail.set(null)"
+    (revoked)="revoke($event)"
+  />
+}

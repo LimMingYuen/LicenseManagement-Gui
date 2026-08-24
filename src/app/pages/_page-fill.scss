@@ -1,0 +1,26 @@
+/**
+ * Shell for a full-height page whose body is a single scrolling child
+ * (usually <app-data-table>). The host fills the router outlet, and
+ * .page-fill passes that height down without letting the child's content
+ * force the page to scroll.
+ *
+ * Use with:
+ *   .scss   @use '../page-fill';
+ *   .html   <div class="page-fill"> … </div>
+ */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.page-fill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,31 @@
+<div class="page-header">
+  @if (showBack) {
+    <button type="button"
+            class="page-header__back"
+            (click)="back.emit()"
+            [matTooltip]="backTooltip"
+            matTooltipPosition="below"
+            aria-label="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  }
+
+  <div class="page-header__heading">
+    <h1 class="page-header__title">
+      @if (icon) {
+        <mat-icon class="page-header__icon">{{ icon }}</mat-icon>
+      }
+      {{ title }}
+      @if (count !== null && count !== undefined) {
+        <span class="page-header__count tnum">{{ count }}</span>
+      }
+    </h1>
+    @if (subtitle) {
+      <div class="page-header__subtitle">{{ subtitle }}</div>
+    }
+  </div>
+
+  <div class="page-header__controls">
+    <ng-content></ng-content>
+  </div>
+</div>

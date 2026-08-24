@@ -1,0 +1,219 @@
+/**
+ * Shared page header. Values come from the data-table header bar, which is the
+ * reference design: pale brand tint, 48px tall, dark title, controls right.
+ *
+ * The bar never rounds its own corners — the container that holds it does the
+ * clipping (dt-card, tabs-card, the amr shell). Pages that need air below it
+ * set `margin-bottom` on <app-page-header> themselves.
+ */
+
+// Control height/font and the easing curve are shared tokens (:root in
+// src/styles.scss). --control-h in particular is load-bearing: the data-table
+// search field has to match it or it sits proud of the other controls.
+// Toggle segments inset by 3px so a selected one never touches the group edge.
+$segment-height: calc(var(--control-h) - 6px);
+
+:host {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: 7px 16px;
+  min-height: 48px;
+  box-sizing: border-box;
+  background-color: var(--brand-primary-tint);
+  border-bottom: 1px solid var(--brand-border);
+
+  &__back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-md);
+    background: transparent;
+    color: var(--brand-text-strong);
+    cursor: pointer;
+    transition: background-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+
+    &:active { transform: scale(0.94); }
+
+    .mat-icon {
+      font-size: var(--fs-2xl);
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+    }
+  }
+
+  &__heading {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--brand-text-strong);
+    white-space: nowrap;
+  }
+
+  &__icon {
+    font-size: var(--fs-2xl);
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--brand-primary);
+  }
+
+  &__count {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--brand-on-primary);
+    background-color: var(--brand-primary);
+    padding: 2px 10px;
+    border-radius: var(--r-pill);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  &__subtitle {
+    font-size: var(--fs-xs);
+    color: var(--brand-text-muted);
+    margin-top: 1px;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+@media (hover: hover) and (pointer: fine) {
+  .page-header__back:hover { background-color: rgba(0, 0, 0, 0.06); }
+}
+
+// -------- Projected controls --------
+// Content arrives carrying the host page's encapsulation attribute, so these
+// have to be ::ng-deep. This is the whole point of the component: every page's
+// controls land on the bar at the same height without restating it.
+//
+// Sizing only — unlike a solid-accent bar, a pale one needs no colour override,
+// so these carry no !important and any page can just style its own control.
+.page-header__controls ::ng-deep {
+
+  button:not(.mat-mdc-icon-button) {
+    min-width: auto;
+    height: var(--control-h);
+    border-radius: var(--r-md);
+    font-size: var(--control-fs);
+    font-weight: var(--fw-medium);
+    transition: transform var(--dur-base) var(--ease-out);
+
+    &:active:not([disabled]) { transform: scale(0.97); }
+  }
+
+  .mat-mdc-icon-button {
+    width: var(--control-h);
+    height: var(--control-h);
+    padding: 0;
+    border-radius: var(--r-md);
+    transition: transform var(--dur-base) var(--ease-out);
+
+    .mat-mdc-button-touch-target { width: var(--control-h); height: var(--control-h); }
+
+    .mat-icon {
+      font-size: var(--fs-2xl);
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    &:active:not([disabled]) { transform: scale(0.97); }
+  }
+
+  // White group, primary selection inset by the group's own padding, so a
+  // selected segment never shares an edge with the bar.
+  mat-button-toggle-group {
+    border-radius: var(--r-md);
+    overflow: hidden;
+    box-sizing: border-box;
+    height: var(--control-h);
+    padding: 3px;
+    align-items: center;
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-border);
+
+    .mat-button-toggle {
+      border: none;
+      border-radius: 5px;
+      overflow: hidden;
+      background: transparent;
+      color: var(--brand-text);
+    }
+
+    .mat-button-toggle-button {
+      padding: 0 12px;
+      font-size: var(--control-fs);
+      font-weight: var(--fw-medium);
+      height: $segment-height;
+      background: transparent;
+      color: inherit;
+    }
+
+    // The text lives in this span with its own line-height and padding —
+    // styling the button alone leaves it low and doubles the side padding.
+    .mat-button-toggle-label-content {
+      line-height: $segment-height;
+      padding: 0;
+    }
+
+    .mat-button-toggle-checked {
+      background-color: var(--brand-primary);
+      color: var(--brand-on-primary);
+
+      .mat-icon { color: var(--brand-on-primary); }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-header__back:active,
+  .page-header__controls ::ng-deep button:active,
+  .page-header__controls ::ng-deep .mat-mdc-icon-button:active {
+    transform: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .page-header__controls {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,37 @@
+@if (mono) {
+  <!-- One outline, evenodd so the keyhole knocks through to whatever is behind. -->
+  <svg
+    class="app-logo__svg"
+    viewBox="0 0 48 48"
+    [attr.width]="size"
+    [attr.height]="size"
+    fill="currentColor"
+    fill-rule="evenodd"
+    role="img"
+    [attr.aria-label]="label"
+  >
+    <path
+      d="M24 4 40 9.7V24c0 10.5-7 17-16 20C15 41 8 34.5 8 24V9.7Z
+         M21.65 24.583a5.6 5.6 0 1 1 4.7 0L28 31.8h-8Z"
+    />
+  </svg>
+} @else {
+  <svg
+    class="app-logo__svg"
+    viewBox="0 0 48 48"
+    [attr.width]="size"
+    [attr.height]="size"
+    role="img"
+    [attr.aria-label]="label"
+  >
+    <defs>
+      <linearGradient id="appLogoShield" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#1189D6" />
+        <stop offset=".45" stop-color="#0074BE" />
+        <stop offset="1" stop-color="#00527F" />
+      </linearGradient>
+    </defs>
+    <path fill="url(#appLogoShield)" d="M24 4 40 9.7V24c0 10.5-7 17-16 20C15 41 8 34.5 8 24V9.7Z" />
+    <path fill="#fff" d="M21.65 24.583a5.6 5.6 0 1 1 4.7 0L28 31.8h-8Z" />
+  </svg>
+}

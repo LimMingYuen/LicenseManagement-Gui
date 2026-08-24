@@ -1,0 +1,27 @@
+<div class="page-fill">
+  <app-data-table
+    [data]="users()"
+    [config]="tableConfig"
+    [loading]="loading()"
+    (action)="handleAction($event)"
+  >
+  </app-data-table>
+</div>
+
+@if (dialog(); as open) {
+  @switch (open.kind) {
+    @case ('create') {
+      <app-user-form (saved)="onSaved($event)" (cancelled)="dialog.set(null)" />
+    }
+    @case ('edit') {
+      <app-user-form [user]="open.user" (saved)="onSaved($event)" (cancelled)="dialog.set(null)" />
+    }
+    @case ('reset') {
+      <app-password-reset
+        [user]="open.user"
+        (reset)="onPasswordReset(open.user.username)"
+        (cancelled)="dialog.set(null)"
+      />
+    }
+  }
+}

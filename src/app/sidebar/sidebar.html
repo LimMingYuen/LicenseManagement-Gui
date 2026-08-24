@@ -1,0 +1,122 @@
+<mat-sidenav-container class="sidebar-container">
+  <!-- Sidebar Navigation -->
+  <mat-sidenav
+    class="sidebar"
+    [class.sidebar--collapsed]="collapsed()"
+    [class.sidebar--expanded]="!collapsed()"
+    [opened]="true"
+    [mode]="'side'"
+    [disableClose]="true"
+  >
+    <div class="sidebar-content">
+      <!-- Header with Toggle -->
+      <div class="sidebar-action">
+        @if (!collapsed()) {
+          <span class="sidebar-brand">
+            <app-logo class="sidebar-brand__mark" [size]="26" />
+            <span class="sidebar-title">License Management</span>
+          </span>
+        }
+        <button
+          mat-fab
+          class="action-button"
+          type="button"
+          [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+          (click)="toggleSidebar()"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+
+      <!-- Navigation Items -->
+      <nav class="sidebar-nav">
+        @for (item of navItems(); track item.route) {
+          <div class="nav-item-wrapper">
+            <a
+              class="nav-item"
+              [routerLink]="item.route"
+              routerLinkActive="nav-item--active"
+              [routerLinkActiveOptions]="{ exact: item.exact }"
+              [matTooltip]="item.label"
+              [matTooltipDisabled]="!collapsed()"
+              matTooltipPosition="right"
+              [matTooltipShowDelay]="200"
+            >
+              <mat-icon class="nav-item__icon">{{ item.icon }}</mat-icon>
+              @if (!collapsed()) {
+                <span class="nav-item__label">{{ item.label }}</span>
+              }
+            </a>
+          </div>
+        }
+      </nav>
+    </div>
+
+    <!-- User Profile at Bottom -->
+    <div class="sidebar-footer">
+      <button
+        class="user-profile-button"
+        type="button"
+        [matMenuTriggerFor]="profileMenu"
+        [matTooltip]="userName()"
+        matTooltipPosition="right"
+        aria-label="Account menu"
+      >
+        <div class="user-avatar-wrapper">
+          <div class="user-avatar">
+            <span class="user-initials">{{ initials() }}</span>
+          </div>
+        </div>
+        <div class="user-status">
+          <div
+            class="status-indicator"
+            [class]="'status-indicator--' + health.status()"
+            role="img"
+            [attr.aria-label]="connectionLabel()"
+          ></div>
+        </div>
+      </button>
+
+      <mat-menu #profileMenu="matMenu" xPosition="after" yPosition="above">
+        <div class="profile-menu-header">
+          <div class="profile-info">
+            <div class="profile-avatar">
+              <span class="profile-initials">{{ initials() }}</span>
+            </div>
+            <div class="profile-text">
+              <div class="profile-name">{{ userName() }}</div>
+              <div class="profile-status">{{ userRole() }}</div>
+            </div>
+          </div>
+
+          <!-- Spelled out here because the dot is only a colour, and the banner is gone
+               once the connection recovers. -->
+          <div class="profile-connection" [class]="'profile-connection--' + health.status()">
+            <span class="profile-connection__dot"></span>
+            <span>{{ connectionLabel() }}</span>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item type="button" routerLink="/account/password">
+          <mat-icon>lock_reset</mat-icon>
+          <span>Change password</span>
+        </button>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-sidenav>
+
+  <!-- Main Content Area -->
+  <mat-sidenav-content
+    class="main-content"
+    [class.main-content--sidebar-collapsed]="collapsed()"
+    [class.main-content--sidebar-expanded]="!collapsed()"
+  >
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="License Management">
+  <defs>
+    <linearGradient id="lmShield" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1189D6"/>
+      <stop offset=".45" stop-color="#0074BE"/>
+      <stop offset="1" stop-color="#00527F"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield body -->
+  <path fill="url(#lmShield)" d="M24 4 40 9.7V24c0 10.5-7 17-16 20C15 41 8 34.5 8 24V9.7Z"/>
+  <!-- Keyhole: circle unioned with the tapered stem, one outline -->
+  <path fill="#fff" d="M21.65 24.583a5.6 5.6 0 1 1 4.7 0L28 31.8h-8Z"/>
+</svg>

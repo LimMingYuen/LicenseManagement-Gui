@@ -1,0 +1,142 @@
+<app-page-header
+  title="Dashboard"
+  icon="dashboard"
+  subtitle="Overview of issued and signed licenses"
+/>
+
+<div class="page-scroll">
+  <div class="page">
+    @if (loading()) {
+      <p class="muted">Loading…</p>
+    } @else if (summary(); as s) {
+      <!-- Quick actions first: issuing a license is why anyone opens this app. -->
+      <div class="quick-row">
+        @for (action of quickActions; track action.route) {
+          <a class="card quick" [routerLink]="action.route">
+            <mat-icon class="quick-icon" aria-hidden="true">{{ action.icon }}</mat-icon>
+            <span class="quick-text">
+              <strong>{{ action.title }}</strong>
+              <em>{{ action.description }}</em>
+            </span>
+          </a>
+        }
+      </div>
+
+      <div class="stats">
+        <div class="card stat">
+          <span class="stat-label">Total issued</span>
+          <span class="stat-value tnum">{{ s.total }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Active</span>
+          <span class="stat-value tnum stat-value--ok">{{ s.activeCount }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Expiring · 30d</span>
+          <span class="stat-value tnum stat-value--warn">{{ s.expiringCount }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Expired</span>
+          <span class="stat-value tnum stat-value--bad">{{ s.expiredCount }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Revoked</span>
+          <span class="stat-value tnum stat-value--bad">{{ s.revokedCount }}</span>
+        </div>
+      </div>
+
+      <div class="stats stats--types">
+        <div class="card stat">
+          <span class="stat-label">Machine</span>
+          <span class="stat-value tnum">{{ s.machineCount }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Robot</span>
+          <span class="stat-value tnum">{{ s.robotCount }}</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Gateway</span>
+          <span class="stat-value tnum">{{ s.gatewayCount }}</span>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="section-title">Expiring soon</h2>
+          <a class="btn btn-sm" routerLink="/licenses">View all</a>
+        </div>
+
+        @if (s.expiringSoon.length === 0) {
+          <p class="muted">Nothing expires in the next 30 days.</p>
+        } @else {
+          <ul class="watchlist">
+            @for (l of s.expiringSoon; track l.id) {
+              <li class="watch" (click)="detail.set(l)">
+                <span class="watch-main">
+                  <span class="pill" [class]="'pill--' + typeTone(l.type)">{{ l.type }}</span>
+                  <strong>{{ l.customerName }}</strong>
+                  <span class="mono watch-target">{{ l.targetId }}</span>
+                </span>
+                <span class="pill pill--warning tnum">{{ expiryLabel(l.expiresAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="section-title">Recent licenses</h2>
+          <a class="btn btn-sm" routerLink="/licenses">View all</a>
+        </div>
+
+        @if (s.recent.length === 0) {
+          <p class="muted">
+            No licenses issued yet.
+            <a routerLink="/licenses/machine">Generate the first one</a>.
+          </p>
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Customer</th>
+                <th>Target ID</th>
+                <th>Issued</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of s.recent; track l.id) {
+                <tr class="row-clickable" (click)="detail.set(l)">
+                  <td><span class="pill" [class]="'pill--' + typeTone(l.type)">{{ l.type }}</span></td>
+                  <td>{{ l.customerName }}</td>
+                  <td class="mono">{{ l.targetId }}</td>
+                  <td class="tnum">{{ formatDate(l.issuedAt) }}</td>
+                  <td>
+                    <span class="pill" [class]="'pill--' + statusTone(l.status)">{{ l.status }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+
+      @if (auth.isSuperAdmin()) {
+        <section class="card">
+          <h2 class="section-title">Administration</h2>
+          <div class="actions">
+            <a class="btn" routerLink="/keys">RSA keys</a>
+            <a class="btn" routerLink="/backup">Backup &amp; restore</a>
+            <a class="btn" routerLink="/users">Users</a>
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>
+
+@if (detail(); as license) {
+  <app-license-detail [license]="license" (closed)="detail.set(null)" />
+}

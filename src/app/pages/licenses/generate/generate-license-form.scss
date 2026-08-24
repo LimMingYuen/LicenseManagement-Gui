@@ -1,0 +1,427 @@
+/**
+ * The generate form is a full-width console rather than a centred document: the four field
+ * groups span the window, the register panel fills the space beneath them, and the preview
+ * lives in a bar pinned to the bottom edge.
+ *
+ * The component owns the scroll itself — see the note at the top of the template — so it
+ * lays itself out as a flex column: a scrolling body, then the bar.
+ */
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+
+  /* The breakpoints below are container queries, not media queries: what decides how many
+     groups fit is the width this component was given, which is the window less the nav
+     rail — not the window itself. */
+  container: gen / inline-size;
+}
+
+.gen-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.gen-page {
+  padding: var(--sp-5) var(--sp-6);
+}
+
+.gen-page > .card,
+.gen-page > .alert {
+  margin-bottom: var(--sp-4);
+}
+
+.gen-page > .card:last-child {
+  margin-bottom: 0;
+}
+
+/* Cards ------------------------------------------------------------------- */
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--brand-border-soft);
+}
+
+.card-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--brand-text-strong);
+}
+
+.card-title-sub {
+  font-weight: var(--fw-regular);
+  color: var(--brand-text-muted);
+}
+
+/* The binding rule used to be a full-width warning block above the fields. It is a
+   standing fact about this license type, not a warning, so it reads as a note beside
+   the title instead of a band of yellow across the page. */
+.card-note {
+  margin: 0;
+  flex: 1 1 auto;
+  text-align: right;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--brand-text-muted);
+}
+
+.details-card {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+}
+
+/* Field groups ------------------------------------------------------------ */
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: stretch;
+}
+
+/* Four across only when there is room for each group to hold a full-width control.
+   Below that they pair off, and below that they stack. */
+@container gen (max-width: 78rem) {
+  .group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container gen (max-width: 42rem) {
+  .group-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--brand-border-soft);
+  border-radius: var(--r-md);
+  background: var(--brand-bg-alt);
+  min-width: 0;
+}
+
+.group-legend {
+  padding: 0 var(--sp-2);
+  margin-left: -4px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-text-subtle);
+}
+
+/* Controls sit on white inside the tinted group so they still read as inputs. */
+.group input,
+.group select,
+.group textarea {
+  background: var(--brand-surface);
+}
+
+.group textarea {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit;
+  font-size: var(--fs-base);
+  color: var(--brand-text);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--r-md);
+  resize: vertical;
+}
+
+.group-note {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--brand-text-subtle);
+}
+
+/* The notes box grows to whatever height the row was given by the tallest group, so the
+   four panels bottom out together instead of leaving one short. */
+.field--fill {
+  flex: 1 1 auto;
+
+  textarea {
+    flex: 1 1 auto;
+    min-height: 5.5rem;
+  }
+}
+
+/* The picker and its create button sit on one line; the select takes the slack so the
+   button keeps its natural width at every breakpoint. */
+.customer-row {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+
+  select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+/* Recently issued --------------------------------------------------------- */
+
+.recent-scroll {
+  overflow-x: auto;
+}
+
+.recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-md);
+
+  th {
+    padding: 0 var(--sp-3) var(--sp-2);
+    text-align: left;
+    white-space: nowrap;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--brand-text-subtle);
+    border-bottom: 1px solid var(--brand-border-soft);
+  }
+
+  td {
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--brand-border-soft);
+    color: var(--brand-text);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover td {
+    background: var(--brand-primary-wash);
+  }
+}
+
+.recent-action {
+  text-align: right;
+}
+
+.empty-note {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--brand-text-subtle);
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  background: var(--brand-neutral-tint);
+  color: var(--brand-neutral-text);
+}
+
+.pill--active {
+  background: var(--brand-success-tint);
+  color: var(--brand-success-text);
+}
+
+.pill--expiring {
+  background: var(--brand-warning-tint);
+  color: var(--brand-warning-text);
+}
+
+.pill--expired,
+.pill--revoked {
+  background: var(--brand-danger-tint);
+  color: var(--brand-danger-text);
+}
+
+/* A text button that reads as a link — used for the per-row re-download. */
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--brand-primary);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--brand-primary-hover);
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    color: var(--brand-text-subtle);
+    cursor: default;
+  }
+}
+
+/* Result ------------------------------------------------------------------ */
+
+.result-card {
+  border-color: var(--brand-success);
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-4) 0;
+  font-size: var(--fs-md);
+
+  dt {
+    color: var(--brand-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--brand-text-strong);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Action bar -------------------------------------------------------------- */
+
+.action-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-6);
+  background: var(--brand-surface);
+  border-top: 1px solid var(--brand-border);
+  box-shadow: 0 -2px 10px rgba(11, 26, 43, 0.05);
+}
+
+.bar-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Each pair is its own column, separated by a rule rather than by gap alone so the row
+   reads as a summary strip and not as a sentence. */
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding-right: var(--sp-5);
+  border-right: 1px solid var(--brand-border-soft);
+
+  &:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  dt {
+    font-size: var(--fs-2xs);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--brand-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-medium);
+    color: var(--brand-text-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* The signature never changes, so it is the first thing to go when the bar runs short. */
+@container gen (max-width: 72rem) {
+  .bar-item--sig {
+    display: none;
+  }
+}
+
+.bar-status {
+  flex: 0 0 auto;
+  padding: 4px var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-md);
+  white-space: nowrap;
+  background: var(--brand-warning-tint);
+  color: var(--brand-warning-text);
+}
+
+.bar-status--ready,
+.bar-status--done {
+  background: var(--brand-success-tint);
+  color: var(--brand-success-text);
+}
+
+.btn-action {
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 var(--sp-5);
+}
+
+@container gen (max-width: 58rem) {
+  .gen-page {
+    padding: var(--sp-4);
+  }
+
+  .action-bar {
+    flex-wrap: wrap;
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .bar-summary {
+    order: 2;
+    flex: 1 1 100%;
+  }
+
+  .btn-action {
+    margin-left: auto;
+  }
+}
+
+/* Result-panel helpers. These used to come from the shared page-scroll partial via the
+   page component, where view encapsulation kept them from ever reaching this template. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.code-block {
+  margin: 0;
+  max-height: 18rem;
+  overflow: auto;
+  padding: var(--sp-3);
+  background: var(--brand-bg-alt);
+  border: 1px solid var(--brand-border-soft);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

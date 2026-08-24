@@ -1,0 +1,12 @@
+<!-- Connectivity first, and it replaces the shell rather than warning above it: the API
+     goes down as a whole, so anything still on screen behind a banner would be stale data
+     the user can keep clicking on. This clears itself once the API answers again. -->
+@if (health.isDown()) {
+  <app-server-unavailable />
+} @else if (auth.isAuthenticated()) {
+  <!-- Signed in: the sidebar shell owns the router outlet (nav rail + page beside it). -->
+  <app-sidebar />
+} @else {
+  <!-- Signed out: the login page renders standalone, with no chrome around it. -->
+  <router-outlet />
+}

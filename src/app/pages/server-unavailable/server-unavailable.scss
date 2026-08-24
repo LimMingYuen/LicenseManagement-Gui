@@ -1,0 +1,93 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.server-unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--sp-6) var(--sp-5);
+  text-align: center;
+  font-family: var(--font-sans);
+  background: linear-gradient(135deg, var(--brand-bg-alt) 0%, var(--brand-primary-tint) 100%);
+}
+
+.server-unavailable__brand {
+  margin-bottom: var(--sp-6);
+  opacity: 0.75;
+}
+
+.server-unavailable__icon {
+  width: 56px;
+  height: 56px;
+  font-size: 56px;
+  color: var(--brand-danger);
+}
+
+.server-unavailable__title {
+  margin: var(--sp-5) 0 0;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-medium);
+  color: var(--brand-text-strong);
+}
+
+.server-unavailable__detail {
+  margin: var(--sp-2) 0 0;
+  max-width: 440px;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--brand-text-muted);
+}
+
+// Only present when the API was well enough to name what is broken.
+.server-unavailable__failures {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  max-width: 440px;
+  list-style: none;
+  text-align: left;
+  border-radius: var(--r-md);
+  border: 1px solid var(--brand-danger);
+  background-color: var(--brand-danger-tint);
+  color: var(--brand-danger-text);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+
+  li + li {
+    margin-top: var(--sp-1);
+  }
+}
+
+.server-unavailable__retry {
+  margin-top: var(--sp-5);
+
+  // Material's label is a block box, so an inline child sits on its text baseline and
+  // leaves the descender gap below it — enough to push the icon and text visibly above
+  // centre in a 40px button. Making the label a flex box drops the baseline strut.
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// The icon and the spinner sit in the button's plain label rather than Material's icon
+// slot, so they are centred against the text here.
+.server-unavailable__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.server-unavailable__hint {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--brand-text-subtle);
+}
+
+.server-unavailable__timestamp {
+  margin-left: var(--sp-1);
+}

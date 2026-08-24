@@ -1,0 +1,60 @@
+/**
+ * Shell for a page that has an <app-page-header> pinned at the top and a
+ * scrolling body beneath it. The sibling of _page-fill.scss, which is for
+ * pages whose body is a single self-scrolling child (a data table).
+ *
+ * Use with:
+ *   .scss   @use '../page-scroll';
+ *   .html   <app-page-header … />
+ *           <div class="page-scroll"> <div class="page"> … </div> </div>
+ */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Vertical rhythm for the stack of cards these pages are built from. */
+.page > section,
+.page > .card {
+  margin-bottom: var(--sp-4);
+}
+
+.section-title {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--brand-text-strong);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+/* Signed payloads and PEM blocks: monospace, scrollable, never widening the page. */
+.code-block {
+  margin: 0;
+  max-height: 18rem;
+  overflow: auto;
+  padding: var(--sp-3);
+  background: var(--brand-bg-alt);
+  border: 1px solid var(--brand-border-soft);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

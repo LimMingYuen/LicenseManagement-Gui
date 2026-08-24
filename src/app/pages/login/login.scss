@@ -1,0 +1,55 @@
+/* Signed-out screen. No sidebar, so this page owns the whole viewport and
+   paints the brand wash the rest of the app only uses for panels. */
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+  background:
+    radial-gradient(circle at 15% 15%, var(--brand-primary-tint), transparent 55%),
+    radial-gradient(circle at 85% 85%, var(--brand-primary-pale), transparent 50%),
+    var(--brand-bg-alt);
+}
+
+.login-card {
+  width: min(100%, 25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--sp-1);
+
+  // The mark carries its own colour now, so no tile behind it — just the shield.
+  .login-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--sp-3);
+    filter: drop-shadow(0 6px 14px rgba(0, 116, 190, 0.28));
+  }
+
+  h1 {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-semibold);
+    color: var(--brand-text-strong);
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--fs-md);
+  }
+}
+
+.login-submit {
+  margin-top: var(--sp-2);
+  height: 40px;
+  font-size: var(--fs-base);
+}
