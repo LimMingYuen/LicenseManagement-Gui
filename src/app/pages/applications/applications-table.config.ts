@@ -15,7 +15,6 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
   return {
     title: 'Applications',
     icon: 'apps',
-    subtitle: 'Product families licenses are issued under',
     columns: [
       {
         key: 'name',
@@ -67,13 +66,6 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
           { value: 'Inactive', label: 'Inactive', tone: 'danger' },
         ],
         transform: (value: boolean) => (value ? 'Active' : 'Inactive'),
-      },
-      {
-        key: 'sortOrder',
-        header: 'Order',
-        sortable: true,
-        cellType: 'tnum',
-        width: '100px',
       },
       {
         key: 'createdAt',
@@ -158,11 +150,11 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
       enabled: true,
     },
     filter: {
-      placeholder: 'Search name, key or description...',
+      placeholder: 'Search name or key...',
       enabled: true,
     },
     defaultSort: {
-      column: 'sortOrder',
+      column: 'name',
       direction: 'asc',
     },
     empty: {

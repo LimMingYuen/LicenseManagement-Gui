@@ -9,11 +9,3 @@
   >
   </app-data-table>
 </div>
-
-@if (detail(); as license) {
-  <app-license-detail
-    [license]="license"
-    (closed)="detail.set(null)"
-    (revoked)="revoke($event)"
-  />
-}

@@ -3,10 +3,11 @@ import {
   Component,
   effect,
   inject,
-  input,
   output,
   signal,
 } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { License } from '../../../models/license.models';
 import { LicenseService } from '../../../services/license.service';
@@ -14,124 +15,122 @@ import { describeError } from '../../utils/http-error';
 import { saveBlob } from '../../utils/download';
 import { formatIsoDateTime } from '../../utils/date-format';
 
+export interface LicenseDetailData {
+  license: License;
+}
+
 /**
  * Read-only view of one license, including the signed file body.
  *
- * Uses the hand-rolled .modal overlay rather than MatDialog, matching the dialogs on the
- * Users page. The file body is fetched on open rather than carried in the list payload —
- * a signed license is a few KB and the register can hold thousands of rows.
+ * Revoking is the caller's job, not this dialog's: the register and the catalog each
+ * confirm it their own way and own the snackbar. This emits `revoked` and stays open;
+ * the caller pushes the updated row back through `update()` so the pills refresh.
+ *
+ * The file body is fetched on open rather than carried in the list payload — a signed
+ * license is a few KB and the register can hold thousands of rows.
  */
 @Component({
   selector: 'app-license-detail',
-  imports: [MatIconModule],
+  imports: [MatIconModule, MatDialogModule, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal-backdrop" (click)="closed.emit()"></div>
-    <div class="modal" role="dialog" aria-modal="true" aria-label="License details">
-      <div class="card modal-card detail-card">
-        <h2 class="modal-title">License details</h2>
+    <h2 mat-dialog-title>License details</h2>
 
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
+    @if (error(); as message) {
+      <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+    }
+
+    <mat-dialog-content>
+      <div class="detail-tags">
+        <span class="pill" [class]="'pill--' + typeTone(license().type)">{{ license().type }}</span>
+        <span class="pill" [class]="'pill--' + statusTone(license().status)">{{ license().status }}</span>
+        <span class="pill pill--outlined">{{ license().licenseType }}</span>
+      </div>
+
+      <dl class="pairs">
+        <dt>License ID</dt>
+        <dd class="mono">{{ license().licenseId }}</dd>
+
+        <dt>Customer</dt>
+        <dd>{{ license().customerName }}</dd>
+
+        <dt>{{ targetLabel() }}</dt>
+        <dd class="mono">{{ license().targetId }}</dd>
+
+        <dt>Application</dt>
+        <dd>{{ license().applicationName }}</dd>
+
+        <!-- Robot licenses always name their machine; gateway licenses optionally do.
+             A machine license is its own machine, so the row would only repeat above. -->
+        @if (license().type !== 'Machine') {
+          <dt>Machine ID</dt>
+          <dd class="mono">{{ license().machineId || '—' }}</dd>
         }
 
-        <div class="modal-body">
-          <div class="detail-tags">
-            <span class="pill" [class]="'pill--' + typeTone(license().type)">{{ license().type }}</span>
-            <span class="pill" [class]="'pill--' + statusTone(license().status)">{{ license().status }}</span>
-            <span class="pill pill--outlined">{{ license().licenseType }}</span>
-          </div>
+        <dt>Issued</dt>
+        <dd class="tnum">{{ formatDate(license().issuedAt) }}</dd>
 
-          <dl class="pairs">
-            <dt>License ID</dt>
-            <dd class="mono">{{ license().licenseId }}</dd>
+        <dt>Expires</dt>
+        <dd class="tnum">
+          {{ license().expiresAt ? formatDate(license().expiresAt!) : 'Perpetual' }}
+        </dd>
 
-            <dt>Customer</dt>
-            <dd>{{ license().customerName }}</dd>
+        @if (license().createdBy) {
+          <dt>Issued by</dt>
+          <dd>{{ license().createdBy }}</dd>
+        }
 
-            <dt>{{ targetLabel() }}</dt>
-            <dd class="mono">{{ license().targetId }}</dd>
+        @if (license().notes) {
+          <dt>Notes</dt>
+          <dd>{{ license().notes }}</dd>
+        }
 
-            <dt>Application</dt>
-            <dd>{{ license().applicationName }}</dd>
+        @if (license().isRevoked) {
+          <dt>Revoked</dt>
+          <dd class="tnum">{{ license().revokedAt ? formatDate(license().revokedAt!) : '—' }}</dd>
 
-            <!-- Robot licenses always name their machine; gateway licenses optionally do.
-                 A machine license is its own machine, so the row would only repeat above. -->
-            @if (license().type !== 'Machine') {
-              <dt>Machine ID</dt>
-              <dd class="mono">{{ license().machineId || '—' }}</dd>
-            }
+          <dt>Reason</dt>
+          <dd>{{ license().revokedReason || '—' }}</dd>
+        }
+      </dl>
 
-            <dt>Issued</dt>
-            <dd class="tnum">{{ formatDate(license().issuedAt) }}</dd>
-
-            <dt>Expires</dt>
-            <dd class="tnum">
-              {{ license().expiresAt ? formatDate(license().expiresAt!) : 'Perpetual' }}
-            </dd>
-
-            @if (license().createdBy) {
-              <dt>Issued by</dt>
-              <dd>{{ license().createdBy }}</dd>
-            }
-
-            @if (license().notes) {
-              <dt>Notes</dt>
-              <dd>{{ license().notes }}</dd>
-            }
-
-            @if (license().isRevoked) {
-              <dt>Revoked</dt>
-              <dd class="tnum">{{ license().revokedAt ? formatDate(license().revokedAt!) : '—' }}</dd>
-
-              <dt>Reason</dt>
-              <dd>{{ license().revokedReason || '—' }}</dd>
-            }
-          </dl>
-
-          <div class="field">
-            <span class="field-label">License file</span>
-            @if (loading()) {
-              <p class="muted">Loading…</p>
-            } @else {
-              <pre class="code-block mono">{{ fileContent() }}</pre>
-            }
-          </div>
-        </div>
-
-        <footer class="modal-actions">
-          <button type="button" class="btn" (click)="closed.emit()">Close</button>
-          <button
-            type="button"
-            class="btn"
-            [disabled]="!fileContent()"
-            (click)="copy()"
-          >
-            {{ copied() ? 'Copied' : 'Copy' }}
-          </button>
-          @if (!license().isRevoked) {
-            <button type="button" class="btn btn-danger" (click)="revoked.emit(license())">
-              Revoke
-            </button>
-          }
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="downloading()"
-            (click)="download()"
-          >
-            {{ downloading() ? 'Downloading…' : 'Download' }}
-          </button>
-        </footer>
+      <div class="field">
+        <span class="field-label">License file</span>
+        @if (loading()) {
+          <p class="muted">Loading…</p>
+        } @else {
+          <pre class="code-block mono">{{ fileContent() }}</pre>
+        }
       </div>
-    </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions>
+      <button type="button" matButton="outlined" mat-dialog-close>Close</button>
+      <button
+        type="button"
+        matButton="outlined"
+        [disabled]="!fileContent()"
+        (click)="copy()"
+      >
+        {{ copied() ? 'Copied' : 'Copy' }}
+      </button>
+      @if (!license().isRevoked) {
+        <button type="button" matButton="outlined" class="danger" (click)="revoked.emit(license())">
+          Revoke
+        </button>
+      }
+      <button
+        type="button"
+        matButton="filled"
+        [disabled]="downloading()"
+        (click)="download()"
+      >
+        {{ downloading() ? 'Downloading…' : 'Download' }}
+      </button>
+    </mat-dialog-actions>
   `,
   styles: [
     `
-      .detail-card {
-        width: min(100%, 44rem);
-      }
-
       .detail-tags {
         display: flex;
         flex-wrap: wrap;
@@ -175,10 +174,10 @@ import { formatIsoDateTime } from '../../utils/date-format';
 })
 export class LicenseDetailComponent {
   private readonly licenses = inject(LicenseService);
+  private readonly dialogRef = inject<MatDialogRef<LicenseDetailComponent>>(MatDialogRef);
 
-  readonly license = input.required<License>();
+  protected readonly license = signal(inject<LicenseDetailData>(MAT_DIALOG_DATA).license);
 
-  readonly closed = output<void>();
   readonly revoked = output<License>();
 
   protected readonly fileContent = signal('');
@@ -189,12 +188,23 @@ export class LicenseDetailComponent {
   protected readonly error = signal<string | null>(null);
 
   constructor() {
-    // Not in the constructor body: a required signal input has no value until after
-    // construction, so reading license() there throws before the request is even made.
     effect(() => {
       const id = this.license().id;
       void this.load(id);
     });
+  }
+
+  /**
+   * Replaces the license on show — the caller pushes the row back after revoking it, so the
+   * open dialog is not left displaying the pre-revocation state.
+   */
+  update(license: License): void {
+    this.license.set(license);
+  }
+
+  /** Closes the dialog from outside, e.g. when the caller navigates away from the row. */
+  close(): void {
+    this.dialogRef.close();
   }
 
   protected formatDate = formatIsoDateTime;

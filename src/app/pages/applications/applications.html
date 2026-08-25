@@ -7,18 +7,3 @@
   >
   </app-data-table>
 </div>
-
-@if (dialog(); as open) {
-  @switch (open.kind) {
-    @case ('create') {
-      <app-application-form (saved)="onSaved($event)" (cancelled)="dialog.set(null)" />
-    }
-    @case ('edit') {
-      <app-application-form
-        [application]="open.application"
-        (saved)="onSaved($event)"
-        (cancelled)="dialog.set(null)"
-      />
-    }
-  }
-}

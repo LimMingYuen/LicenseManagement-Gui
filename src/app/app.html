@@ -3,10 +3,11 @@
      the user can keep clicking on. This clears itself once the API answers again. -->
 @if (health.isDown()) {
   <app-server-unavailable />
-} @else if (auth.isAuthenticated()) {
+} @else if (auth.isAuthenticated() && !isOnLoginPage()) {
   <!-- Signed in: the sidebar shell owns the router outlet (nav rail + page beside it). -->
   <app-sidebar />
 } @else {
-  <!-- Signed out: the login page renders standalone, with no chrome around it. -->
+  <!-- Signed out — or on the way off a login page a live session has no business seeing.
+       Either way the page renders standalone, with no chrome around it. -->
   <router-outlet />
 }

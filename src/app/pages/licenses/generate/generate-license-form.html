@@ -22,21 +22,58 @@
           <legend class="group-legend">Binding</legend>
 
           @for (field of config().fields; track field.key) {
-            <label class="field">
-              <span class="field-label">{{ field.label }}</span>
-              <input
-                type="text"
-                [formControlName]="field.key"
-                [placeholder]="field.placeholder"
-                [class.mono]="field.mono"
-                [maxlength]="field.maxLength"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              @if (field.hint) {
-                <span class="field-hint">{{ field.hint }}</span>
-              }
-            </label>
+            <!-- A machine is picked from the customer's register rather than typed: this
+                 license attaches to a machine that must already be licensed, and typing that
+                 binding by hand is what used to produce robots bound to machines that did
+                 not exist. Everything else here is a new identifier, so it is typed. -->
+            @if (field.control === 'machine') {
+              <mat-form-field>
+                <mat-label>{{ field.label }}</mat-label>
+                <mat-select
+                  [formControlName]="field.key"
+                  [class.mono]="field.mono"
+                  [attr.aria-busy]="machinesLoading()"
+                >
+                  @for (machine of machines(); track machine.id) {
+                    <mat-option [value]="machine.machineId">
+                      <span class="mono">{{ machine.machineId }}</span>
+                      @if (machine.name) {
+                        <span class="option-note">· {{ machine.name }}</span>
+                      }
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (machinesLoading()) {
+                  <mat-hint>Loading machines…</mat-hint>
+                } @else if (!selectedCustomer() || !selectedApplication()) {
+                  <mat-hint>Pick an application and a customer first.</mat-hint>
+                } @else if (machines().length === 0) {
+                  <mat-hint>
+                    {{ selectedCustomer()?.name }} has no machine licensed for
+                    {{ selectedApplication()?.name }}.
+                    <a routerLink="/licenses/machine">Issue a machine license</a> first.
+                  </mat-hint>
+                } @else if (field.hint) {
+                  <mat-hint>{{ field.hint }}</mat-hint>
+                }
+              </mat-form-field>
+            } @else {
+              <mat-form-field>
+                <mat-label>{{ field.label }}</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  [formControlName]="field.key"
+                  [class.mono]="field.mono"
+                  [maxlength]="field.maxLength"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                @if (field.hint) {
+                  <mat-hint>{{ field.hint }}</mat-hint>
+                }
+              </mat-form-field>
+            }
           }
         </fieldset>
 
@@ -45,74 +82,73 @@
 
           <!-- Which product this license belongs to. Only applications that issue this page's
                license type are offered, so the API cannot refuse the pick. -->
-          <label class="field">
-            <span class="field-label">Application</span>
-            <select formControlName="applicationId" [attr.aria-busy]="applicationsLoading()">
-              <option [ngValue]="0" disabled>
-                {{ applicationsLoading() ? 'Loading applications…' : 'Select an application…' }}
-              </option>
+          <mat-form-field>
+            <mat-label>Application</mat-label>
+            <mat-select
+              formControlName="applicationId"
+              [attr.aria-busy]="applicationsLoading()"
+            >
               @for (application of applications(); track application.id) {
-                <option [ngValue]="application.id">{{ application.name }}</option>
+                <mat-option [value]="application.id">{{ application.name }}</mat-option>
               }
-            </select>
-            @if (!applicationsLoading() && applications().length === 0) {
-              <span class="field-hint">
+            </mat-select>
+            @if (applicationsLoading()) {
+              <mat-hint>Loading applications…</mat-hint>
+            } @else if (applications().length === 0) {
+              <mat-hint>
                 No active application issues {{ config().kind }} licenses. Add or
                 adjust one on the <a routerLink="/applications">Applications</a> page.
-              </span>
+              </mat-hint>
             }
-          </label>
+          </mat-form-field>
 
-          <!-- The customer picker carries its own create-inline so an operator who finds the
-               customer missing is not sent away mid-form. -->
-          <div class="field">
-            <span class="field-label">Customer</span>
-            <div class="customer-row">
-              <select formControlName="customerId" [attr.aria-busy]="customersLoading()">
-                <option [ngValue]="0" disabled>
-                  {{ customersLoading() ? 'Loading customers…' : 'Select a customer…' }}
-                </option>
-                @for (customer of customers(); track customer.id) {
-                  <option [ngValue]="customer.id">{{ customer.name }}</option>
-                }
-              </select>
-              <button type="button" class="btn" (click)="creatingCustomer.set(true)">
-                New
-              </button>
-            </div>
-            @if (!customersLoading() && customers().length === 0) {
-              <span class="field-hint">
-                No active customers yet — create one to issue a license against.
-              </span>
-            } @else {
-              <span class="field-hint">
-                The registered name is written into the signed file. Manage the list on the
+          <!-- Who the license is issued to. The list is managed on the Customers page —
+               this picker only chooses from it. -->
+          <mat-form-field>
+            <mat-label>Customer</mat-label>
+            <mat-select
+              formControlName="customerId"
+              [attr.aria-busy]="customersLoading()"
+            >
+              @for (customer of customers(); track customer.id) {
+                <mat-option [value]="customer.id">{{ customer.name }}</mat-option>
+              }
+            </mat-select>
+            @if (customersLoading()) {
+              <mat-hint>Loading customers…</mat-hint>
+            } @else if (customers().length === 0) {
+              <mat-hint>
+                No active customers yet — add one on the
                 <a routerLink="/customers">Customers</a> page.
-              </span>
+              </mat-hint>
             }
-          </div>
+          </mat-form-field>
         </fieldset>
 
         <fieldset class="group">
           <legend class="group-legend">Term</legend>
 
-          <label class="field">
-            <span class="field-label">License type</span>
-            <select formControlName="licenseType">
+          <mat-form-field>
+            <mat-label>License type</mat-label>
+            <mat-select formControlName="licenseType">
               @for (tier of config().tiers; track tier) {
-                <option [value]="tier">{{ tier }}</option>
+                <mat-option [value]="tier">{{ tier }}</mat-option>
               }
-            </select>
-          </label>
+            </mat-select>
+          </mat-form-field>
 
           <!-- A perpetual license has no expiry, so the control is not just disabled: it is
                absent, and the group says why rather than leaving a hole. -->
           @if (!isPerpetual()) {
-            <label class="field">
-              <span class="field-label">Expiration date</span>
-              <input type="date" formControlName="expiresAt" />
-              <span class="field-hint">Required for {{ form.controls.licenseType.value }} licenses.</span>
-            </label>
+            <mat-form-field #expiryField>
+              <mat-label>Expiration date</mat-label>
+              <input matInput [matDatepicker]="expiry" formControlName="expiresAt" />
+              <mat-datepicker-toggle matIconSuffix [for]="expiry" />
+              <!-- The calendar opens as wide as the field it drops out of. The panel class
+                   marks it for the global rule that reads the measured width. -->
+              <mat-datepicker #expiry panelClass="field-width-calendar" />
+              <mat-hint>Required for {{ form.controls.licenseType.value }} licenses.</mat-hint>
+            </mat-form-field>
           } @else {
             <p class="group-note">
               A perpetual license carries no expiry date. Pick another tier to set one.
@@ -123,15 +159,11 @@
         <fieldset class="group">
           <legend class="group-legend">Notes</legend>
 
-          <label class="field field--fill">
-            <span class="field-label">Internal notes</span>
-            <textarea
-              formControlName="notes"
-              maxlength="500"
-              placeholder="Internal notes (optional)…"
-            ></textarea>
-            <span class="field-hint">Kept in the register only — never written into the signed file.</span>
-          </label>
+          <mat-form-field class="notes-field">
+            <mat-label>Internal notes</mat-label>
+            <textarea matInput formControlName="notes" maxlength="500"></textarea>
+            <mat-hint>Kept in the register only — never written into the signed file.</mat-hint>
+          </mat-form-field>
         </fieldset>
       </div>
     </form>
@@ -166,13 +198,13 @@
         <pre class="code-block mono">{{ generated.licenseFileContent }}</pre>
 
         <div class="actions">
-          <button type="button" class="btn btn-primary" (click)="download()">
+          <button type="button" matButton="filled" (click)="download()">
             Download {{ generated.fileName }}
           </button>
-          <button type="button" class="btn" (click)="copy()">
+          <button type="button" matButton="outlined" (click)="copy()">
             {{ copied() ? 'Copied' : 'Copy to clipboard' }}
           </button>
-          <a class="btn" routerLink="/licenses">View register</a>
+          <a matButton="outlined" routerLink="/licenses">View register</a>
         </div>
       </section>
     } @else {
@@ -272,7 +304,7 @@
     <div class="bar-item">
       <dt>Expires</dt>
       <dd class="tnum">
-        {{ isPerpetual() ? 'Never' : (form.controls.expiresAt.value || '—') }}
+        {{ isPerpetual() ? 'Never' : (expiryPreview() || '—') }}
       </dd>
     </div>
     <div class="bar-item bar-item--sig">
@@ -283,7 +315,7 @@
 
   @if (result(); as generated) {
     <span class="bar-status bar-status--done">Signed · {{ generated.license.licenseId }}</span>
-    <button type="button" class="btn btn-primary btn-action" (click)="issueAnother()">
+    <button type="button" matButton="filled" class="btn-action" (click)="issueAnother()">
       Issue another
     </button>
   } @else {
@@ -292,7 +324,7 @@
     </span>
     <button
       type="button"
-      class="btn btn-primary btn-action"
+      matButton="filled" class="btn-action"
       [disabled]="saving() || !ready()"
       (click)="submit()"
     >
@@ -300,11 +332,3 @@
     </button>
   }
 </div>
-
-<!-- Create-inline. Mounted outside the form element so its own <form> is not nested. -->
-@if (creatingCustomer()) {
-  <app-customer-form
-    (saved)="onCustomerCreated($event)"
-    (cancelled)="creatingCustomer.set(false)"
-  />
-}

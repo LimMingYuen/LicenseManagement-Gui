@@ -6,8 +6,16 @@ export interface GenerateFieldConfig {
   /** Form control name; also the request property. */
   key: string;
   label: string;
-  placeholder: string;
   hint?: string;
+  /**
+   * How the field is collected. 'text' is a free-typed identifier - the machine or device
+   * this license will bind to, which by definition does not exist in the register yet.
+   *
+   * 'machine' is a picker over the customer's registered machines, used where the license
+   * must attach to a machine that is already licensed rather than name a new one. Typing
+   * that binding by hand is what let a robot end up bound to a machine that did not exist.
+   */
+  control?: 'text' | 'machine';
   /** Identifiers render monospaced so operators can compare them character by character. */
   mono?: boolean;
   /** Left blank without blocking submission. Only the gateway's parent machine is. */
@@ -18,7 +26,6 @@ export interface GenerateFieldConfig {
 export interface GenerateConfig {
   kind: LicenseKind;
   title: string;
-  subtitle: string;
   icon: string;
   /** A note about how this license type binds, shown above the form. */
   banner: string;
@@ -40,7 +47,6 @@ export interface GenerateConfig {
 export const MACHINE_CONFIG: GenerateConfig = {
   kind: 'Machine',
   title: 'Machine License',
-  subtitle: "Issue a license bound to a customer's machine",
   icon: 'precision_manufacturing',
   banner:
     'Machine licenses are bound to a single machine ID. Dashes are stripped, so MACHINE-001 ' +
@@ -51,7 +57,6 @@ export const MACHINE_CONFIG: GenerateConfig = {
     {
       key: 'machineId',
       label: 'Machine ID',
-      placeholder: 'MACHINE-001',
       mono: true,
       maxLength: 100,
     },
@@ -72,16 +77,25 @@ export const MACHINE_CONFIG: GenerateConfig = {
 export const ROBOT_CONFIG: GenerateConfig = {
   kind: 'Robot',
   title: 'Robot License',
-  subtitle: 'Issue a license for a robot on a specific machine',
   icon: 'smart_toy',
   banner:
-    'Robot licenses are tied to both a robot ID and a machine ID. The robot will only ' +
-    'operate on the machine named here.',
+    'Robot licenses are tied to both a robot ID and a machine. The robot will only operate ' +
+    'on the machine picked here, and only machines already holding a license for this ' +
+    'application can be picked.',
   targetLabel: 'Robot ID',
   targetKey: 'robotId',
   fields: [
-    { key: 'robotId', label: 'Robot ID', placeholder: 'ROBOT-A14', mono: true, maxLength: 100 },
-    { key: 'machineId', label: 'Machine ID', placeholder: 'MACHINE-001', mono: true, maxLength: 100 },
+    { key: 'robotId', label: 'Robot ID', mono: true, maxLength: 100 },
+    {
+      key: 'machineId',
+      label: 'Machine',
+      control: 'machine',
+      hint:
+        'The customer machines holding an active machine license for this application. ' +
+        'Issue a machine license first if the one you need is missing.',
+      mono: true,
+      maxLength: 100,
+    },
   ],
   // No trial tier for robots - matches the desktop app.
   tiers: ['PERPETUAL', 'SUBSCRIPTION'],
@@ -101,7 +115,6 @@ export const ROBOT_CONFIG: GenerateConfig = {
 export const GATEWAY_CONFIG: GenerateConfig = {
   kind: 'Gateway',
   title: 'Gateway License',
-  subtitle: 'Issue a license for the OMRON DI Gateway Android app',
   icon: 'router',
   banner:
     'Gateway licenses are tied to one Android device via its device ID. The app will only ' +
@@ -112,7 +125,6 @@ export const GATEWAY_CONFIG: GenerateConfig = {
     {
       key: 'deviceId',
       label: 'Device ID',
-      placeholder: 'A1B2-C3D4-E5F6-7G8H-9I0J-K1L2-M3N4-O5P6',
       hint: "Read it from the gateway app's License screen. Case and spaces are normalised.",
       mono: true,
       maxLength: 100,
@@ -120,7 +132,6 @@ export const GATEWAY_CONFIG: GenerateConfig = {
     {
       key: 'machineId',
       label: 'Machine ID (optional)',
-      placeholder: 'MACHINE-001',
       hint:
         'Files the device under a machine in the license catalog. Registry only — it is ' +
         'never written into the signed file, so the gateway app is unaffected.',

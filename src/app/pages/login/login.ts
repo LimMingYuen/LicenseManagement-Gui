@@ -1,13 +1,22 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../services/auth.service';
 import { describeError } from '../../shared/utils/http-error';
 import { AppLogoComponent } from '../../shared/components/app-logo/app-logo';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, AppLogoComponent],
+  imports: [
+    ReactiveFormsModule,
+    AppLogoComponent,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

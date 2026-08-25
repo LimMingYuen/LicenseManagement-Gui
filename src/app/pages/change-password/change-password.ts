@@ -1,12 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../services/auth.service';
+import { FormErrorStateMatcher } from '../../shared/utils/error-state';
 import { describeError } from '../../shared/utils/http-error';
 
 @Component({
   selector: 'app-change-password',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page narrow">
@@ -17,29 +21,42 @@ import { describeError } from '../../shared/utils/http-error';
           <p class="alert alert-error" role="alert">{{ message }}</p>
         }
 
-        <label class="field">
-          <span class="field-label">Current password</span>
-          <input type="password" formControlName="currentPassword" autocomplete="current-password" />
-        </label>
+        <mat-form-field>
+          <mat-label>Current password</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+          />
+        </mat-form-field>
 
-        <label class="field">
-          <span class="field-label">New password</span>
-          <input type="password" formControlName="newPassword" autocomplete="new-password" />
-          @if (form.controls.newPassword.touched && form.controls.newPassword.invalid) {
-            <span class="field-error">A password is required.</span>
-          }
-        </label>
+        <mat-form-field>
+          <mat-label>New password</mat-label>
+          <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
+          <mat-error>A password is required.</mat-error>
+        </mat-form-field>
 
-        <label class="field">
-          <span class="field-label">Confirm new password</span>
-          <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
-          @if (form.controls.confirmPassword.touched && form.hasError('mismatch')) {
-            <span class="field-error">Passwords do not match.</span>
-          }
-        </label>
+        <mat-form-field>
+          <mat-label>Confirm new password</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            [errorStateMatcher]="confirmMatcher"
+          />
+          <mat-error>
+            @if (form.hasError('mismatch')) {
+              Passwords do not match.
+            } @else {
+              A password is required.
+            }
+          </mat-error>
+        </mat-form-field>
 
-        <footer class="modal-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <footer class="form-actions">
+          <button type="submit" matButton="filled" [disabled]="saving()">
             {{ saving() ? 'Saving…' : 'Change password' }}
           </button>
         </footer>
@@ -53,6 +70,12 @@ export class ChangePassword {
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  /**
+   * The mismatch rule lives on the group, not on the confirm box, so Material would never
+   * paint that field as failing on its own. This hands it the group's verdict.
+   */
+  protected readonly confirmMatcher = new FormErrorStateMatcher('mismatch');
 
   protected readonly form = inject(FormBuilder).nonNullable.group(
     {

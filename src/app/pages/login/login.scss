@@ -48,8 +48,11 @@
   }
 }
 
+/* The one action on the card, so it spans it. Sized through Material's own
+   tokens rather than a height, which the button would fight. */
 .login-submit {
+  width: 100%;
   margin-top: var(--sp-2);
-  height: 40px;
-  font-size: var(--fs-base);
+  --mat-button-filled-container-height: 44px;
+  --mat-button-filled-label-text-size: var(--fs-base);
 }

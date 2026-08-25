@@ -1,8 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { User } from '../../models/user.models';
 import { UserService } from '../../services/user.service';
 import { describeError } from '../../shared/utils/http-error';
+
+export interface PasswordResetData {
+  /** The account whose password is being set. */
+  user: User;
+}
 
 /**
  * Super-admin-initiated password reset. Sets the account's real password — there is no
@@ -10,47 +19,45 @@ import { describeError } from '../../shared/utils/http-error';
  */
 @Component({
   selector: 'app-password-reset',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal-backdrop" (click)="cancelled.emit()"></div>
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Reset password">
-      <form class="card modal-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <h2 class="modal-title">Reset password for {{ user().username }}</h2>
+    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2 mat-dialog-title>Reset password for {{ user.username }}</h2>
 
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
-        }
+      @if (error(); as message) {
+        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+      }
 
-        <div class="modal-body">
-          <label class="field">
-            <span class="field-label">New password</span>
-            <input type="password" formControlName="newPassword" autocomplete="new-password" />
-            <span class="field-hint">
-              Communicate it out of band — it is not emailed.
-            </span>
-            @if (form.controls.newPassword.touched && form.controls.newPassword.invalid) {
-              <span class="field-error">A password is required.</span>
-            }
-          </label>
-        </div>
+      <mat-dialog-content>
+        <mat-form-field>
+          <mat-label>New password</mat-label>
+          <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
+          <mat-hint>Communicate it out of band — it is not emailed.</mat-hint>
+          <mat-error>A password is required.</mat-error>
+        </mat-form-field>
+      </mat-dialog-content>
 
-        <footer class="modal-actions">
-          <button type="button" class="btn" (click)="cancelled.emit()">Cancel</button>
-          <button type="submit" class="btn btn-danger" [disabled]="saving()">
-            {{ saving() ? 'Resetting…' : 'Reset password' }}
-          </button>
-        </footer>
-      </form>
-    </div>
+      <mat-dialog-actions>
+        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
+        <button type="submit" matButton="outlined" class="danger" [disabled]="saving()">
+          {{ saving() ? 'Resetting…' : 'Reset password' }}
+        </button>
+      </mat-dialog-actions>
+    </form>
   `,
 })
 export class PasswordReset {
   private readonly users = inject(UserService);
+  private readonly dialogRef = inject<MatDialogRef<PasswordReset, boolean>>(MatDialogRef);
 
-  readonly user = input.required<User>();
-  readonly reset = output<void>();
-  readonly cancelled = output<void>();
+  protected readonly user = inject<PasswordResetData>(MAT_DIALOG_DATA).user;
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -69,8 +76,8 @@ export class PasswordReset {
     this.error.set(null);
 
     try {
-      await this.users.resetPassword(this.user().id, this.form.getRawValue().newPassword);
-      this.reset.emit();
+      await this.users.resetPassword(this.user.id, this.form.getRawValue().newPassword);
+      this.dialogRef.close(true);
     } catch (error) {
       this.error.set(describeError(error, 'Could not reset the password.'));
     } finally {

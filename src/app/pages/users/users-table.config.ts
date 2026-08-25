@@ -16,7 +16,6 @@ export function buildUsersTableConfig(selfId: number | null): DataTableConfig<Us
   return {
     title: 'Users',
     icon: 'people',
-    subtitle: 'Accounts that can sign in to the license portal',
     columns: [
       {
         key: 'username',

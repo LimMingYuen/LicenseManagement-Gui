@@ -6,6 +6,10 @@ import {
 } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldDefaultOptions,
+} from '@angular/material/form-field';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
@@ -27,6 +31,17 @@ export const appConfig: ApplicationConfig = {
     // Started here rather than in the service constructor because the auth interceptor
     // injects it, and a probe fired during construction would re-enter a half-built service.
     provideAppInitializer(() => void inject(HealthService).start()),
+
+    // Every form field in the app is outlined, and reserves subscript space only when it
+    // actually carries a hint or an error. Set once here rather than repeated as an
+    // attribute on each of the fields across the dialogs and pages.
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: {
+        appearance: 'outline',
+        subscriptSizing: 'dynamic',
+      } satisfies MatFormFieldDefaultOptions,
+    },
 
     {
       provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,

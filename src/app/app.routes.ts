@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
-import { superAdminGuard, authGuard } from './guards/auth.guard';
+import { superAdminGuard, authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
     title: 'Sign in · License Management',
+    canActivate: [guestGuard],
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
@@ -67,12 +68,6 @@ export const routes: Routes = [
     title: 'RSA keys · License Management',
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/keys/keys').then((m) => m.Keys),
-  },
-  {
-    path: 'backup',
-    title: 'Backup & restore · License Management',
-    canActivate: [superAdminGuard],
-    loadComponent: () => import('./pages/backup/backup').then((m) => m.Backup),
   },
   {
     path: 'users',

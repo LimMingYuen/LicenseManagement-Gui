@@ -33,11 +33,11 @@ export interface ConfirmationDialogData {
       </mat-dialog-content>
       <mat-dialog-actions align="center">
         @if (data.showCancel) {
-          <button mat-stroked-button [mat-dialog-close]="false">
+          <button matButton="outlined" [mat-dialog-close]="false">
             {{ data.cancelText || 'Cancel' }}
           </button>
         }
-        <button mat-flat-button class="confirm-btn" [mat-dialog-close]="true" cdkFocusInitial>
+        <button matButton="filled" class="confirm-btn" [mat-dialog-close]="true" cdkFocusInitial>
           {{ data.confirmText || 'OK' }}
         </button>
       </mat-dialog-actions>

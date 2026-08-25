@@ -1,8 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { Customer } from '../../models/customer.models';
 import { CustomerService } from '../../services/customer.service';
 import { describeError } from '../../shared/utils/http-error';
+
+export interface CustomerMergeData {
+  /** The customer being folded away. */
+  source: Customer;
+
+  /** Every customer, including the source — filtered out below. */
+  all: Customer[];
+}
 
 /**
  * Folds one customer into another.
@@ -14,75 +26,72 @@ import { describeError } from '../../shared/utils/http-error';
  */
 @Component({
   selector: 'app-customer-merge',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatButtonModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal-backdrop" (click)="cancelled.emit()"></div>
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Merge customer">
-      <form class="card modal-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <h2 class="modal-title">Merge {{ source().name }}</h2>
+    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2 mat-dialog-title>Merge {{ source.name }}</h2>
 
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
-        }
+      @if (error(); as message) {
+        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+      }
 
-        <div class="modal-body">
-          <p class="alert alert-warn">
-            {{ source().licenseCount }}
-            {{ source().licenseCount === 1 ? 'license moves' : 'licenses move' }}
-            to the customer you pick, and <strong>{{ source().name }}</strong> is deleted. The
-            customer name inside each signed license file is unchanged — only which customer it
-            files under.
-          </p>
+      <mat-dialog-content>
+        <p class="alert alert-warn">
+          {{ source.licenseCount }}
+          {{ source.licenseCount === 1 ? 'license moves' : 'licenses move' }}
+          to the customer you pick, and <strong>{{ source.name }}</strong> is deleted. The
+          customer name inside each signed license file is unchanged — only which customer it
+          files under.
+        </p>
 
-          <label class="field">
-            <span class="field-label">Merge into</span>
-            <select formControlName="targetId">
-              <option [value]="0" disabled>Choose a customer…</option>
-              @for (candidate of candidates(); track candidate.id) {
-                <option [value]="candidate.id">
-                  {{ candidate.name }} ({{ candidate.licenseCount }})
-                </option>
-              }
-            </select>
-            @if (candidates().length === 0) {
-              <span class="field-hint">There is no other customer to merge into.</span>
+        <mat-form-field>
+          <mat-label>Merge into</mat-label>
+          <mat-select formControlName="targetId">
+            @for (candidate of candidates(); track candidate.id) {
+              <mat-option [value]="candidate.id">
+                {{ candidate.name }} ({{ candidate.licenseCount }})
+              </mat-option>
             }
-          </label>
-        </div>
+          </mat-select>
+          @if (candidates().length === 0) {
+            <mat-hint>There is no other customer to merge into.</mat-hint>
+          }
+        </mat-form-field>
+      </mat-dialog-content>
 
-        <footer class="modal-actions">
-          <button type="button" class="btn" (click)="cancelled.emit()">Cancel</button>
-          <button
-            type="submit"
-            class="btn btn-danger"
-            [disabled]="saving() || !form.controls.targetId.value"
-          >
-            {{ saving() ? 'Merging…' : 'Merge' }}
-          </button>
-        </footer>
-      </form>
-    </div>
+      <mat-dialog-actions>
+        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
+        <button
+          type="submit"
+          matButton="outlined" class="danger"
+          [disabled]="saving() || !form.controls.targetId.value"
+        >
+          {{ saving() ? 'Merging…' : 'Merge' }}
+        </button>
+      </mat-dialog-actions>
+    </form>
   `,
 })
 export class CustomerMerge {
   private readonly customers = inject(CustomerService);
+  private readonly dialogRef = inject<MatDialogRef<CustomerMerge, Customer>>(MatDialogRef);
+  private readonly data = inject<CustomerMergeData>(MAT_DIALOG_DATA);
 
-  /** The customer being folded away. */
-  readonly source = input.required<Customer>();
-
-  /** Every customer, including the source — filtered out below. */
-  readonly all = input.required<Customer[]>();
-
-  readonly merged = output<Customer>();
-  readonly cancelled = output<void>();
+  protected readonly source = this.data.source;
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly candidates = computed(() =>
-    this.all()
-      .filter((c) => c.id !== this.source().id)
+    this.data.all
+      .filter((c) => c.id !== this.source.id)
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
@@ -101,7 +110,7 @@ export class CustomerMerge {
     this.error.set(null);
 
     try {
-      this.merged.emit(await this.customers.merge(this.source().id, targetId));
+      this.dialogRef.close(await this.customers.merge(this.source.id, targetId));
     } catch (error) {
       this.error.set(describeError(error, 'Could not merge these customers.'));
     } finally {

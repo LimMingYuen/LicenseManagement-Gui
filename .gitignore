@@ -5,6 +5,8 @@
 /tmp
 /out-tsc
 /bazel-out
+publish/
+web.config
 
 # Node
 /node_modules

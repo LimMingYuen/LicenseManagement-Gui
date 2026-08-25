@@ -7,98 +7,54 @@
   gap: var(--sp-3);
 }
 
-.key-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--sp-4);
+/* Label/value rows, one per line. A grid of columns left the second row half empty and
+   squeezed the 95-character fingerprint into three wrapped lines; at full width it fits
+   on one, and every value lines up on the same edge. */
+.detail-list {
   margin: var(--sp-4) 0 0;
+
+  > div {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    gap: var(--sp-4);
+    align-items: baseline;
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--brand-border-soft);
+  }
+
+  > div:first-child { padding-top: 0; }
+  > div:last-child { padding-bottom: 0; border-bottom: none; }
 
   dt {
     font-size: var(--fs-sm);
     color: var(--brand-text-muted);
-    margin-bottom: var(--sp-1);
   }
 
   dd {
     margin: 0;
     font-size: var(--fs-base);
     color: var(--brand-text-strong);
+  }
+}
+
+/* Too narrow for two columns - stack the value under its label. */
+@media (max-width: 40rem) {
+  .detail-list > div {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
   }
 }
 
 /* A colon-separated SHA-256 is 95 characters; let it wrap rather than overflow. */
 .fingerprint {
-  font-size: var(--fs-sm);
   overflow-wrap: anywhere;
 }
 
-.key-roles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: var(--sp-4);
-  margin-bottom: var(--sp-4);
-}
-
-.key-role {
-  padding: var(--sp-4);
-  border-radius: var(--r-md);
-  border: 1px solid var(--brand-border-soft);
-
-  h3 {
-    margin: 0 0 var(--sp-2);
-    font-size: var(--fs-base);
-    font-weight: var(--fw-semibold);
-  }
-
-  ul {
-    margin: 0;
-    padding-left: var(--sp-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-1);
-    font-size: var(--fs-md);
-    color: var(--brand-text-muted);
-  }
-}
-
-.key-role--private {
-  background: var(--brand-danger-tint);
-  border-color: var(--brand-danger);
-
-  h3 { color: var(--brand-danger-text); }
-}
-
-.key-role--public {
-  background: var(--brand-info-tint);
-  border-color: var(--brand-info);
-
-  h3 { color: var(--brand-info-text); }
-}
-
-.crypto-specs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: var(--sp-4);
-  margin: 0;
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--brand-border-soft);
-
-  dt {
-    font-size: var(--fs-base);
-    font-weight: var(--fw-semibold);
-    color: var(--brand-text-strong);
-  }
-
-  dd {
-    margin: var(--sp-1) 0 0;
-    font-size: var(--fs-xs);
-    color: var(--brand-text-muted);
-  }
-}
-
-.note {
-  margin: var(--sp-4) 0 0;
-  font-size: var(--fs-md);
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
 }
 
 .danger-zone {
@@ -107,4 +63,26 @@
 
 .danger-title {
   color: var(--brand-danger-text);
+}
+
+.import-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-block: 1rem;
+  max-width: 32rem;
+}
+
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+// Long enough to read a filename, short enough not to push the button off a narrow page.
+.file-name {
+  overflow-wrap: anywhere;
+  opacity: 0.75;
+  font-size: 0.875rem;
 }

@@ -1,12 +1,11 @@
 <app-page-header
   title="License Catalog"
   icon="account_tree"
-  subtitle="Licenses by application, customer and machine"
   [count]="catalog()?.totals?.total ?? null"
 >
-  <button type="button" class="btn btn-sm" (click)="expandAll()">Expand all</button>
-  <button type="button" class="btn btn-sm" (click)="collapseAll()">Collapse all</button>
-  <button type="button" class="btn btn-sm" (click)="load()" [disabled]="loading()">
+  <button type="button" matButton="outlined" class="btn-sm" (click)="expandAll()">Expand all</button>
+  <button type="button" matButton="outlined" class="btn-sm" (click)="collapseAll()">Collapse all</button>
+  <button type="button" matButton="outlined" class="btn-sm" (click)="load()" [disabled]="loading()">
     {{ loading() ? 'Loading…' : 'Refresh' }}
   </button>
 </app-page-header>
@@ -14,31 +13,31 @@
 <div class="page-scroll">
   <div class="page">
     <section class="card filters">
-      <label class="field filters__search">
-        <span class="field-label">Search</span>
+      <mat-form-field class="filters__search">
+        <mat-label>Search</mat-label>
         <input
+          matInput
           type="search"
           [value]="search()"
           (input)="onSearch($event)"
-          placeholder="Customer, machine, target or license ID…"
           autocomplete="off"
           spellcheck="false"
         />
-      </label>
+      </mat-form-field>
 
-      <label class="field filters__status">
-        <span class="field-label">Status</span>
-        <select [value]="statusFilter()" (change)="onStatus($event)">
+      <mat-form-field class="filters__status">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter()" (valueChange)="onStatus($event)">
           @for (option of statusOptions; track option) {
-            <option [value]="option">{{ option }}</option>
+            <mat-option [value]="option">{{ option }}</mat-option>
           }
-        </select>
-      </label>
+        </mat-select>
+      </mat-form-field>
 
       @if (filtered()) {
         <div class="filters__result">
           <span class="pill pill--info">{{ matchCount() }} matching</span>
-          <button type="button" class="btn btn-sm" (click)="clearFilters()">Clear</button>
+          <button type="button" matButton="outlined" class="btn-sm" (click)="clearFilters()">Clear</button>
         </div>
       }
     </section>
@@ -58,7 +57,7 @@
             <mat-icon class="node__chevron">
               {{ isOpen(appKey(app)) ? 'expand_more' : 'chevron_right' }}
             </mat-icon>
-            <mat-icon class="node__icon">{{ app.icon }}</mat-icon>
+            <mat-icon class="node__icon">apps</mat-icon>
 
             <span class="node__label">
               {{ app.name }}
@@ -132,6 +131,13 @@
 
                         <span class="node__label mono">{{ machineLabel(machine) }}</span>
 
+                        <!-- The ID above is what gets signed, so it stays the label. A name
+                             is only set for machines someone has bothered to describe, and
+                             follows as an aside rather than replacing what was bound. -->
+                        @if (machine.name) {
+                          <span class="node__sub">{{ machine.name }}</span>
+                        }
+
                         @if (machine.isOrphaned) {
                           <span
                             class="pill pill--warning"
@@ -158,7 +164,7 @@
                               type="button"
                               class="leaf"
                               [class.leaf--muted]="license.isRevoked"
-                              (click)="detail.set(license)"
+                              (click)="openDetail(license)"
                             >
                               <span class="pill" [class]="'pill--' + typeTone(license.type)">
                                 {{ license.type }}
@@ -189,19 +195,11 @@
           <mat-icon>account_tree</mat-icon>
           <p>No licenses issued yet.</p>
           <div class="actions">
-            <a class="btn btn-primary" routerLink="/licenses/machine">Issue a machine license</a>
-            <a class="btn" routerLink="/licenses/gateway">Issue a gateway license</a>
+            <a matButton="filled" routerLink="/licenses/machine">Issue a machine license</a>
+            <a matButton="outlined" routerLink="/licenses/gateway">Issue a gateway license</a>
           </div>
         </section>
       }
     }
   </div>
 </div>
-
-@if (detail(); as license) {
-  <app-license-detail
-    [license]="license"
-    (closed)="detail.set(null)"
-    (revoked)="revoke($event)"
-  />
-}

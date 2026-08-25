@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  inject,
   Input,
   Output,
   EventEmitter,
@@ -29,12 +31,7 @@ import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule, MatCalendarHeader } from '@angular/material/datepicker';
 import { MatTimepickerModule } from '@angular/material/timepicker';
-import {
-  NativeDateAdapter,
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  MatDateFormats
-} from '@angular/material/core';
+import { provideIsoDates } from '../../utils/iso-date';
 import { SelectionModel } from '@angular/cdk/collections';
 
 import { PageHeaderComponent } from '../page-header/page-header';
@@ -46,6 +43,7 @@ import {
   DataColumnFilterType,
   DataCombinedFilterState,
   DataActionConfig,
+  DataHeaderActionConfig,
   DataActionEvent,
   DataSortEvent,
   DataPageEvent,
@@ -56,46 +54,6 @@ import {
   DEFAULT_DATA_EMPTY,
   DEFAULT_DATA_FILTER
 } from '../../models/data-table.models';
-
-const ISO_DATE_FORMATS: MatDateFormats = {
-  parse: {
-    dateInput: 'YYYY-MM-DD',
-    timeInput: null
-  },
-  display: {
-    dateInput: { year: 'numeric', month: '2-digit', day: '2-digit' },
-    monthYearLabel: { year: 'numeric', month: 'short' },
-    dateA11yLabel: { year: 'numeric', month: 'long', day: 'numeric' },
-    monthYearA11yLabel: { year: 'numeric', month: 'long' },
-    timeInput: { hour: '2-digit', minute: '2-digit', hour12: false },
-    timeOptionLabel: { hour: '2-digit', minute: '2-digit', hour12: false }
-  }
-};
-
-class IsoDateAdapter extends NativeDateAdapter {
-  override format(date: Date, displayFormat: object): string {
-    // Only override for date formats — time formats (hour/minute) must fall
-    // through to NativeDateAdapter so MatTimepicker can render them.
-    if (typeof displayFormat === 'object' && this.isDateFormat(displayFormat)) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-    return super.format(date, displayFormat);
-  }
-  override parse(value: any): Date | null {
-    if (typeof value === 'string' && value.length > 0) {
-      const match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-      if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
-    }
-    return super.parse(value);
-  }
-  private isDateFormat(fmt: any): boolean {
-    return ('year' in fmt || 'month' in fmt || 'day' in fmt)
-        && !('hour' in fmt) && !('minute' in fmt);
-  }
-}
 
 /**
  * Filter popover sizing. The popover takes its column's width, clamped so a
@@ -209,10 +167,7 @@ export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
     MatTimepickerModule,
     PageHeaderComponent
 ],
-  providers: [
-    { provide: DateAdapter, useClass: IsoDateAdapter },
-    { provide: MAT_DATE_FORMATS, useValue: ISO_DATE_FORMATS }
-  ],
+  providers: [provideIsoDates()],
   templateUrl: './data-table.html',
   styleUrl: './data-table.scss'
 })
@@ -278,6 +233,8 @@ export class DataTableComponent<T = any>
 
   dataSource = new MatTableDataSource<T>();
   displayedColumns: string[] = [];
+
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _globalFilter = '';
   @Input()
@@ -801,6 +758,25 @@ export class DataTableComponent<T = any>
     // setGlobalFilterFromUI already commits, but only when value changed;
     // re-commit so cleared column filters also take effect when search is unchanged.
     this.commitFilter();
+    // Pages with their own toolbar call this from outside the view, where no
+    // event binding of ours has marked the component dirty.
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * The rows the grid is currently showing across all pages — filtered by the
+   * search box and column popovers, in the active sort order. Pages exporting
+   * the grid read this so the file matches what the operator sees.
+   */
+  getVisibleRows(): T[] {
+    const rows = [...(this.dataSource.filteredData ?? [])];
+    const s = this.sort;
+    return s?.active && s.direction ? this.dataSource.sortData(rows, s) : rows;
+  }
+
+  /** True when a global search term or any column filter is currently applied. */
+  hasAnyFilter(): boolean {
+    return this.globalFilter.length > 0 || Object.keys(this.appliedFilters).length > 0;
   }
 
   // -------- cell rendering --------
@@ -901,6 +877,12 @@ export class DataTableComponent<T = any>
   onActionClick(actionCfg: DataActionConfig<T>, row: T, rowIndex: number): void {
     this.action.emit({ type: 'action', action: actionCfg.action, row, rowIndex });
   }
+  /** Reset-filters is dead weight with nothing applied, so grey it out. */
+  isHeaderActionDisabled(actionCfg: DataHeaderActionConfig): boolean {
+    if (actionCfg.loading) return true;
+    return actionCfg.action === 'clear-filters' && !this.hasAnyFilter();
+  }
+
   onHeaderActionClick(actionCfg: { action: string }): void {
     if (actionCfg.action === 'clear-filters') {
       this.clearAllFilters();
@@ -936,8 +918,7 @@ export class DataTableComponent<T = any>
   }
 
   shouldShowNoResults(): boolean {
-    const hasFilters = this.globalFilter.length > 0 || Object.keys(this.appliedFilters).length > 0;
-    return hasFilters && (this.dataSource.filteredData?.length ?? 0) === 0 && !this.loading;
+    return this.hasAnyFilter() && (this.dataSource.filteredData?.length ?? 0) === 0 && !this.loading;
   }
 
   paginatorLength(): number {

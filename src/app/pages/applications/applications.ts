@@ -1,20 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { Application } from '../../models/application.models';
 import { ApplicationService } from '../../services/application.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
+import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { ApplicationForm } from './application-form';
+import { ApplicationForm, ApplicationFormData } from './application-form';
 import { buildApplicationsTableConfig } from './applications-table.config';
-
-type Dialog = { kind: 'create' } | { kind: 'edit'; application: Application } | null;
 
 @Component({
   selector: 'app-applications',
-  imports: [MatSnackBarModule, DataTableComponent, ApplicationForm],
+  imports: [MatSnackBarModule, DataTableComponent],
   templateUrl: './applications.html',
   styleUrl: './applications.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,10 +25,10 @@ export class Applications {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly applications = signal<Application[]>([]);
   protected readonly loading = signal(true);
-  protected readonly dialog = signal<Dialog>(null);
 
   /** Built once: which actions exist depends only on the signed-in role. */
   protected readonly tableConfig = buildApplicationsTableConfig(
@@ -58,13 +59,13 @@ export class Applications {
   protected handleAction(event: DataActionEvent<Application>): void {
     switch (event.action) {
       case 'add':
-        this.dialog.set({ kind: 'create' });
+        void this.openForm(null);
         break;
       case 'refresh':
         void this.load();
         break;
       case 'edit':
-        if (event.row) this.dialog.set({ kind: 'edit', application: event.row });
+        if (event.row) void this.openForm(event.row);
         break;
       case 'licenses':
         // The register filters by application key server-side, which is exactly what this
@@ -85,9 +86,21 @@ export class Applications {
     }
   }
 
-  protected onSaved(application: Application): void {
+  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  private async openForm(application: Application | null): Promise<void> {
+    const saved = await firstValueFrom(
+      this.dialog
+        .open(ApplicationForm, dialogConfig<ApplicationFormData>({ application }, '42rem'))
+        .afterClosed(),
+    );
+
+    if (saved) {
+      this.onSaved(saved);
+    }
+  }
+
+  private onSaved(application: Application): void {
     const isNew = !this.applications().some((a) => a.id === application.id);
-    this.dialog.set(null);
 
     if (isNew) {
       void this.load();

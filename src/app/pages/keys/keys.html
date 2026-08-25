@@ -1,7 +1,6 @@
 <app-page-header
   title="RSA Keys"
   icon="key"
-  subtitle="The key pair every license is signed with"
 />
 
 <div class="page-scroll">
@@ -14,21 +13,21 @@
         <section class="card empty-key">
           <h2 class="section-title">No signing key yet</h2>
           <p class="muted">
-            Licenses are sealed with an RSA-2048 private key held by the server. Generate the
-            key pair once, then deploy its public half to the machines that verify licenses.
+            Licenses are sealed with an {{ keyLabel() }} private key held by the server. Generate
+            the key pair once, then deploy its public half to the machines that verify licenses.
           </p>
-          <button type="button" class="btn btn-primary" [disabled]="working()" (click)="generate()">
+          <button type="button" matButton="filled" [disabled]="working()" (click)="generate()">
             {{ working() ? 'Generating…' : 'Generate key pair' }}
           </button>
         </section>
       } @else {
         <section class="card">
           <p class="alert alert-success">
-            <strong>Keys are configured.</strong> The RSA-{{ key.keySize }} key pair is ready for
-            license generation.
+            <strong>Keys are configured.</strong> The {{ key.algorithm }}-{{ key.keySize }} key
+            pair is ready for license generation.
           </p>
 
-          <dl class="key-meta">
+          <dl class="detail-list">
             <div>
               <dt>Fingerprint (SHA-256)</dt>
               <dd class="mono fingerprint">{{ key.fingerprint }}</dd>
@@ -61,75 +60,98 @@
         <section class="card">
           <h2 class="section-title">Public key</h2>
           <p class="muted">
-            Safe to distribute. Deploy it to the servers that verify licenses — on KUKA backend
-            hosts it belongs at <span class="mono">{{ serverKeyPath }}</span>.
+            Safe to distribute — it can verify licenses but cannot create them. Consuming
+            applications carry this key as a compiled-in constant rather than reading it from
+            disk, so this is the copy that belongs in their source. Changing the key means
+            rebuilding and redeploying every application that verifies against it.
           </p>
 
           <pre class="code-block mono">{{ key.publicKeyPem }}</pre>
 
           <div class="actions">
-            <button type="button" class="btn btn-primary" (click)="copyPublicKey()">
+            <button type="button" matButton="filled" (click)="copyPublicKey()">
               {{ copied() ? 'Copied' : 'Copy public key' }}
             </button>
-            <button type="button" class="btn" (click)="exportForServer()">
+            <button type="button" matButton="outlined" (click)="exportForServer()">
               Export publickey.pem
             </button>
           </div>
         </section>
 
-        <section class="card">
-          <h2 class="section-title">How the pair is used</h2>
-
-          <div class="key-roles">
-            <div class="key-role key-role--private">
-              <h3>Private key</h3>
-              <ul>
-                <li>Signs licenses</li>
-                <li>Encrypted at rest in the database</li>
-                <li>Never leaves the server</li>
-                <li>Never included in a backup export</li>
-              </ul>
-            </div>
-            <div class="key-role key-role--public">
-              <h3>Public key</h3>
-              <ul>
-                <li>Verifies licenses</li>
-                <li>Safe to distribute</li>
-                <li>Goes into client applications</li>
-                <li>Cannot create licenses</li>
-              </ul>
-            </div>
-          </div>
-
-          <dl class="crypto-specs">
-            @for (spec of cryptoSpecs; track spec.label) {
-              <div>
-                <dt class="mono">{{ spec.value }}</dt>
-                <dd>{{ spec.label }}</dd>
-              </div>
-            }
-          </dl>
-
-          <p class="muted note">
-            Sign-in passwords are managed separately — change your own on the
-            <a routerLink="/account/password">password page</a>.
-          </p>
-        </section>
-
         <section class="card danger-zone">
           <h2 class="section-title danger-title">Danger zone</h2>
           <p class="muted">
-            Regenerating the key invalidates <strong>every</strong> license already issued.
+            Regenerating the key invalidates <strong>every</strong> license already issued, and
+            every application with the current public key compiled in rejects the new one until
+            it is rebuilt and redeployed.
             @if (key.signedLicenseCount > 0) {
               {{ key.signedLicenseCount }} license(s) signed with the current key would stop
               verifying, and each customer would need a replacement.
             }
+            To adopt a key your installations already trust, import it above instead.
           </p>
-          <button type="button" class="btn btn-danger" [disabled]="working()" (click)="regenerate()">
-            {{ working() ? 'Working…' : 'Regenerate key' }}
-          </button>
+
+          @if (showRotation()) {
+            <button type="button" matButton="outlined" class="danger" [disabled]="working()" (click)="regenerate()">
+              {{ working() ? 'Working…' : 'Regenerate key' }}
+            </button>
+          } @else {
+            <button type="button" matButton="outlined" (click)="showRotation.set(true)">
+              Show key rotation
+            </button>
+          }
         </section>
       }
+
+      <!--
+        Rendered whether or not a key exists. Before one is generated it is the alternative to
+        generating; afterwards it is the way to correct a server that generated a pair the
+        field does not trust.
+      -->
+      <section class="card">
+        <h2 class="section-title">Import an existing key</h2>
+        <p class="muted">
+          Adopt a key pair this server did not generate — the desktop app's
+          <span class="mono">private.pem.enc</span>, or any PEM file holding an RSA private key.
+          Use this when applications already deployed trust a particular key: importing it keeps
+          them working instead of stranding them behind a new one.
+        </p>
+
+        <div class="import-fields">
+          <div class="file-picker">
+            <input #keyFileInput type="file" hidden (change)="onFileChosen($event)" />
+            <button type="button" matButton="outlined" (click)="keyFileInput.click()">
+              Choose key file
+            </button>
+            <span class="mono file-name">{{ importFile()?.name ?? 'No file chosen' }}</span>
+          </div>
+
+          <mat-form-field>
+            <mat-label>Passphrase</mat-label>
+            <input
+              matInput
+              type="password"
+              autocomplete="off"
+              [ngModel]="importPassphrase()"
+              (ngModelChange)="importPassphrase.set($event)"
+            />
+            <mat-hint>
+              The password the file was encrypted with. Leave empty for a plain PEM.
+            </mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="actions">
+          <button
+            type="button"
+            matButton="filled"
+            [disabled]="importing() || !importFile()"
+            (click)="importKey()"
+          >
+            {{ importing() ? 'Importing…' : 'Import key' }}
+          </button>
+        </div>
+      </section>
     }
   </div>
 </div>

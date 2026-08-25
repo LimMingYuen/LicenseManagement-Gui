@@ -1,11 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header';
-import { LicenseDetailComponent } from '../../../shared/components/license-detail/license-detail';
+import {
+  LicenseDetailComponent,
+  LicenseDetailData,
+} from '../../../shared/components/license-detail/license-detail';
 import { LicenseService } from '../../../services/license.service';
 import {
   ApplicationNode,
@@ -19,6 +26,7 @@ import {
   ConfirmationDialogComponent,
   ConfirmationDialogData,
 } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { dialogConfig } from '../../../shared/utils/dialog';
 import { describeError } from '../../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../../shared/utils/date-format';
 
@@ -41,8 +49,11 @@ type NodeKey = string;
     RouterLink,
     MatIconModule,
     MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
     PageHeaderComponent,
-    LicenseDetailComponent,
   ],
   templateUrl: './catalog.html',
   styleUrl: './catalog.scss',
@@ -55,7 +66,9 @@ export class LicenseCatalogPage {
 
   protected readonly catalog = signal<LicenseCatalog | null>(null);
   protected readonly loading = signal(true);
-  protected readonly detail = signal<License | null>(null);
+
+  /** The open detail dialog, kept so a revoke can push the updated license back into it. */
+  private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<LicenseStatus | 'All'>('All');
@@ -92,6 +105,20 @@ export class LicenseCatalogPage {
     }
   }
 
+  protected openDetail(license: License): void {
+    const ref = this.dialog.open(
+      LicenseDetailComponent,
+      dialogConfig<LicenseDetailData>({ license }, 'min(44rem, 96vw)'),
+    );
+
+    ref.componentInstance.revoked.subscribe((row) => void this.revoke(row));
+
+    this.detailRef = ref;
+    ref.afterClosed().subscribe(() => {
+      if (this.detailRef === ref) this.detailRef = null;
+    });
+  }
+
   /**
    * Revoking from the detail modal. Confirmed for the same reason the register confirms it:
    * the customer already holds the signed file, and this registry is the only thing that
@@ -122,7 +149,7 @@ export class LicenseCatalogPage {
 
     try {
       const updated = await this.licenses.revoke(license.id, null);
-      this.detail.set(updated);
+      this.detailRef?.componentInstance.update(updated);
       await this.load();
       this.notify(`License for ${updated.customerName} was revoked.`, 'success');
     } catch (error) {
@@ -197,8 +224,8 @@ export class LicenseCatalogPage {
     this.search.set((event.target as HTMLInputElement).value);
   }
 
-  protected onStatus(event: Event): void {
-    this.statusFilter.set((event.target as HTMLSelectElement).value as LicenseStatus | 'All');
+  protected onStatus(value: LicenseStatus | 'All'): void {
+    this.statusFilter.set(value);
   }
 
   // ---- Expansion ------------------------------------------------------------------------

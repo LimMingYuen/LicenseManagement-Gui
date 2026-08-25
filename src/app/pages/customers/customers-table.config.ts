@@ -18,7 +18,6 @@ export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfi
   return {
     title: 'Customers',
     icon: 'apartment',
-    subtitle: 'Organisations licenses are issued to',
     columns: [
       {
         key: 'name',
@@ -27,35 +26,6 @@ export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfi
         filterable: true,
         columnFilter: true,
         columnFilterType: 'text',
-      },
-      {
-        key: 'code',
-        header: 'Code',
-        sortable: true,
-        filterable: true,
-        cellType: 'mono',
-        width: '120px',
-        columnFilter: true,
-        columnFilterType: 'text',
-        transform: (value: string | null) => value || '—',
-      },
-      {
-        key: 'contactName',
-        header: 'Contact',
-        sortable: true,
-        filterable: true,
-        columnFilter: true,
-        columnFilterType: 'text',
-        transform: (value: string | null) => value || '—',
-      },
-      {
-        key: 'contactEmail',
-        header: 'Email',
-        sortable: true,
-        filterable: true,
-        columnFilter: true,
-        columnFilterType: 'text',
-        transform: (value: string | null) => value || '—',
       },
       {
         key: 'licenseCount',
@@ -161,7 +131,7 @@ export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfi
       enabled: true,
     },
     filter: {
-      placeholder: 'Search name, code, contact or email...',
+      placeholder: 'Search customers...',
       enabled: true,
     },
     defaultSort: {

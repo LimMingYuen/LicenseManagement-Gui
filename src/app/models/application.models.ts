@@ -13,14 +13,9 @@ export interface Application {
   /** Stable identifier used in API filters, e.g. "QES-KUKA-AMR". Fixed at creation. */
   key: string;
   name: string;
-  /** Material icon name shown against the application in the catalog. */
-  icon: string;
-  description: string | null;
   supportsMachine: boolean;
   supportsRobot: boolean;
   supportsGateway: boolean;
-  /** Catalog display order; ties break on name. */
-  sortOrder: number;
   isActive: boolean;
   /** How many licenses were issued under it. Zero is the only deletable state. */
   licenseCount: number;
@@ -32,12 +27,9 @@ export interface Application {
 export interface CreateApplicationRequest {
   key: string;
   name: string;
-  icon: string;
-  description: string | null;
   supportsMachine: boolean;
   supportsRobot: boolean;
   supportsGateway: boolean;
-  sortOrder: number;
   isActive: boolean;
 }
 

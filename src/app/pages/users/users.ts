@@ -1,21 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.models';
 import { UserService } from '../../services/user.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
+import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { UserForm } from './user-form';
-import { PasswordReset } from './password-reset';
+import { UserForm, UserFormData } from './user-form';
+import { PasswordReset, PasswordResetData } from './password-reset';
 import { buildUsersTableConfig } from './users-table.config';
-
-type Dialog =
-  { kind: 'create' } | { kind: 'edit'; user: User } | { kind: 'reset'; user: User } | null;
 
 @Component({
   selector: 'app-users',
-  imports: [MatSnackBarModule, DataTableComponent, UserForm, PasswordReset],
+  imports: [MatSnackBarModule, DataTableComponent],
   templateUrl: './users.html',
   styleUrl: './users.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,10 +24,10 @@ export class Users {
   private readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly users = signal<User[]>([]);
   protected readonly loading = signal(true);
-  protected readonly dialog = signal<Dialog>(null);
 
   /** Built once: the self-guard on deactivate only depends on who is signed in. */
   protected readonly tableConfig = buildUsersTableConfig(this.auth.currentUser()?.id ?? null);
@@ -55,16 +55,16 @@ export class Users {
   protected handleAction(event: DataActionEvent<User>): void {
     switch (event.action) {
       case 'add':
-        this.dialog.set({ kind: 'create' });
+        void this.openForm(null);
         break;
       case 'refresh':
         void this.load();
         break;
       case 'edit':
-        if (event.row) this.dialog.set({ kind: 'edit', user: event.row });
+        if (event.row) void this.openForm(event.row);
         break;
       case 'reset-password':
-        if (event.row) this.dialog.set({ kind: 'reset', user: event.row });
+        if (event.row) void this.openPasswordReset(event.row);
         break;
       case 'activate':
       case 'deactivate':
@@ -73,23 +73,36 @@ export class Users {
     }
   }
 
-  protected onSaved(user: User): void {
-    const isNew = !this.users().some((u) => u.id === user.id);
-    this.dialog.set(null);
+  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  private async openForm(user: User | null): Promise<void> {
+    const saved = await firstValueFrom(
+      this.dialog.open(UserForm, dialogConfig<UserFormData>({ user })).afterClosed(),
+    );
+
+    if (!saved) {
+      return;
+    }
+
+    const isNew = !this.users().some((u) => u.id === saved.id);
 
     if (isNew) {
       void this.load();
-      this.notify(`${user.username} was created.`, 'success');
+      this.notify(`${saved.username} was created.`, 'success');
     } else {
-      this.replace(user);
-      this.notify(`${user.username} was updated.`, 'success');
+      this.replace(saved);
+      this.notify(`${saved.username} was updated.`, 'success');
     }
   }
 
-  protected onPasswordReset(username: string): void {
-    this.dialog.set(null);
-    void this.load();
-    this.notify(`Password for ${username} was reset.`, 'success');
+  private async openPasswordReset(user: User): Promise<void> {
+    const done = await firstValueFrom(
+      this.dialog.open(PasswordReset, dialogConfig<PasswordResetData>({ user })).afterClosed(),
+    );
+
+    if (done) {
+      void this.load();
+      this.notify(`Password for ${user.username} was reset.`, 'success');
+    }
   }
 
   private async toggleActive(user: User): Promise<void> {

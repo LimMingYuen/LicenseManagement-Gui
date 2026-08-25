@@ -122,22 +122,12 @@
   color: var(--brand-text-subtle);
 }
 
-/* Controls sit on white inside the tinted group so they still read as inputs. */
-.group input,
-.group select,
-.group textarea {
+/* Controls sit on white inside the tinted group so they still read as inputs.
+   The outlined field paints nothing behind itself, so the fill goes on the
+   wrapper Material draws the notched outline around. */
+.group ::ng-deep .mat-mdc-text-field-wrapper {
   background: var(--brand-surface);
-}
-
-.group textarea {
-  width: 100%;
-  padding: var(--sp-2) var(--sp-3);
-  font: inherit;
-  font-size: var(--fs-base);
-  color: var(--brand-text);
-  border: 1px solid var(--brand-border);
   border-radius: var(--r-md);
-  resize: vertical;
 }
 
 .group-note {
@@ -149,30 +139,11 @@
 
 /* The notes box grows to whatever height the row was given by the tallest group, so the
    four panels bottom out together instead of leaving one short. */
-.field--fill {
+.notes-field {
   flex: 1 1 auto;
 
-  textarea {
-    flex: 1 1 auto;
+  textarea.mat-mdc-input-element {
     min-height: 5.5rem;
-  }
-}
-
-/* The picker and its create button sit on one line; the select takes the slack so the
-   button keeps its natural width at every breakpoint. */
-.customer-row {
-  display: flex;
-  gap: var(--sp-2);
-  align-items: center;
-
-  select {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
   }
 }
 
@@ -377,10 +348,11 @@
   color: var(--brand-success-text);
 }
 
+/* The bar's own action reads a size up from the buttons inside the form. */
 .btn-action {
   flex: 0 0 auto;
-  height: 38px;
-  padding: 0 var(--sp-5);
+  --mat-button-filled-container-height: 38px;
+  --mat-button-filled-horizontal-padding: var(--sp-5);
 }
 
 @container gen (max-width: 58rem) {
@@ -424,4 +396,13 @@
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* The machine picker lists the ID first because that is what gets signed; a machine's
+   human label follows it as a subdued aside so the two never compete for the scan. The
+   options render in an overlay on <body>, so this rule is deliberately not nested. */
+.option-note {
+  margin-left: var(--sp-1);
+  color: var(--brand-text-muted);
+  font-size: var(--fs-sm);
 }

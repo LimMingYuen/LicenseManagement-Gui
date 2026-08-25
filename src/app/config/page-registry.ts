@@ -31,6 +31,5 @@ export const PAGE_REGISTRY: PageDefinition[] = [
   { path: '/customers', name: 'Customers', icon: 'apartment' },
   { path: '/applications', name: 'Applications', icon: 'apps' },
   { path: '/keys', name: 'RSA Keys', icon: 'key', superAdminOnly: true },
-  { path: '/backup', name: 'Backup & Restore', icon: 'backup', superAdminOnly: true },
   { path: '/users', name: 'Users', icon: 'people', superAdminOnly: true },
 ];

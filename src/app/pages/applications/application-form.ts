@@ -1,8 +1,18 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { Application } from '../../models/application.models';
 import { ApplicationService } from '../../services/application.service';
 import { describeError } from '../../shared/utils/http-error';
+
+export interface ApplicationFormData {
+  /** null = create a new application, otherwise edit this one. */
+  application: Application | null;
+}
 
 /**
  * Create/edit dialog for a product family.
@@ -14,134 +24,136 @@ import { describeError } from '../../shared/utils/http-error';
  */
 @Component({
   selector: 'app-application-form',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    MatButtonModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal-backdrop" (click)="cancelled.emit()"></div>
-    <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="title()">
-      <form class="card modal-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <h2 class="modal-title">{{ title() }}</h2>
+    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2 mat-dialog-title>{{ title }}</h2>
 
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
-        }
+      @if (error(); as message) {
+        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+      }
 
-        <div class="modal-body">
-          <label class="field">
-            <span class="field-label">Application name</span>
-            <input type="text" formControlName="name" placeholder="QES KUKA AMR" maxlength="200" />
-            @if (form.controls.name.touched && form.controls.name.invalid) {
-              <span class="field-error">An application name is required.</span>
-            }
-          </label>
+      <mat-dialog-content>
+        <div class="form-row">
+          <mat-form-field>
+            <mat-label>Application name</mat-label>
+            <input matInput type="text" formControlName="name" maxlength="200" />
+            <mat-error>An application name is required.</mat-error>
+          </mat-form-field>
 
-          <label class="field">
-            <span class="field-label">Key</span>
+          <mat-form-field>
+            <mat-label>Key</mat-label>
             <input
+              matInput
               type="text"
               formControlName="key"
-              placeholder="QES-KUKA-AMR"
               maxlength="100"
               class="mono"
               autocapitalize="characters"
               spellcheck="false"
             />
-            <span class="field-hint">
-              @if (editing()) {
+            <mat-hint>
+              @if (editing) {
                 Fixed after creation — API filters and saved links quote it.
               } @else {
                 Letters, digits, dot, underscore and hyphen only. Cannot be changed later.
               }
-            </span>
-            @if (form.controls.key.touched && form.controls.key.invalid) {
-              <span class="field-error">
-                Letters, digits, dot, underscore or hyphen only.
-              </span>
-            }
-          </label>
+            </mat-hint>
+            <mat-error>Letters, digits, dot, underscore or hyphen only.</mat-error>
+          </mat-form-field>
+        </div>
 
-          <fieldset class="field">
-            <legend class="field-label">Issues these license types</legend>
+        <fieldset class="field">
+          <legend class="field-label">Issues these license types</legend>
 
-            <label class="field-inline">
-              <input type="checkbox" formControlName="supportsMachine" />
-              <span>Machine — bound to a customer's machine ID</span>
-            </label>
+          <div class="checkbox-row">
+            <mat-checkbox formControlName="supportsMachine">
+              Machine — bound to a customer's machine ID
+            </mat-checkbox>
 
-            <label class="field-inline">
-              <input type="checkbox" formControlName="supportsRobot" />
-              <span>Robot — a robot tied to a specific machine</span>
-            </label>
+            <mat-checkbox formControlName="supportsRobot">
+              Robot — a robot tied to a specific machine
+            </mat-checkbox>
 
-            <label class="field-inline">
-              <input type="checkbox" formControlName="supportsGateway" />
-              <span>Gateway — an Android device fingerprint</span>
-            </label>
+            <mat-checkbox formControlName="supportsGateway">
+              Gateway — an Android device fingerprint
+            </mat-checkbox>
+          </div>
 
-            <span class="field-hint">
-              Only the ticked types offer this application on their generate page. A type cannot
-              be switched off while licenses of that type already exist under it.
-            </span>
-            @if (!anyTypeSelected()) {
-              <span class="field-error">Select at least one license type.</span>
-            }
-          </fieldset>
+          <span class="field-hint">
+            Only the ticked types offer this application on their generate page. A type cannot
+            be switched off while licenses of that type already exist under it.
+          </span>
+          @if (!anyTypeSelected()) {
+            <span class="field-invalid">Select at least one license type.</span>
+          }
+        </fieldset>
 
-          <label class="field">
-            <span class="field-label">Icon</span>
-            <input
-              type="text"
-              formControlName="icon"
-              placeholder="precision_manufacturing"
-              maxlength="50"
-              class="mono"
-              autocapitalize="none"
-              spellcheck="false"
-            />
-            <span class="field-hint">
-              A Material Symbols name, shown against the application in the catalog.
-            </span>
-          </label>
-
-          <label class="field">
-            <span class="field-label">Display order</span>
-            <input type="number" formControlName="sortOrder" />
-            <span class="field-hint">Lowest first in the catalog. Ties break on name.</span>
-          </label>
-
-          <label class="field">
-            <span class="field-label">Description</span>
-            <textarea formControlName="description" rows="3" maxlength="500"></textarea>
-          </label>
-
-          <label class="field-inline">
-            <input type="checkbox" formControlName="isActive" />
-            <span>Application is active</span>
-          </label>
+        <div class="field">
+          <mat-checkbox formControlName="isActive">Application is active</mat-checkbox>
           <span class="field-hint">
             Inactive applications keep their licenses and stay in the catalog, but nothing new
             can be issued under them.
           </span>
         </div>
+      </mat-dialog-content>
 
-        <footer class="modal-actions">
-          <button type="button" class="btn" (click)="cancelled.emit()">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            {{ saving() ? 'Saving…' : 'Save' }}
-          </button>
-        </footer>
-      </form>
-    </div>
+      <mat-dialog-actions>
+        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
+        <button type="submit" matButton="filled" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  `,
+  styles: `
+    /* Fields sit side by side and drop to one column only when the dialog is
+       narrower than two comfortable inputs.
+
+       align-items matters: stretched, a field grows to the row's height, and
+       since the hint and error text below it are a fixed size, the extra
+       height lands on the input box itself — so the two boxes only matched
+       when both happened to show the same number of subscript lines. Aligned
+       to the top they keep their own height and the boxes always agree. */
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: var(--sp-4);
+
+      mat-form-field {
+        flex: 1 1 16rem;
+        min-width: 0;
+      }
+    }
+
+    /* The three types are one choice made across three tickboxes, so they read
+       as a row rather than a stack. */
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: var(--sp-5);
+      row-gap: var(--sp-1);
+    }
   `,
 })
 export class ApplicationForm {
   private readonly applications = inject(ApplicationService);
+  private readonly dialogRef = inject<MatDialogRef<ApplicationForm, Application>>(MatDialogRef);
 
-  /** null = create a new application, otherwise edit this one. */
-  readonly application = input<Application | null>(null);
+  /** null = create a new application, otherwise the one being edited. */
+  private readonly application = inject<ApplicationFormData>(MAT_DIALOG_DATA).application;
 
-  readonly saved = output<Application>();
-  readonly cancelled = output<void>();
+  protected readonly editing = this.application !== null;
+  protected readonly title = this.editing ? `Edit ${this.application?.name}` : 'New application';
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -149,42 +161,30 @@ export class ApplicationForm {
   protected readonly form = inject(FormBuilder).nonNullable.group({
     key: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]+$/), Validators.maxLength(100)]],
     name: ['', [Validators.required, Validators.maxLength(200)]],
-    icon: ['apps', [Validators.required, Validators.maxLength(50)]],
-    description: ['', Validators.maxLength(500)],
     supportsMachine: [false],
     supportsRobot: [false],
     supportsGateway: [false],
-    sortOrder: [0],
     isActive: [true],
   });
 
   constructor() {
-    effect(() => {
-      const existing = this.application();
+    const existing = this.application;
 
-      if (!existing) {
-        return;
-      }
+    if (!existing) {
+      return;
+    }
 
-      // Editing: the key is the identity other things quote, so it is shown but not editable.
-      this.form.controls.key.disable();
-      this.form.patchValue({
-        key: existing.key,
-        name: existing.name,
-        icon: existing.icon,
-        description: existing.description ?? '',
-        supportsMachine: existing.supportsMachine,
-        supportsRobot: existing.supportsRobot,
-        supportsGateway: existing.supportsGateway,
-        sortOrder: existing.sortOrder,
-        isActive: existing.isActive,
-      });
+    // Editing: the key is the identity other things quote, so it is shown but not editable.
+    this.form.controls.key.disable();
+    this.form.patchValue({
+      key: existing.key,
+      name: existing.name,
+      supportsMachine: existing.supportsMachine,
+      supportsRobot: existing.supportsRobot,
+      supportsGateway: existing.supportsGateway,
+      isActive: existing.isActive,
     });
   }
-
-  protected editing = () => this.application() !== null;
-  protected title = () =>
-    this.editing() ? `Edit ${this.application()?.name}` : 'New application';
 
   protected anyTypeSelected(): boolean {
     const v = this.form.getRawValue();
@@ -210,22 +210,19 @@ export class ApplicationForm {
     const value = this.form.getRawValue();
     const shared = {
       name: value.name.trim(),
-      icon: value.icon.trim() || 'apps',
-      description: value.description.trim() || null,
       supportsMachine: value.supportsMachine,
       supportsRobot: value.supportsRobot,
       supportsGateway: value.supportsGateway,
-      sortOrder: Number(value.sortOrder) || 0,
       isActive: value.isActive,
     };
 
     try {
-      const existing = this.application();
+      const existing = this.application;
       const result = existing
         ? await this.applications.update(existing.id, shared)
         : await this.applications.create({ ...shared, key: value.key.trim() });
 
-      this.saved.emit(result);
+      this.dialogRef.close(result);
     } catch (error) {
       this.error.set(describeError(error, 'Could not save this application.'));
     } finally {

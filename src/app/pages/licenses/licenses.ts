@@ -1,17 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { License } from '../../models/license.models';
 import { LicenseService } from '../../services/license.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
-import { LicenseDetailComponent } from '../../shared/components/license-detail/license-detail';
+import {
+  LicenseDetailComponent,
+  LicenseDetailData,
+} from '../../shared/components/license-detail/license-detail';
 import {
   ConfirmationDialogComponent,
   ConfirmationDialogData,
 } from '../../shared/components/confirmation-dialog/confirmation-dialog';
+import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
 import { saveBlob } from '../../shared/utils/download';
 import { buildLicensesTableConfig } from './licenses-table.config';
@@ -22,7 +26,7 @@ import { buildLicensesTableConfig } from './licenses-table.config';
  */
 @Component({
   selector: 'app-licenses',
-  imports: [MatSnackBarModule, DataTableComponent, LicenseDetailComponent],
+  imports: [MatSnackBarModule, DataTableComponent],
   templateUrl: './licenses.html',
   styleUrl: './licenses.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,7 +39,9 @@ export class Licenses {
 
   protected readonly rows = signal<License[]>([]);
   protected readonly loading = signal(true);
-  protected readonly detail = signal<License | null>(null);
+
+  /** The open detail dialog, kept so a revoke can push the updated row back into it. */
+  private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   private readonly queryParams = inject(ActivatedRoute).snapshot.queryParamMap;
 
@@ -80,7 +86,7 @@ export class Licenses {
         void this.load();
         break;
       case 'view':
-        if (event.row) this.detail.set(event.row);
+        if (event.row) this.openDetail(event.row);
         break;
       case 'download':
         if (event.row) void this.download(event.row);
@@ -92,7 +98,19 @@ export class Licenses {
   }
 
   protected openDetail(row: License): void {
-    this.detail.set(row);
+    const ref = this.dialog.open(
+      LicenseDetailComponent,
+      dialogConfig<LicenseDetailData>({ license: row }, 'min(44rem, 96vw)'),
+    );
+
+    // Revoking is confirmed and reported here, not in the dialog, so the register and the
+    // catalog can each own their own wording while sharing one read-only view.
+    ref.componentInstance.revoked.subscribe((license) => void this.revoke(license));
+
+    this.detailRef = ref;
+    ref.afterClosed().subscribe(() => {
+      if (this.detailRef === ref) this.detailRef = null;
+    });
   }
 
   private async download(license: License): Promise<void> {
@@ -131,10 +149,8 @@ export class Licenses {
       const updated = await this.licenses.revoke(license.id, null);
       this.rows.update((list) => list.map((l) => (l.id === updated.id ? updated : l)));
 
-      // The open detail modal would otherwise still show the pre-revocation state.
-      if (this.detail()?.id === updated.id) {
-        this.detail.set(updated);
-      }
+      // The open detail dialog would otherwise still show the pre-revocation state.
+      this.detailRef?.componentInstance.update(updated);
 
       this.notify(`License for ${updated.customerName} was revoked.`, 'success');
     } catch (error) {

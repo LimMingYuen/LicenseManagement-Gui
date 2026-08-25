@@ -15,7 +15,7 @@
              [placeholder]="config.filter?.placeholder ?? 'Search'"
              [ngModel]="globalFilter"
              (input)="onGlobalFilterInput($event)">
-      <button mat-icon-button matSuffix
+      <button matIconButton matSuffix
               type="button"
               [disabled]="!globalFilter"
               (click)="clearGlobalFilter()"
@@ -26,33 +26,33 @@
 
     <ng-container *ngFor="let a of config.headerActions">
       <button *ngIf="a.type === 'icon'"
-              mat-icon-button
+              matIconButton
               [color]="a.color"
-              [disabled]="a.loading"
+              [disabled]="isHeaderActionDisabled(a)"
               [matTooltip]="a.tooltip || a.label"
               (click)="onHeaderActionClick(a)">
         <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
       </button>
       <button *ngIf="a.type === 'raised'"
-              mat-raised-button
+              matButton="elevated"
               [color]="a.color || 'primary'"
-              [disabled]="a.loading"
+              [disabled]="isHeaderActionDisabled(a)"
               (click)="onHeaderActionClick(a)">
         <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
         <span>{{ a.label }}</span>
       </button>
       <button *ngIf="a.type === 'stroked'"
-              mat-stroked-button
+              matButton="outlined"
               [color]="a.color"
-              [disabled]="a.loading"
+              [disabled]="isHeaderActionDisabled(a)"
               (click)="onHeaderActionClick(a)">
         <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
         <span>{{ a.label }}</span>
       </button>
       <button *ngIf="a.type === 'button' || !a.type"
-              mat-button
+              matButton
               [color]="a.color"
-              [disabled]="a.loading"
+              [disabled]="isHeaderActionDisabled(a)"
               (click)="onHeaderActionClick(a)">
         <mat-icon *ngIf="a.icon">{{ a.icon }}</mat-icon>
         <span>{{ a.label }}</span>
@@ -117,7 +117,7 @@
             <div class="dt-th" #thContent>
               <span class="dt-th__label">{{ col.header }}</span>
               <ng-container *ngIf="col.columnFilter">
-                <button mat-icon-button
+                <button matIconButton
                         class="dt-filter-icon"
                         [class.dt-filter-icon--active]="hasAppliedFilter(columnKey(col))"
                         (click)="filterTrigger.openMenu(); $event.stopPropagation()"
@@ -141,7 +141,7 @@
 
                 <div class="dt-popover__head">
                   <span class="dt-popover__title">Filter · {{ col.header }}</span>
-                  <button mat-button
+                  <button matButton
                           *ngIf="hasAppliedFilter(columnKey(col))"
                           class="dt-popover__clear"
                           (click)="clearColumnFilter(columnKey(col))">Clear</button>
@@ -330,14 +330,14 @@
           <td mat-cell *matCellDef="let row; let i = index" class="dt-actions-cell">
             <ng-container *ngFor="let a of config.actions">
               <button *ngIf="(!a.hidden || !a.hidden(row)) && a.type === 'icon'"
-                      mat-icon-button
+                      matIconButton
                       [disabled]="a.disabled ? a.disabled(row) : false"
                       [matTooltip]="a.tooltip || a.label"
                       (click)="onActionClick(a, row, i)">
                 <mat-icon>{{ a.icon }}</mat-icon>
               </button>
               <button *ngIf="(!a.hidden || !a.hidden(row)) && (a.type === 'button' || !a.type)"
-                      mat-button
+                      matButton
                       [color]="a.color"
                       [disabled]="a.disabled ? a.disabled(row) : false"
                       (click)="onActionClick(a, row, i)">
@@ -364,7 +364,7 @@
                 <h3>No results</h3>
                 <p>No rows match your filters.</p>
               </div>
-              <button mat-stroked-button color="primary" (click)="clearAllFilters()">Clear all</button>
+              <button matButton="outlined" color="primary" (click)="clearAllFilters()">Clear all</button>
             </div>
           </td>
         </tr>

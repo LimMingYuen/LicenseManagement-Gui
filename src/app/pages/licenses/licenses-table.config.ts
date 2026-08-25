@@ -24,7 +24,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
   return {
     title: 'Licenses',
     icon: 'inventory_2',
-    subtitle: 'Every license issued by this system',
     columns: [
       {
         key: 'applicationName',

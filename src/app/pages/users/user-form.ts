@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { UserService } from '../../services/user.service';
 import { User, UserRole } from '../../models/user.models';
 import { describeError } from '../../shared/utils/http-error';
+
+export interface UserFormData {
+  /** null = create a new account, otherwise edit this one. */
+  user: User | null;
+}
 
 /**
  * Create/edit dialog. The same form serves both; on edit the username and password
@@ -13,77 +24,80 @@ import { describeError } from '../../shared/utils/http-error';
  */
 @Component({
   selector: 'app-user-form',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatButtonModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="modal-backdrop" (click)="cancelled.emit()"></div>
-    <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="title()">
-      <form class="card modal-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <h2 class="modal-title">{{ title() }}</h2>
+    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2 mat-dialog-title>{{ title }}</h2>
 
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
+      @if (error(); as message) {
+        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+      }
+
+      <mat-dialog-content>
+        @if (!editing) {
+          <mat-form-field>
+            <mat-label>Username</mat-label>
+            <input
+              matInput
+              type="text"
+              formControlName="username"
+              autocapitalize="none"
+              spellcheck="false"
+            />
+            <mat-error>Letters, digits, dot, underscore or hyphen only.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="new-password" />
+            <mat-hint>Communicate it out of band — it is not emailed.</mat-hint>
+            <mat-error>A password is required.</mat-error>
+          </mat-form-field>
         }
 
-        <div class="modal-body">
-          @if (!editing()) {
-            <label class="field">
-              <span class="field-label">Username</span>
-              <input type="text" formControlName="username" autocapitalize="none" spellcheck="false" />
-              @if (form.controls.username.touched && form.controls.username.invalid) {
-                <span class="field-error">Letters, digits, dot, underscore or hyphen only.</span>
-              }
-            </label>
+        <mat-form-field>
+          <mat-label>Full name</mat-label>
+          <input matInput type="text" formControlName="fullName" />
+        </mat-form-field>
 
-            <label class="field">
-              <span class="field-label">Password</span>
-              <input type="password" formControlName="password" autocomplete="new-password" />
-              <span class="field-hint">
-                Communicate it out of band — it is not emailed.
-              </span>
-              @if (form.controls.password.touched && form.controls.password.invalid) {
-                <span class="field-error">A password is required.</span>
-              }
-            </label>
-          }
+        <mat-form-field>
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            <mat-option value="Operator">Operator — generate and view licenses</mat-option>
+            <mat-option value="SuperAdmin">Super Admin — full access, including users</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-          <label class="field">
-            <span class="field-label">Full name</span>
-            <input type="text" formControlName="fullName" />
-          </label>
+        <mat-checkbox formControlName="isActive">Account is active</mat-checkbox>
+      </mat-dialog-content>
 
-          <label class="field">
-            <span class="field-label">Role</span>
-            <select formControlName="role">
-              <option value="Operator">Operator — generate and view licenses</option>
-              <option value="SuperAdmin">Super Admin — full access, including users</option>
-            </select>
-          </label>
-
-          <label class="field-inline">
-            <input type="checkbox" formControlName="isActive" />
-            <span>Account is active</span>
-          </label>
-        </div>
-
-        <footer class="modal-actions">
-          <button type="button" class="btn" (click)="cancelled.emit()">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            {{ saving() ? 'Saving…' : 'Save' }}
-          </button>
-        </footer>
-      </form>
-    </div>
+      <mat-dialog-actions>
+        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
+        <button type="submit" matButton="filled" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      </mat-dialog-actions>
+    </form>
   `,
 })
 export class UserForm {
   private readonly users = inject(UserService);
+  private readonly dialogRef = inject<MatDialogRef<UserForm, User>>(MatDialogRef);
 
-  /** null = create a new account, otherwise edit this one. */
-  readonly user = input<User | null>(null);
+  /** null = create a new account, otherwise the one being edited. */
+  private readonly user = inject<UserFormData>(MAT_DIALOG_DATA).user;
 
-  readonly saved = output<User>();
-  readonly cancelled = output<void>();
+  protected readonly editing = this.user !== null;
+  protected readonly title = this.editing ? `Edit ${this.user?.username}` : 'New user';
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -97,25 +111,21 @@ export class UserForm {
   });
 
   constructor() {
-    effect(() => {
-      const existing = this.user();
-      if (!existing) {
-        return;
-      }
+    const existing = this.user;
 
-      // Editing: identity and credential fields are out of scope for this form.
-      this.form.controls.username.disable();
-      this.form.controls.password.disable();
-      this.form.patchValue({
-        fullName: existing.fullName,
-        role: existing.role,
-        isActive: existing.isActive,
-      });
+    if (!existing) {
+      return;
+    }
+
+    // Editing: identity and credential fields are out of scope for this form.
+    this.form.controls.username.disable();
+    this.form.controls.password.disable();
+    this.form.patchValue({
+      fullName: existing.fullName,
+      role: existing.role,
+      isActive: existing.isActive,
     });
   }
-
-  protected editing = () => this.user() !== null;
-  protected title = () => (this.editing() ? `Edit ${this.user()?.username}` : 'New user');
 
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
@@ -129,7 +139,7 @@ export class UserForm {
     const value = this.form.getRawValue();
 
     try {
-      const existing = this.user();
+      const existing = this.user;
       const result = existing
         ? await this.users.update(existing.id, {
             fullName: value.fullName.trim(),
@@ -144,7 +154,7 @@ export class UserForm {
             isActive: value.isActive,
           });
 
-      this.saved.emit(result);
+      this.dialogRef.close(result);
     } catch (error) {
       this.error.set(describeError(error, 'Could not save this user.'));
     } finally {

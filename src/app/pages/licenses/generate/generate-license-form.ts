@@ -1,17 +1,34 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LicenseService } from '../../../services/license.service';
 import { CustomerService } from '../../../services/customer.service';
 import { ApplicationService } from '../../../services/application.service';
+import { MachineService } from '../../../services/machine.service';
 import { Application } from '../../../models/application.models';
 import { Customer } from '../../../models/customer.models';
+import { Machine } from '../../../models/machine.models';
 import { License, LicenseKind, LicenseTier, LicenseWithFile } from '../../../models/license.models';
 import { describeError } from '../../../shared/utils/http-error';
 import { saveText } from '../../../shared/utils/download';
-import { CustomerForm } from '../../customers/customer-form';
+import { provideIsoDates, toIsoDate } from '../../../shared/utils/iso-date';
 import { GenerateConfig } from './generate-license.config';
 
 /**
@@ -22,12 +39,21 @@ import { GenerateConfig } from './generate-license.config';
  * Users page uses between users.ts and users-table.config.ts.
  *
  * The customer is not part of that config. It is a picker over the customer register that
- * every license type needs, and it can create a customer inline so an operator who reaches
- * this page and finds the customer missing is not sent away mid-form.
+ * every license type needs; the register itself is managed on the Customers page.
  */
 @Component({
   selector: 'app-generate-license-form',
-  imports: [ReactiveFormsModule, RouterLink, MatSnackBarModule, CustomerForm],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatButtonModule,
+  ],
+  providers: [provideIsoDates()],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './generate-license-form.html',
   styleUrl: './generate-license-form.scss',
@@ -39,6 +65,7 @@ export class GenerateLicenseForm {
   private readonly licenses = inject(LicenseService);
   private readonly customerService = inject(CustomerService);
   private readonly applicationService = inject(ApplicationService);
+  private readonly machineService = inject(MachineService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
 
@@ -52,11 +79,20 @@ export class GenerateLicenseForm {
   /** Active customers only — a deactivated one cannot be issued against. */
   protected readonly customers = signal<Customer[]>([]);
   protected readonly customersLoading = signal(true);
-  protected readonly creatingCustomer = signal(false);
 
   /** Active applications that issue this page's license type, and nothing else. */
   protected readonly applications = signal<Application[]>([]);
   protected readonly applicationsLoading = signal(true);
+
+  /**
+   * The machines a robot can be licensed onto: this customer's, active, and already holding
+   * a machine license for the picked application. Empty until both pickers above are set,
+   * because a machine belongs to one customer and is licensed under one application.
+   *
+   * Only the robot form reads these — see the 'machine' control kind in GenerateFieldConfig.
+   */
+  protected readonly machines = signal<Machine[]>([]);
+  protected readonly machinesLoading = signal(false);
 
   /**
    * The licenses this page's type issued most recently. Shown under the form because it is
@@ -77,12 +113,15 @@ export class GenerateLicenseForm {
     machineId: ['', [Validators.maxLength(100)]],
     robotId: ['', [Validators.maxLength(100)]],
     deviceId: ['', [Validators.maxLength(100)]],
-    // 0 is "nothing picked" for both pickers. Bound with [ngValue] so the value stays a
-    // number rather than becoming the string a plain <option value> would produce.
+    // 0 is "nothing picked" for both pickers. mat-option carries the id through as a
+    // number, so nothing has to undo the string a native <option value> would produce.
     applicationId: [0, [Validators.required, Validators.min(1)]],
     customerId: [0, [Validators.required, Validators.min(1)]],
     licenseType: ['PERPETUAL' as LicenseTier, Validators.required],
-    expiresAt: [''],
+    // MatDatepicker works in Date, not the YYYY-MM-DD string the old native date input
+    // held. It is turned back into a string at the two places that need one: the preview
+    // rail below, and the request built in submit().
+    expiresAt: [null as Date | null],
     notes: ['', Validators.maxLength(500)],
   });
 
@@ -92,6 +131,12 @@ export class GenerateLicenseForm {
    * context that a field initializer does not reliably provide here.
    */
   private readonly value = signal(this.rawValue());
+
+  /**
+   * The expiry field, when the tier has one. Measured so its calendar can open at the same
+   * width — see the effect in the constructor.
+   */
+  private readonly expiryField = viewChild('expiryField', { read: ElementRef });
 
   constructor() {
     this.form.valueChanges
@@ -114,9 +159,58 @@ export class GenerateLicenseForm {
       const application = this.selectedApplication()?.key;
       void this.loadRecent(kind, application);
     });
+
+    // The machine list is a function of the customer and the application, both of which the
+    // operator can change after the form has loaded - so it is reloaded on every change
+    // rather than fetched once. Only forms that render a machine picker ask for it.
+    effect(() => {
+      const needsMachines = this.config().fields.some((f) => f.control === 'machine');
+      const customerId = Number(this.value()['customerId'] ?? 0);
+      const applicationId = Number(this.value()['applicationId'] ?? 0);
+
+      if (!needsMachines) {
+        return;
+      }
+
+      void this.loadMachines(customerId, applicationId);
+    });
+
+    // Material sizes the calendar to a fixed 296px, which leaves it visibly narrower than
+    // the field it drops out of. The overlay renders on <body>, so no stylesheet in this
+    // component can reach it and no CSS anywhere can read the field's width: the width has
+    // to be measured here and published as a custom property the global rule for
+    // .field-width-calendar picks up. Observed rather than read once, because the field
+    // belongs to a container-query grid and changes width as the window does.
+    effect((onCleanup) => {
+      const field: HTMLElement | undefined = this.expiryField()?.nativeElement;
+      if (!field) {
+        return;
+      }
+
+      const publish = () =>
+        document.documentElement.style.setProperty(
+          '--field-calendar-width',
+          `${field.offsetWidth}px`,
+        );
+
+      publish();
+      const observer = new ResizeObserver(publish);
+      observer.observe(field);
+
+      onCleanup(() => {
+        observer.disconnect();
+        document.documentElement.style.removeProperty('--field-calendar-width');
+      });
+    });
   }
 
   protected readonly isPerpetual = computed(() => this.value()['licenseType'] === 'PERPETUAL');
+
+  /** The picked expiry in ISO order, for the preview rail. Empty until one is picked. */
+  protected readonly expiryPreview = computed(() => {
+    const picked = this.value()['expiresAt'];
+    return picked instanceof Date ? toIsoDate(picked) : '';
+  });
 
   /** The picked application, for the preview rail. */
   protected readonly selectedApplication = computed(() => {
@@ -155,7 +249,7 @@ export class GenerateLicenseForm {
 
   /**
    * Inactive customers are excluded server-side. Failing to load is reported but does not
-   * block the page — the picker simply stays empty and the create-inline button still works.
+   * block the page — the picker simply stays empty.
    */
   private async loadCustomers(): Promise<void> {
     this.customersLoading.set(true);
@@ -189,6 +283,43 @@ export class GenerateLicenseForm {
       this.error.set(describeError(error, 'Could not load the application list.'));
     } finally {
       this.applicationsLoading.set(false);
+    }
+  }
+
+  /**
+   * The machines this robot could be licensed onto.
+   *
+   * Filtered server-side to the ones holding an active machine license for this application,
+   * so the picker cannot offer something the API would then refuse. A picked machine that
+   * falls out of the new list - the operator switched customer - is cleared rather than left
+   * showing a machine that no longer belongs to the form.
+   */
+  private async loadMachines(customerId: number, applicationId: number): Promise<void> {
+    if (customerId <= 0 || applicationId <= 0) {
+      this.machines.set([]);
+      return;
+    }
+
+    this.machinesLoading.set(true);
+
+    try {
+      const list = await this.machineService.list({
+        customerId,
+        licensedForApplicationId: applicationId,
+        includeInactive: false,
+      });
+
+      this.machines.set(list);
+
+      const picked = String(this.form.controls.machineId.value ?? '');
+      if (picked && !list.some((m) => m.machineId === picked)) {
+        this.form.controls.machineId.setValue('');
+      }
+    } catch (error) {
+      this.machines.set([]);
+      this.error.set(describeError(error, 'Could not load the machine list.'));
+    } finally {
+      this.machinesLoading.set(false);
     }
   }
 
@@ -244,16 +375,6 @@ export class GenerateLicenseForm {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
 
-  /** A customer created from the inline dialog is selected straight away. */
-  protected onCustomerCreated(customer: Customer): void {
-    this.creatingCustomer.set(false);
-    this.customers.update((list) =>
-      [...list, customer].sort((a, b) => a.name.localeCompare(b.name)),
-    );
-    this.form.controls.customerId.setValue(customer.id);
-    this.notify(`${customer.name} was created.`, 'success');
-  }
-
   protected async submit(): Promise<void> {
     if (this.saving()) return;
 
@@ -296,7 +417,7 @@ export class GenerateLicenseForm {
       const generated = await this.config().submit(this.licenses, {
         ...v,
         // The API treats a perpetual license as one with no expiry, whatever the date box holds.
-        expiresAt: this.isPerpetual() ? null : new Date(String(v['expiresAt'])).toISOString(),
+        expiresAt: this.isPerpetual() ? null : (v['expiresAt'] as Date).toISOString(),
         notes: String(v['notes'] ?? '').trim() || null,
       });
 
@@ -312,10 +433,21 @@ export class GenerateLicenseForm {
     }
   }
 
-  /** Clears the form for the next license, keeping the customer — they usually come in batches. */
+  /**
+   * Clears the form for the next license, keeping the customer — they usually come in batches.
+   * The machine is kept for the same reason: a machine is normally licensed once and then
+   * fitted with several robots, so it outlasts a single trip through this form.
+   */
   protected issueAnother(): void {
-    const { customerId, applicationId } = this.form.getRawValue();
-    this.form.reset({ licenseType: 'PERPETUAL', customerId, applicationId });
+    const { customerId, applicationId, machineId } = this.form.getRawValue();
+    const keepMachine = this.config().fields.some((f) => f.control === 'machine');
+
+    this.form.reset({
+      licenseType: 'PERPETUAL',
+      customerId,
+      applicationId,
+      machineId: keepMachine ? machineId : '',
+    });
     this.result.set(null);
     this.error.set(null);
   }

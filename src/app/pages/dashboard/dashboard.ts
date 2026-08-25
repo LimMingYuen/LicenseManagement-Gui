@@ -1,12 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
-import { LicenseDetailComponent } from '../../shared/components/license-detail/license-detail';
+import {
+  LicenseDetailComponent,
+  LicenseDetailData,
+} from '../../shared/components/license-detail/license-detail';
 import { AuthService } from '../../services/auth.service';
 import { LicenseService } from '../../services/license.service';
 import { License, LicenseSummary } from '../../models/license.models';
+import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
@@ -16,9 +22,9 @@ import { formatIsoDateTime } from '../../shared/utils/date-format';
   imports: [
     RouterLink,
     MatIconModule,
+    MatButtonModule,
     MatSnackBarModule,
     PageHeaderComponent,
-    LicenseDetailComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -27,12 +33,20 @@ import { formatIsoDateTime } from '../../shared/utils/date-format';
 export class Dashboard {
   private readonly licenses = inject(LicenseService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly auth = inject(AuthService);
 
   protected readonly summary = signal<LicenseSummary | null>(null);
   protected readonly loading = signal(true);
-  protected readonly detail = signal<License | null>(null);
+
+  /** Read-only from here — revoking lives on the register and the catalog. */
+  protected openDetail(license: License): void {
+    this.dialog.open(
+      LicenseDetailComponent,
+      dialogConfig<LicenseDetailData>({ license }, 'min(44rem, 96vw)'),
+    );
+  }
 
   protected readonly quickActions = [
     {

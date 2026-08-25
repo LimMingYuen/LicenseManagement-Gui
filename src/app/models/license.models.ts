@@ -36,8 +36,16 @@ export interface License {
    */
   machineId: string | null;
   /**
+   * The machine register row this license hangs off - the authoritative link, where
+   * `machineId` above is only the string that was signed. Null for desktop imports that
+   * could not be attached to a customer-owned machine.
+   */
+  machineRefId: number | null;
+  /** The machine's human label, when it has one. */
+  machineName: string | null;
+  /**
    * The customer row this license belongs to. Null for rows that predate the customer
-   * register or arrived through a desktop backup import.
+   * register or were imported from the desktop app.
    */
   customerId: number | null;
   /** The linked customer's current name, or the name frozen into the record when unlinked. */
@@ -127,6 +135,13 @@ export interface CatalogCounts {
 export interface MachineNode {
   /** The machine ID, or a placeholder label when `isUnassigned`. */
   machineId: string;
+  /**
+   * The machine register row these licenses are linked to. Null for the unassigned bucket
+   * and for desktop imports, which still group on the machine ID string alone.
+   */
+  machineRefId: number | null;
+  /** The machine's human label, when it has one. */
+  name: string | null;
   /** True for the bucket holding licenses that name no machine. */
   isUnassigned: boolean;
   /**
@@ -153,7 +168,6 @@ export interface ApplicationNode {
   id: number;
   key: LicenseApplicationKey;
   name: string;
-  icon: string;
   customers: CustomerNode[];
   counts: CatalogCounts;
 }

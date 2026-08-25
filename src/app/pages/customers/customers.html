@@ -7,26 +7,3 @@
   >
   </app-data-table>
 </div>
-
-@if (dialog(); as open) {
-  @switch (open.kind) {
-    @case ('create') {
-      <app-customer-form (saved)="onSaved($event)" (cancelled)="dialog.set(null)" />
-    }
-    @case ('edit') {
-      <app-customer-form
-        [customer]="open.customer"
-        (saved)="onSaved($event)"
-        (cancelled)="dialog.set(null)"
-      />
-    }
-    @case ('merge') {
-      <app-customer-merge
-        [source]="open.customer"
-        [all]="customers()"
-        (merged)="onMerged($event)"
-        (cancelled)="dialog.set(null)"
-      />
-    }
-  }
-}

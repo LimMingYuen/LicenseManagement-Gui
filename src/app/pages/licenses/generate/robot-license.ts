@@ -12,7 +12,6 @@ import { ROBOT_CONFIG } from './generate-license.config';
     <app-page-header
       [title]="config.title"
       [icon]="config.icon"
-      [subtitle]="config.subtitle"
     />
     <app-generate-license-form [config]="config" />
   `,

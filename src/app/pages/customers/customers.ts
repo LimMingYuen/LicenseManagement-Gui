@@ -1,25 +1,22 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { Customer } from '../../models/customer.models';
 import { CustomerService } from '../../services/customer.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
+import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { CustomerForm } from './customer-form';
-import { CustomerMerge } from './customer-merge';
+import { CustomerForm, CustomerFormData } from './customer-form';
+import { CustomerMerge, CustomerMergeData } from './customer-merge';
 import { buildCustomersTableConfig } from './customers-table.config';
-
-type Dialog =
-  | { kind: 'create' }
-  | { kind: 'edit'; customer: Customer }
-  | { kind: 'merge'; customer: Customer }
-  | null;
 
 @Component({
   selector: 'app-customers',
-  imports: [MatSnackBarModule, DataTableComponent, CustomerForm, CustomerMerge],
+  imports: [MatSnackBarModule, DataTableComponent],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,10 +26,10 @@ export class Customers {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly customers = signal<Customer[]>([]);
   protected readonly loading = signal(true);
-  protected readonly dialog = signal<Dialog>(null);
 
   /** Built once: which actions exist depends only on the signed-in role. */
   protected readonly tableConfig = buildCustomersTableConfig(
@@ -63,16 +60,16 @@ export class Customers {
   protected handleAction(event: DataActionEvent<Customer>): void {
     switch (event.action) {
       case 'add':
-        this.dialog.set({ kind: 'create' });
+        void this.openForm(null);
         break;
       case 'refresh':
         void this.load();
         break;
       case 'edit':
-        if (event.row) this.dialog.set({ kind: 'edit', customer: event.row });
+        if (event.row) void this.openForm(event.row);
         break;
       case 'merge':
-        if (event.row) this.dialog.set({ kind: 'merge', customer: event.row });
+        if (event.row) void this.openMerge(event.row);
         break;
       case 'licenses':
         // The register's global search matches the customer name, so this lands on exactly
@@ -93,21 +90,38 @@ export class Customers {
     }
   }
 
-  protected onSaved(customer: Customer): void {
-    const isNew = !this.customers().some((c) => c.id === customer.id);
-    this.dialog.set(null);
+  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  private async openForm(customer: Customer | null): Promise<void> {
+    const saved = await firstValueFrom(
+      this.dialog.open(CustomerForm, dialogConfig<CustomerFormData>({ customer })).afterClosed(),
+    );
+
+    if (!saved) {
+      return;
+    }
+
+    const isNew = !this.customers().some((c) => c.id === saved.id);
 
     if (isNew) {
       void this.load();
-      this.notify(`${customer.name} was created.`, 'success');
+      this.notify(`${saved.name} was created.`, 'success');
     } else {
-      this.replace(customer);
-      this.notify(`${customer.name} was updated.`, 'success');
+      this.replace(saved);
+      this.notify(`${saved.name} was updated.`, 'success');
     }
   }
 
-  protected onMerged(target: Customer): void {
-    this.dialog.set(null);
+  private async openMerge(source: Customer): Promise<void> {
+    const target = await firstValueFrom(
+      this.dialog
+        .open(CustomerMerge, dialogConfig<CustomerMergeData>({ source, all: this.customers() }))
+        .afterClosed(),
+    );
+
+    if (!target) {
+      return;
+    }
+
     // A merge changes two rows and deletes one, so the list is refetched rather than patched.
     void this.load();
     this.notify(`Merged into ${target.name}.`, 'success');
