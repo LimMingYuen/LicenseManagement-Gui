@@ -13,6 +13,7 @@ import { describeError } from '../../shared/utils/http-error';
 import { ApplicationForm, ApplicationFormData } from './application-form';
 import { buildApplicationsTableConfig } from './applications-table.config';
 
+/** Page that lists and manages applications. */
 @Component({
   selector: 'app-applications',
   imports: [MatSnackBarModule, DataTableComponent],
@@ -30,7 +31,7 @@ export class Applications {
   protected readonly applications = signal<Application[]>([]);
   protected readonly loading = signal(true);
 
-  /** Built once: which actions exist depends only on the signed-in role. */
+  /** Built once, since the available actions depend only on the signed-in role. */
   protected readonly tableConfig = buildApplicationsTableConfig(
     this.auth.currentUser()?.role === 'SuperAdmin',
   );
@@ -39,11 +40,7 @@ export class Applications {
     void this.load();
   }
 
-  /**
-   * The whole list is fetched once and filtered in the table — there are only ever a handful
-   * of products. Inactive rows are included so they can be reactivated; only the generate
-   * forms hide them.
-   */
+  /** Loads all applications, including inactive ones. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -56,6 +53,7 @@ export class Applications {
     }
   }
 
+  /** Dispatches a table action. */
   protected handleAction(event: DataActionEvent<Application>): void {
     switch (event.action) {
       case 'add':
@@ -68,8 +66,6 @@ export class Applications {
         if (event.row) void this.openForm(event.row);
         break;
       case 'licenses':
-        // The register filters by application key server-side, which is exactly what this
-        // link needs — no client-side matching on a display name.
         if (event.row) {
           void this.router.navigate(['/licenses'], {
             queryParams: { application: event.row.key },
@@ -86,7 +82,7 @@ export class Applications {
     }
   }
 
-  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  /** Opens the application dialog, creating a new application when given null. */
   private async openForm(application: Application | null): Promise<void> {
     const saved = await firstValueFrom(
       this.dialog
@@ -99,6 +95,7 @@ export class Applications {
     }
   }
 
+  /** Updates the list after a save and confirms it. */
   private onSaved(application: Application): void {
     const isNew = !this.applications().some((a) => a.id === application.id);
 
@@ -111,6 +108,7 @@ export class Applications {
     }
   }
 
+  /** Toggles the application's active status. */
   private async toggleActive(application: Application): Promise<void> {
     try {
       const updated = await this.applicationService.setActive(
@@ -127,6 +125,7 @@ export class Applications {
     }
   }
 
+  /** Deletes the application after confirmation. */
   private async remove(application: Application): Promise<void> {
     if (!confirm(`Delete ${application.name}? This cannot be undone.`)) {
       return;
@@ -141,12 +140,14 @@ export class Applications {
     }
   }
 
+  /** Replaces the matching application in the list. */
   private replace(application: Application): void {
     this.applications.update((list) =>
       list.map((a) => (a.id === application.id ? application : a)),
     );
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

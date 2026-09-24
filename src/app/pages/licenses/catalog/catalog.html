@@ -131,9 +131,6 @@
 
                         <span class="node__label mono">{{ machineLabel(machine) }}</span>
 
-                        <!-- The ID above is what gets signed, so it stays the label. A name
-                             is only set for machines someone has bothered to describe, and
-                             follows as an aside rather than replacing what was bound. -->
                         @if (machine.name) {
                           <span class="node__sub">{{ machine.name }}</span>
                         }
@@ -156,7 +153,7 @@
                         }
                       </div>
 
-                      <!-- Leaves — the licenses themselves -->
+                      <!-- Leaves — licenses -->
                       <ul class="leaves">
                         @for (license of machine.licenses; track license.id) {
                           <li>

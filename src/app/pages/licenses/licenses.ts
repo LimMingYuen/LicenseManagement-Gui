@@ -20,10 +20,7 @@ import { describeError } from '../../shared/utils/http-error';
 import { saveBlob } from '../../shared/utils/download';
 import { buildLicensesTableConfig } from './licenses-table.config';
 
-/**
- * The license register. The whole list is fetched once and filtered in the table, matching
- * the Users page — status is computed server-side, so filtering client-side cannot drift.
- */
+/** Page that lists the license register. */
 @Component({
   selector: 'app-licenses',
   imports: [MatSnackBarModule, DataTableComponent],
@@ -40,31 +37,24 @@ export class Licenses {
   protected readonly rows = signal<License[]>([]);
   protected readonly loading = signal(true);
 
-  /** The open detail dialog, kept so a revoke can push the updated row back into it. */
+  /** Open detail dialog, updated in place after a revoke. */
   private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   private readonly queryParams = inject(ActivatedRoute).snapshot.queryParamMap;
 
   protected readonly tableConfig = buildLicensesTableConfig();
 
-  /**
-   * Seeds the table's search box from ?search=. The Customers page links here to show one
-   * customer's licenses, and the global filter already matches on customer name, so this is
-   * all that is needed - no customer-specific filter in the register itself.
-   */
+  /** Initial table search from the ?search= query parameter. */
   protected readonly initialSearch = signal(this.queryParams.get('search') ?? '');
 
-  /**
-   * ?application= filters server-side by application key. Unlike the customer link, this
-   * cannot be a text search - the key is not shown in any column, and two products could
-   * share a display name prefix.
-   */
+  /** Application key from ?application=, filtered server-side. */
   private readonly applicationFilter = this.queryParams.get('application') ?? undefined;
 
   constructor() {
     void this.load();
   }
 
+  /** Loads the licenses, filtered by application when one is given. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -77,6 +67,7 @@ export class Licenses {
     }
   }
 
+  /** Dispatches a table action. */
   protected handleAction(event: DataActionEvent<License>): void {
     switch (event.action) {
       case 'add':
@@ -97,14 +88,13 @@ export class Licenses {
     }
   }
 
+  /** Opens the license detail dialog. */
   protected openDetail(row: License): void {
     const ref = this.dialog.open(
       LicenseDetailComponent,
       dialogConfig<LicenseDetailData>({ license: row }, 'min(44rem, 96vw)'),
     );
 
-    // Revoking is confirmed and reported here, not in the dialog, so the register and the
-    // catalog can each own their own wording while sharing one read-only view.
     ref.componentInstance.revoked.subscribe((license) => void this.revoke(license));
 
     this.detailRef = ref;
@@ -113,6 +103,7 @@ export class Licenses {
     });
   }
 
+  /** Downloads a license file. */
   private async download(license: License): Promise<void> {
     try {
       const blob = await this.licenses.download(license.id);
@@ -122,10 +113,7 @@ export class Licenses {
     }
   }
 
-  /**
-   * Revocation is confirmed because the customer already holds the signed file — this
-   * registry is the only thing that says it is no longer valid.
-   */
+  /** Revokes a license after confirmation. */
   protected async revoke(license: License): Promise<void> {
     const data: ConfirmationDialogData = {
       title: 'Revoke license?',
@@ -148,8 +136,6 @@ export class Licenses {
     try {
       const updated = await this.licenses.revoke(license.id, null);
       this.rows.update((list) => list.map((l) => (l.id === updated.id ? updated : l)));
-
-      // The open detail dialog would otherwise still show the pre-revocation state.
       this.detailRef?.componentInstance.update(updated);
 
       this.notify(`License for ${updated.customerName} was revoked.`, 'success');
@@ -158,12 +144,13 @@ export class Licenses {
     }
   }
 
-  /** Mirrors the server's naming, so a row download matches a freshly generated file. */
+  /** Builds the download file name the same way the server does. */
   private fileNameFor(license: License): string {
     const safe = license.targetId.replace(/[^A-Za-z0-9_-]/g, '') || 'license';
     return license.type === 'Gateway' ? `gateway_${safe.slice(0, 8)}.lic` : `${safe}.lic`;
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

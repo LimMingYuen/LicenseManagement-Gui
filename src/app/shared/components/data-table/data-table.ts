@@ -55,11 +55,7 @@ import {
   DEFAULT_DATA_FILTER
 } from '../../models/data-table.models';
 
-/**
- * Filter popover sizing. The popover takes its column's width, clamped so a
- * narrow column still gets a usable body (the date filter needs room for a
- * date + time pair) and a very wide one doesn't get an absurdly wide panel.
- */
+/** Width bounds in px for a column filter popover. */
 const POPOVER_MIN_WIDTH = 280;
 const POPOVER_MAX_WIDTH = 420;
 
@@ -72,22 +68,12 @@ interface DraftFilter {
   max?: number | null;
   from?: Date | null;
   to?: Date | null;
-  /** Time-of-day picked via mat-timepicker. Only hours+minutes are read off this Date. */
+  /** Time of day from mat-timepicker; only hours and minutes are used. */
   fromTime?: Date | null;
   toTime?: Date | null;
 }
 
-/**
- * Custom calendar header for the filter popover.
- *
- * Defaults: clicking the period label toggles month ↔ multi-year (year picker).
- * Here we toggle month ↔ year (month-of-year picker) — picking a date by month
- * is the common path in this app, and the year picker is reached via the
- * back-arrow inside the year view.
- *
- * Template is copied from Material's MatCalendarHeader so we keep the same
- * look; the only behavioral change is the override of currentPeriodClicked().
- */
+/** Calendar header for the date filter whose period button cycles month, year and multi-year. */
 @Component({
   selector: 'app-dt-calendar-header',
   standalone: true,
@@ -130,11 +116,8 @@ interface DraftFilter {
   `,
 })
 export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
+  /** Advances the calendar to the next view in the month, year, multi-year cycle. */
   override currentPeriodClicked(): void {
-    // Cycle month → year (pick month) → multi-year (pick year) → month.
-    // Default Material behavior skips the month-picker step (month ↔ multi-year);
-    // this gives users a one-click path to month selection while still keeping
-    // the year picker reachable.
     const next: Record<string, 'month' | 'year' | 'multi-year'> = {
       month: 'year',
       year: 'multi-year',
@@ -144,6 +127,7 @@ export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
   }
 }
 
+/** Renders a configurable table with search, column filters, sorting, paging and selection. */
 @Component({
   selector: 'app-data-table',
   standalone: true,
@@ -194,9 +178,6 @@ export class DataTableComponent<T = any>
     if (this._paginator === p) return;
     this._paginator = p;
     if (!p) return;
-    // Defer the dataSource wiring to a microtask so this side-effect
-    // doesn't run inside Angular's current change detection cycle
-    // (which would emit page/length changes mid-CD and crash).
     Promise.resolve().then(() => {
       if (this._paginator !== p) return;
       if (this.config?.pagination?.enabled) {
@@ -212,9 +193,6 @@ export class DataTableComponent<T = any>
     if (this._sort === s) return;
     this._sort = s;
     if (!s) return;
-    // Same reason as paginator: s.sort() emits sortChange synchronously.
-    // Wiring it inside the setter would mutate state inside CD and
-    // throw ExpressionChangedAfterItHasBeenChecked.
     Promise.resolve().then(() => {
       if (this._sort !== s) return;
       this.dataSource.sort = s;
@@ -242,24 +220,21 @@ export class DataTableComponent<T = any>
     const next = value ?? '';
     if (this._globalFilter === next) return;
     this._globalFilter = next;
-    // commitFilter may run before the data source is initialised on first
-    // change-detection pass; the predicate runs against an empty data set
-    // in that case, which is fine.
     this.commitFilter();
   }
   get globalFilter(): string { return this._globalFilter; }
 
-  /** Applied per-column filters (drive the data-source filter predicate). */
+  /** Applied per-column filters that drive the data-source filter predicate. */
   appliedFilters: Record<string, DataColumnFilterEntry> = {};
 
-  /** Draft per-column filters (live state inside an open popover). */
+  /** Draft per-column filters edited inside an open popover. */
   draftFilters: Record<string, DraftFilter> = {};
 
   private readonly selectionIds = new SelectionModel<string>(true, []);
 
-  /** Custom header so the period click goes month ↔ year (not multi-year). */
   readonly calendarHeaderComponent = DtCalendarHeader;
 
+  /** Applies config defaults and installs columns, filter predicate and sort accessor. */
   ngOnInit(): void {
     this.applyConfigDefaults();
     this.rebuildDisplayedColumns();
@@ -267,10 +242,7 @@ export class DataTableComponent<T = any>
     this.installSortAccessor();
   }
 
-  // Sort and paginator are wired through @ViewChild setters above, which also
-  // handle the case where the table renders after data arrives (loading ->
-  // table view transition) — so no ngAfterViewInit is needed.
-
+  /** Syncs the data source and column setup with changed data or config inputs. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
       this.dataSource.data = this.data || [];
@@ -287,6 +259,7 @@ export class DataTableComponent<T = any>
 
   // -------- config / columns --------
 
+  /** Merges the config with the default pagination, empty, filter and style settings. */
   private applyConfigDefaults(): void {
     this.config = {
       ...this.config,
@@ -300,6 +273,7 @@ export class DataTableComponent<T = any>
     };
   }
 
+  /** Rebuilds the displayed column keys, including row-number, selection and action columns. */
   private rebuildDisplayedColumns(): void {
     const keys: string[] = [];
     if (this.config.showRowNumbers) keys.push('__row');
@@ -309,12 +283,7 @@ export class DataTableComponent<T = any>
     this.displayedColumns = keys;
   }
 
-  /**
-   * Lazily return the draft state for a column's popover, creating an empty
-   * one on first access. Used from the template so that bindings inside
-   * mat-menu content never read `undefined` — regardless of when the
-   * menu's template instantiates vs. when (menuOpened) fires.
-   */
+  /** Returns the draft filter for a column, creating an empty one on first access. */
   draftFor(col: DataColumnConfig<T>): DraftFilter {
     const key = String(col.key);
     let d = this.draftFilters[key];
@@ -325,6 +294,7 @@ export class DataTableComponent<T = any>
     return d;
   }
 
+  /** Creates an empty draft filter of the given type. */
   private emptyDraft(type: DataColumnFilterType): DraftFilter {
     return {
       type,
@@ -342,6 +312,7 @@ export class DataTableComponent<T = any>
 
   // -------- filter predicate & sort accessor --------
 
+  /** Installs the predicate that applies the global search and column filters to each row. */
   private installFilterPredicate(): void {
     this.dataSource.filterPredicate = (row: T, raw: string) => {
       if (!raw) return true;
@@ -409,6 +380,7 @@ export class DataTableComponent<T = any>
     };
   }
 
+  /** Installs the sort accessor that compares numbers, ISO dates and strings. */
   private installSortAccessor(): void {
     this.dataSource.sortingDataAccessor = (row: T, id: string) => {
       const col = this.config.columns.find(c => String(c.key) === id);
@@ -423,14 +395,17 @@ export class DataTableComponent<T = any>
 
   // -------- global filter --------
 
+  /** Applies the search box value as the global filter. */
   onGlobalFilterInput(ev: Event): void {
     this.setGlobalFilterFromUI((ev.target as HTMLInputElement).value);
   }
 
+  /** Clears the global search filter. */
   clearGlobalFilter(): void {
     this.setGlobalFilterFromUI('');
   }
 
+  /** Sets the global filter from user input and emits the change. */
   private setGlobalFilterFromUI(value: string): void {
     const next = value ?? '';
     if (this._globalFilter === next) return;
@@ -441,6 +416,7 @@ export class DataTableComponent<T = any>
 
   // -------- per-column popover lifecycle --------
 
+  /** Seeds a column's draft filter from its applied filter when the popover opens. */
   onPopoverOpened(col: DataColumnConfig<T>): void {
     const key = String(col.key);
     const applied = this.appliedFilters[key];
@@ -462,8 +438,6 @@ export class DataTableComponent<T = any>
         const t = applied?.to ? new Date(applied.to) : null;
         draft.from = f;
         draft.to = t;
-        // Only treat the time component as "user-set" when it isn't the implicit
-        // day-boundary default we apply on commit (00:00 for start, 23:59 for end).
         draft.fromTime = f && !this.isStartOfDay(f) ? new Date(f) : null;
         draft.toTime = t && !this.isEndOfDay(t) ? new Date(t) : null;
         break;
@@ -472,15 +446,10 @@ export class DataTableComponent<T = any>
     this.draftFilters[key] = draft;
   }
 
-  /**
-   * Give the filter popover its column's width. The .dt-th__anchor span spans
-   * the header cell, so Material already opens the panel at the column's left
-   * edge; this just stops it being a fixed 280px regardless of the column.
-   */
+  /** Sizes the open filter popover to its column's width within the popover bounds. */
   sizePopoverToColumn(headerContent: HTMLElement): void {
     const th = headerContent.closest('th');
     if (!th) return;
-    // The panel only enters the DOM when the overlay attaches — measure next frame.
     requestAnimationFrame(() => {
       const panel = document.querySelector<HTMLElement>('.mat-mdc-menu-panel.dt-filter-menu');
       if (!panel) return;
@@ -492,11 +461,13 @@ export class DataTableComponent<T = any>
     });
   }
 
+  /** Resets a column's draft filter to empty. */
   resetDraft(col: DataColumnConfig<T>): void {
     const key = String(col.key);
     this.draftFilters[key] = this.emptyDraft(col.columnFilterType ?? 'text');
   }
 
+  /** Applies a column's draft filter and closes the popover. */
   applyDraft(col: DataColumnConfig<T>): void {
     if (this.isDateRangeInvalid(col)) return;
     const key = String(col.key);
@@ -510,11 +481,9 @@ export class DataTableComponent<T = any>
     this.closeOpenMenus();
   }
 
-  /** Apply the current draft live (no menu close). Called on every change inside the popover. */
+  /** Applies a column's draft filter live without closing the popover. */
   onDraftChanged(col: DataColumnConfig<T>): void {
     const key = String(col.key);
-    // Hold off committing an inverted date range — the inline error tells the
-    // user what's wrong; pushing the bad range through would empty the table.
     if (this.isDateRangeInvalid(col)) return;
     const entry = this.buildEntryFromDraft(this.draftFor(col));
     if (this.isEntryEmpty(entry)) {
@@ -528,7 +497,7 @@ export class DataTableComponent<T = any>
     }
   }
 
-  /** True when the draft has both edges set and the "to" timestamp is earlier than "from". */
+  /** Reports whether a date draft has a "to" timestamp earlier than its "from" timestamp. */
   isDateRangeInvalid(col: DataColumnConfig<T>): boolean {
     const d = this.draftFor(col);
     if (d.type !== 'date') return false;
@@ -539,16 +508,13 @@ export class DataTableComponent<T = any>
     return new Date(to).getTime() < new Date(from).getTime();
   }
 
-  /** Lower bound for the "To" date input — the currently-picked From date (calendar day). */
+  /** Returns the minimum date for the "To" picker, the start of the "From" day. */
   dateMinForTo(col: DataColumnConfig<T>): Date | null {
     const f = this.draftFor(col).from;
     return f ? this.atStartOfDay(f) : null;
   }
 
-  /**
-   * Lower bound for the "To" time input — only constraining when From and To
-   * are on the same calendar day; otherwise the time is free to be anything.
-   */
+  /** Returns the minimum "To" time when both dates fall on the same day, else null. */
   timeMinForTo(col: DataColumnConfig<T>): Date | null {
     const d = this.draftFor(col);
     if (!d.from || !d.to) return null;
@@ -556,21 +522,25 @@ export class DataTableComponent<T = any>
     return d.fromTime instanceof Date ? d.fromTime : null;
   }
 
+  /** Returns a copy of the date set to midnight. */
   private atStartOfDay(d: Date): Date {
     const out = new Date(d);
     out.setHours(0, 0, 0, 0);
     return out;
   }
+  /** Reports whether two dates fall on the same calendar day. */
   private isSameCalendarDay(a: Date, b: Date): boolean {
     return a.getFullYear() === b.getFullYear()
         && a.getMonth() === b.getMonth()
         && a.getDate() === b.getDate();
   }
 
+  /** Closes any open filter popover. */
   private closeOpenMenus(): void {
     this.menuTriggers?.forEach(t => { if (t.menuOpen) t.closeMenu(); });
   }
 
+  /** Converts a draft filter into an applied filter entry. */
   private buildEntryFromDraft(d: DraftFilter): DataColumnFilterEntry {
     switch (d.type) {
       case 'text':
@@ -592,20 +562,16 @@ export class DataTableComponent<T = any>
     }
   }
 
+  /** Reports whether the time is 00:00. */
   private isStartOfDay(d: Date): boolean {
     return d.getHours() === 0 && d.getMinutes() === 0;
   }
+  /** Reports whether the time is 23:59. */
   private isEndOfDay(d: Date): boolean {
     return d.getHours() === 23 && d.getMinutes() === 59;
   }
 
-  /**
-   * Combine a calendar date with a time-of-day Date (mat-timepicker value)
-   * into an ISO timestamp. If no date is picked, returns undefined.
-   * If no time is picked, defaults to 00:00 for the start edge of the range
-   * and 23:59:59 for the end so a date-only range still feels like an
-   * inclusive day.
-   */
+  /** Combines a date and optional time into an ISO timestamp, defaulting to the day boundary. */
   private combineDateAndTime(
     date: Date | null | undefined,
     time: Date | null | undefined,
@@ -623,6 +589,7 @@ export class DataTableComponent<T = any>
     return out.toISOString();
   }
 
+  /** Reports whether a filter entry has no criteria. */
   private isEntryEmpty(entry: DataColumnFilterEntry): boolean {
     switch (entry.type) {
       case 'text': return !entry.value;
@@ -634,6 +601,7 @@ export class DataTableComponent<T = any>
 
   // -------- option filter helpers --------
 
+  /** Returns the configured options, or distinct display values with counts, for an option filter. */
   getOptionList(col: DataColumnConfig<T>): DataSelectOption[] {
     if (col.columnFilterOptions) return col.columnFilterOptions;
     const counts = new Map<string, number>();
@@ -648,6 +616,7 @@ export class DataTableComponent<T = any>
       .map(([value, count]) => ({ value, label: value, count }));
   }
 
+  /** Returns the option list narrowed by the popover's search text. */
   filteredOptionList(col: DataColumnConfig<T>): DataSelectOption[] {
     const key = String(col.key);
     const needle = (this.draftFilters[key]?.selectSearch ?? '').toLowerCase().trim();
@@ -658,6 +627,7 @@ export class DataTableComponent<T = any>
 
   trackOptionByValue = (_: number, opt: DataSelectOption): string => opt.value;
 
+  /** Toggles an option in a column's draft filter and applies it live. */
   toggleDraftOption(col: DataColumnConfig<T>, value: string): void {
     const draft = this.draftFor(col);
     if (!draft.selectedValues) draft.selectedValues = new Set();
@@ -666,12 +636,14 @@ export class DataTableComponent<T = any>
     this.onDraftChanged(col);
   }
 
+  /** Reports whether an option is selected in a column's draft filter. */
   isDraftOptionChecked(col: DataColumnConfig<T>, value: string): boolean {
     return this.draftFor(col).selectedValues?.has(value) ?? false;
   }
 
   // -------- range filter helpers --------
 
+  /** Returns the configured or data-derived bounds for a range filter. */
   getRangeBounds(col: DataColumnConfig<T>): { min: number; max: number } {
     if (col.rangeMin != null && col.rangeMax != null) {
       return { min: col.rangeMin, max: col.rangeMax };
@@ -689,6 +661,7 @@ export class DataTableComponent<T = any>
     return { min, max };
   }
 
+  /** Returns histogram bar heights and in-range flags for a range filter. */
   histogramBins(col: DataColumnConfig<T>, count = 10): { height: number; inRange: boolean }[] {
     const { min, max } = this.getRangeBounds(col);
     if (max <= min) return Array.from({ length: count }, () => ({ height: 0, inRange: false }));
@@ -715,6 +688,7 @@ export class DataTableComponent<T = any>
     });
   }
 
+  /** Returns the selected range as percentages of the column bounds. */
   rangeFillPct(col: DataColumnConfig<T>): { lo: number; hi: number } {
     const { min, max } = this.getRangeBounds(col);
     if (max <= min) return { lo: 0, hi: 100 };
@@ -727,10 +701,9 @@ export class DataTableComponent<T = any>
     };
   }
 
-  // -------- date preset --------
-
   // -------- commit & emit --------
 
+  /** Pushes the combined filter state to the data source and emits filterChange. */
   private commitFilter(): void {
     const state: DataCombinedFilterState = {
       global: this.globalFilter.trim().toLowerCase(),
@@ -746,50 +719,44 @@ export class DataTableComponent<T = any>
     });
   }
 
+  /** Clears the applied and draft filter of one column. */
   clearColumnFilter(columnKey: string): void {
     delete this.appliedFilters[columnKey];
     delete this.draftFilters[columnKey];
     this.commitFilter();
   }
 
+  /** Clears the global search and every column filter. */
   clearAllFilters(): void {
     this.appliedFilters = {};
     this.setGlobalFilterFromUI('');
-    // setGlobalFilterFromUI already commits, but only when value changed;
-    // re-commit so cleared column filters also take effect when search is unchanged.
     this.commitFilter();
-    // Pages with their own toolbar call this from outside the view, where no
-    // event binding of ours has marked the component dirty.
     this.cdr.markForCheck();
   }
 
-  /**
-   * The rows the grid is currently showing across all pages — filtered by the
-   * search box and column popovers, in the active sort order. Pages exporting
-   * the grid read this so the file matches what the operator sees.
-   */
+  /** Returns the filtered rows across all pages in the active sort order. */
   getVisibleRows(): T[] {
     const rows = [...(this.dataSource.filteredData ?? [])];
     const s = this.sort;
     return s?.active && s.direction ? this.dataSource.sortData(rows, s) : rows;
   }
 
-  /** True when a global search term or any column filter is currently applied. */
+  /** Reports whether a global search term or any column filter is applied. */
   hasAnyFilter(): boolean {
     return this.globalFilter.length > 0 || Object.keys(this.appliedFilters).length > 0;
   }
 
   // -------- cell rendering --------
 
+  /** Returns the display text of a cell. */
   cellDisplay(row: T, col: DataColumnConfig<T>): string {
     const v = (row as any)[col.key];
 
-    // A transform sees null/undefined too: that is where a column decides what an absent
-    // value reads as ('Never', 'Perpetual', an em dash). Only untransformed columns blank out.
     if (col.transform) return col.transform(v, row);
     return v == null ? '' : String(v);
   }
 
+  /** Returns the badge tone of a cell. */
   badgeTone(row: T, col: DataColumnConfig<T>): BadgeTone {
     if (!col.badgeTone) return 'neutral';
     return col.badgeTone(this.cellDisplay(row, col), row);
@@ -797,15 +764,18 @@ export class DataTableComponent<T = any>
 
   // -------- selection --------
 
+  /** Returns the selection ID of a row. */
   private selectionKey(row: T): string {
     const k = this.config.selection?.idKey ?? ('id' as keyof T);
     return String((row as any)[k]);
   }
 
+  /** Reports whether a row is selected. */
   isRowSelected(row: T): boolean {
     return this.selectionIds.isSelected(this.selectionKey(row));
   }
 
+  /** Selects or deselects a row within the selection limit. */
   onRowCheckboxChange(row: T, checked: boolean): void {
     if (!this.config.selection?.enabled) return;
     const id = this.selectionKey(row);
@@ -819,6 +789,7 @@ export class DataTableComponent<T = any>
     this.emitSelection();
   }
 
+  /** Returns the filtered rows on the current page. */
   private getCurrentPageRows(): T[] {
     const rows = this.dataSource.filteredData || [];
     if (!this.paginator || !this.config.pagination?.enabled) return rows;
@@ -826,15 +797,18 @@ export class DataTableComponent<T = any>
     return rows.slice(start, start + this.paginator.pageSize);
   }
 
+  /** Reports whether every row on the current page is selected. */
   isAllCurrentPageSelected(): boolean {
     const p = this.getCurrentPageRows();
     return p.length > 0 && p.every(r => this.selectionIds.isSelected(this.selectionKey(r)));
   }
 
+  /** Reports whether any row on the current page is selected. */
   isSomeCurrentPageSelected(): boolean {
     return this.getCurrentPageRows().some(r => this.selectionIds.isSelected(this.selectionKey(r)));
   }
 
+  /** Selects or deselects every row on the current page within the selection limit. */
   onMasterCheckboxChange(checked: boolean): void {
     if (!this.config.selection?.enabled) return;
     const page = this.getCurrentPageRows();
@@ -850,6 +824,7 @@ export class DataTableComponent<T = any>
     this.emitSelection();
   }
 
+  /** Drops selected IDs that are no longer in the data. */
   private pruneStaleSelection(): void {
     if (!this.config.selection?.enabled) return;
     const valid = new Set((this.data || []).map(r => this.selectionKey(r)));
@@ -859,6 +834,7 @@ export class DataTableComponent<T = any>
     this.emitSelection();
   }
 
+  /** Emits the currently selected rows. */
   private emitSelection(): void {
     if (!this.config.selection?.enabled) return;
     const k = this.config.selection.idKey ?? ('id' as keyof T);
@@ -868,21 +844,25 @@ export class DataTableComponent<T = any>
 
   // -------- misc emitters --------
 
+  /** Emits a sort change. */
   onSortChange(ev: any): void {
     this.sortChange.emit({ column: ev.active, direction: ev.direction });
   }
+  /** Emits a page change. */
   onPageChange(ev: any): void {
     this.pageChange.emit({ pageIndex: ev.pageIndex, pageSize: ev.pageSize, length: ev.length });
   }
+  /** Emits a row action. */
   onActionClick(actionCfg: DataActionConfig<T>, row: T, rowIndex: number): void {
     this.action.emit({ type: 'action', action: actionCfg.action, row, rowIndex });
   }
-  /** Reset-filters is dead weight with nothing applied, so grey it out. */
+  /** Reports whether a header action is disabled while loading or with no filter to clear. */
   isHeaderActionDisabled(actionCfg: DataHeaderActionConfig): boolean {
     if (actionCfg.loading) return true;
     return actionCfg.action === 'clear-filters' && !this.hasAnyFilter();
   }
 
+  /** Handles clear-filters internally and emits every other header action. */
   onHeaderActionClick(actionCfg: { action: string }): void {
     if (actionCfg.action === 'clear-filters') {
       this.clearAllFilters();
@@ -890,6 +870,7 @@ export class DataTableComponent<T = any>
     }
     this.action.emit({ type: 'header-action', action: actionCfg.action, row: null, rowIndex: -1 });
   }
+  /** Emits a row click unless the click landed on an interactive control. */
   onRowClick(ev: MouseEvent, row: T, index: number): void {
     if (!this.config.rowClickable) return;
     const t = ev.target as HTMLElement;
@@ -903,35 +884,42 @@ export class DataTableComponent<T = any>
 
   // -------- view helpers --------
 
+  /** Returns a column's key as a string. */
   columnKey(col: DataColumnConfig<T>): string { return String(col.key); }
 
+  /** Reports whether a column has an applied filter. */
   hasAppliedFilter(columnKey: string): boolean {
     return columnKey in this.appliedFilters;
   }
 
+  /** Reports whether a row is rendered muted. */
   rowMuted(row: T): boolean {
     return this.config.rowMutedWhen?.(row) === true;
   }
 
+  /** Reports whether the table has no data and is not loading. */
   isEmpty(): boolean {
     return (this.dataSource.data?.length ?? 0) === 0 && !this.loading;
   }
 
+  /** Reports whether filters are applied and match no rows. */
   shouldShowNoResults(): boolean {
     return this.hasAnyFilter() && (this.dataSource.filteredData?.length ?? 0) === 0 && !this.loading;
   }
 
+  /** Returns the number of filtered rows. */
   paginatorLength(): number {
     return this.dataSource.filteredData?.length ?? this.data?.length ?? 0;
   }
 
-  /** Count pill text for the header bar, or null while there is nothing to count. */
+  /** Count pill text for the header bar, or null when there is nothing to count. */
   get headerCount(): string | null {
     if (this.loading || this.isEmpty()) return null;
     const n = this.paginatorLength();
     return `${n} ${n === 1 ? 'Item' : 'Items'}`;
   }
 
+  /** Returns the 1-based row number across pages. */
   rowNumber(i: number): number {
     if (this.paginator && this.config.pagination?.enabled) {
       return this.paginator.pageIndex * this.paginator.pageSize + i + 1;

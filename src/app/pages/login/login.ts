@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { describeError } from '../../shared/utils/http-error';
 import { AppLogoComponent } from '../../shared/components/app-logo/app-logo';
 
+/** Sign-in page. */
 @Component({
   selector: 'app-login',
   imports: [
@@ -34,6 +35,7 @@ export class Login {
     password: ['', Validators.required],
   });
 
+  /** Signs in and navigates to the return URL or the dashboard. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.submitting()) {
       this.form.markAllAsTouched();

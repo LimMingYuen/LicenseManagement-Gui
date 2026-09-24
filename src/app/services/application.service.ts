@@ -8,18 +8,13 @@ import {
 } from '../models/application.models';
 import { LicenseKind } from '../models/license.models';
 
+/** Calls the applications API. */
 @Injectable({ providedIn: 'root' })
 export class ApplicationService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/applications';
 
-  /**
-   * @param supports Restricts the list to applications that issue this payload type. The
-   * generate forms pass their own kind, so the picker cannot offer an application that
-   * would then reject the request.
-   * @param includeInactive Retired applications stay in the management list so they can be
-   * reactivated; the generate forms pass false.
-   */
+  /** Lists applications, optionally filtered by search text, payload type and active state. */
   list(options?: {
     search?: string;
     supports?: LicenseKind;
@@ -42,23 +37,27 @@ export class ApplicationService {
     return firstValueFrom(this.http.get<Application[]>(this.baseUrl, { params }));
   }
 
+  /** Gets one application by ID. */
   get(id: number): Promise<Application> {
     return firstValueFrom(this.http.get<Application>(`${this.baseUrl}/${id}`));
   }
 
+  /** Creates an application. */
   create(request: CreateApplicationRequest): Promise<Application> {
     return firstValueFrom(this.http.post<Application>(this.baseUrl, request));
   }
 
+  /** Updates an application. */
   update(id: number, request: UpdateApplicationRequest): Promise<Application> {
     return firstValueFrom(this.http.put<Application>(`${this.baseUrl}/${id}`, request));
   }
 
+  /** Activates or deactivates an application. */
   setActive(id: number, isActive: boolean): Promise<Application> {
     return firstValueFrom(this.http.post<Application>(`${this.baseUrl}/${id}/status`, { isActive }));
   }
 
-  /** Only succeeds for an application with no licenses; the API refuses the rest. */
+  /** Deletes an application that has no licenses. */
   remove(id: number): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }

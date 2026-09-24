@@ -42,7 +42,6 @@
   color: var(--brand-text-muted);
 }
 
-// Only present when the API was well enough to name what is broken.
 .server-unavailable__failures {
   margin: var(--sp-4) 0 0;
   padding: var(--sp-3) var(--sp-4);
@@ -64,9 +63,6 @@
 .server-unavailable__retry {
   margin-top: var(--sp-5);
 
-  // Material's label is a block box, so an inline child sits on its text baseline and
-  // leaves the descender gap below it — enough to push the icon and text visibly above
-  // centre in a 40px button. Making the label a flex box drops the baseline strut.
   ::ng-deep .mdc-button__label {
     display: flex;
     align-items: center;
@@ -74,8 +70,6 @@
   }
 }
 
-// The icon and the spinner sit in the button's plain label rather than Material's icon
-// slot, so they are centred against the text here.
 .server-unavailable__label {
   display: flex;
   align-items: center;

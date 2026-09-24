@@ -7,9 +7,7 @@
   gap: var(--sp-3);
 }
 
-/* Label/value rows, one per line. A grid of columns left the second row half empty and
-   squeezed the 95-character fingerprint into three wrapped lines; at full width it fits
-   on one, and every value lines up on the same edge. */
+// Key details: one label/value row per line
 .detail-list {
   margin: var(--sp-4) 0 0;
 
@@ -37,7 +35,7 @@
   }
 }
 
-/* Too narrow for two columns - stack the value under its label. */
+// Narrow screens: value below its label
 @media (max-width: 40rem) {
   .detail-list > div {
     grid-template-columns: 1fr;
@@ -45,7 +43,6 @@
   }
 }
 
-/* A colon-separated SHA-256 is 95 characters; let it wrap rather than overflow. */
 .fingerprint {
   overflow-wrap: anywhere;
 }
@@ -80,7 +77,6 @@
   flex-wrap: wrap;
 }
 
-// Long enough to read a filename, short enough not to push the button off a narrow page.
 .file-name {
   overflow-wrap: anywhere;
   opacity: 0.75;

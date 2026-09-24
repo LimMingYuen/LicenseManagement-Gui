@@ -8,7 +8,7 @@ export interface HealthCheckEntry {
   description: string | null;
 }
 
-/** The body of GET /api/health. Also arrives on a 503, which is how an outage reports itself. */
+/** Response body of GET /api/health. */
 export interface HealthReport {
   status: HealthReportStatus;
   checkedAt: string;
@@ -16,9 +16,5 @@ export interface HealthReport {
   checks: HealthCheckEntry[];
 }
 
-/**
- * What the UI branches on. The split that matters is `unreachable` (nothing answered — the
- * API is down or the network is gone) versus `unhealthy` (the API answered and told us one
- * of its dependencies is broken). They need different words in front of an operator.
- */
+/** Backend connection state the UI branches on. */
 export type BackendStatus = 'unknown' | 'online' | 'degraded' | 'unhealthy' | 'unreachable';

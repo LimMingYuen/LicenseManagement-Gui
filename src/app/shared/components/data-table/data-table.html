@@ -1,5 +1,5 @@
 <mat-card class="dt-card" [class.dt-card--compact]="config.compact">
-  <!-- Header: the shared bar, same as every page -->
+  <!-- Header -->
   <app-page-header
       *ngIf="config.title || config.filter?.enabled || config.headerActions?.length"
       [title]="config.title"
@@ -7,7 +7,7 @@
       [subtitle]="config.subtitle"
       [count]="headerCount">
 
-    <!-- Additional filters projected from the parent page -->
+    <!-- Filters projected from the parent page -->
     <ng-content select="[dtAdditionalFilters]"></ng-content>
 
     <mat-form-field appearance="outline" class="dt-search" *ngIf="config.filter?.enabled">
@@ -124,8 +124,6 @@
                         [matTooltip]="'Filter ' + col.header">
                   <mat-icon>filter_alt</mat-icon>
                 </button>
-                <!-- The popover hangs off this cell-sized anchor, not off the
-                     little icon button, so it lines up with its own column. -->
                 <span class="dt-th__anchor"
                       #filterTrigger="matMenuTrigger"
                       [matMenuTriggerFor]="filterMenu"

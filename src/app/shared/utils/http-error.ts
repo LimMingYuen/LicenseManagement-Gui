@@ -1,9 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-/**
- * Turns an API failure into something worth showing a user. The backend returns
- * ProblemDetails, so prefer its title/detail over the generic status text.
- */
+/** Converts an API error into a user-facing message. */
 export function describeError(error: unknown, fallback = 'Something went wrong.'): string {
   if (!(error instanceof HttpErrorResponse)) {
     return fallback;
@@ -20,7 +17,6 @@ export function describeError(error: unknown, fallback = 'Something went wrong.'
   }
 
   if (body && typeof body === 'object') {
-    // ASP.NET model-validation payload: surface the first message rather than "One or more errors".
     const firstValidationMessage = body.errors && Object.values(body.errors).flat()[0];
     if (firstValidationMessage) {
       return firstValidationMessage;

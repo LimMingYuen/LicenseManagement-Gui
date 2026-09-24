@@ -1,8 +1,4 @@
-/**
- * The generate pages do not use the shared .page-scroll wrapper. The form component owns
- * its own scroll area so it can pin an action bar to the bottom of the window, so the page
- * is just the header plus a component told to fill what is left.
- */
+// Generate page shell: the header plus a form that fills the rest and owns its own scroll area.
 :host {
   display: flex;
   flex-direction: column;

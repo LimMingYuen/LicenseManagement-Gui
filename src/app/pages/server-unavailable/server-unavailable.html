@@ -21,8 +21,6 @@
     [disabled]="isRetrying()"
     (click)="retry()"
   >
-    <!-- One root node per branch: a bare mat-icon here would be claimed by MatButton's
-         icon slot, which a multi-node control-flow branch cannot fill. -->
     @if (isRetrying()) {
       <span class="server-unavailable__label">
         <mat-spinner diameter="18" />
@@ -36,7 +34,6 @@
     }
   </button>
 
-  <!-- Says the quiet part out loud: nobody needs to sit here refreshing the page. -->
   <p class="server-unavailable__hint">
     Retrying automatically.
     @if (lastCheckedLabel()) {

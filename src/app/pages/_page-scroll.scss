@@ -1,13 +1,4 @@
-/**
- * Shell for a page that has an <app-page-header> pinned at the top and a
- * scrolling body beneath it. The sibling of _page-fill.scss, which is for
- * pages whose body is a single self-scrolling child (a data table).
- *
- * Use with:
- *   .scss   @use '../page-scroll';
- *   .html   <app-page-header … />
- *           <div class="page-scroll"> <div class="page"> … </div> </div>
- */
+// Shell for a page with a pinned <app-page-header> above a scrolling body.
 
 :host {
   display: flex;
@@ -24,7 +15,7 @@
   overflow-y: auto;
 }
 
-/* Vertical rhythm for the stack of cards these pages are built from. */
+// Card stack spacing
 .page > section,
 .page > .card {
   margin-bottom: var(--sp-4);
@@ -44,7 +35,7 @@
   margin-top: var(--sp-4);
 }
 
-/* Signed payloads and PEM blocks: monospace, scrollable, never widening the page. */
+// Signed payloads and PEM blocks
 .code-block {
   margin: 0;
   max-height: 18rem;

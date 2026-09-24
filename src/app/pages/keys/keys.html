@@ -9,7 +9,6 @@
       <p class="muted">Loading…</p>
     } @else if (status(); as key) {
       @if (!key.exists) {
-        <!-- Nothing can be signed until this button is pressed. -->
         <section class="card empty-key">
           <h2 class="section-title">No signing key yet</h2>
           <p class="muted">
@@ -103,11 +102,6 @@
         </section>
       }
 
-      <!--
-        Rendered whether or not a key exists. Before one is generated it is the alternative to
-        generating; afterwards it is the way to correct a server that generated a pair the
-        field does not trust.
-      -->
       <section class="card">
         <h2 class="section-title">Import an existing key</h2>
         <p class="muted">

@@ -1,12 +1,6 @@
 import { MatDialogConfig } from '@angular/material/dialog';
 
-/**
- * Config every dialog in the app opens with.
- *
- * Dialogs go through MatDialog rather than a component-level overlay: the CDK renders them
- * on <body>, clear of the sidenav's stacking context and of the z-index the CDK table writes
- * inline onto its sticky header cells. An in-page overlay loses to both.
- */
+/** Builds the shared MatDialog config used by every dialog in the app. */
 export function dialogConfig<T>(data: T, width = '30rem'): MatDialogConfig<T> {
   return {
     data,

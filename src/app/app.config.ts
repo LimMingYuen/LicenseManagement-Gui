@@ -22,19 +22,12 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([authInterceptor])),
 
-    // Revalidate stored Basic credentials before the first route activates,
-    // so guards never see a half-restored session after a page reload.
+    // Guards need a settled auth state before the first route activates.
     provideAppInitializer(() => inject(AuthService).restoreSession()),
 
-    // Start watching the API. Not awaited: a dead backend must not hold the app at a blank
-    // screen — the whole point is to render the login page and say the server is down.
-    // Started here rather than in the service constructor because the auth interceptor
-    // injects it, and a probe fired during construction would re-enter a half-built service.
+    // Not awaited, so a dead backend cannot block the first render.
     provideAppInitializer(() => void inject(HealthService).start()),
 
-    // Every form field in the app is outlined, and reserves subscript space only when it
-    // actually carries a hint or an error. Set once here rather than repeated as an
-    // attribute on each of the fields across the dialogs and pages.
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: {

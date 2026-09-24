@@ -13,6 +13,7 @@ import { UserForm, UserFormData } from './user-form';
 import { PasswordReset, PasswordResetData } from './password-reset';
 import { buildUsersTableConfig } from './users-table.config';
 
+/** Page that lists and manages user accounts. */
 @Component({
   selector: 'app-users',
   imports: [MatSnackBarModule, DataTableComponent],
@@ -29,17 +30,14 @@ export class Users {
   protected readonly users = signal<User[]>([]);
   protected readonly loading = signal(true);
 
-  /** Built once: the self-guard on deactivate only depends on who is signed in. */
+  /** Built once, since the self-deactivation guard depends only on the signed-in user. */
   protected readonly tableConfig = buildUsersTableConfig(this.auth.currentUser()?.id ?? null);
 
   constructor() {
     void this.load();
   }
 
-  /**
-   * The whole list is fetched once and filtered in the table — the account list is
-   * small enough that a round trip per keystroke buys nothing.
-   */
+  /** Loads all user accounts. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -52,6 +50,7 @@ export class Users {
     }
   }
 
+  /** Dispatches a table action. */
   protected handleAction(event: DataActionEvent<User>): void {
     switch (event.action) {
       case 'add':
@@ -73,7 +72,7 @@ export class Users {
     }
   }
 
-  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  /** Opens the user dialog, creating a new account when given null. */
   private async openForm(user: User | null): Promise<void> {
     const saved = await firstValueFrom(
       this.dialog.open(UserForm, dialogConfig<UserFormData>({ user })).afterClosed(),
@@ -94,6 +93,7 @@ export class Users {
     }
   }
 
+  /** Opens the password reset dialog for an account. */
   private async openPasswordReset(user: User): Promise<void> {
     const done = await firstValueFrom(
       this.dialog.open(PasswordReset, dialogConfig<PasswordResetData>({ user })).afterClosed(),
@@ -105,6 +105,7 @@ export class Users {
     }
   }
 
+  /** Toggles the account's active status. */
   private async toggleActive(user: User): Promise<void> {
     try {
       const updated = await this.userService.setActive(user.id, !user.isActive);
@@ -118,10 +119,12 @@ export class Users {
     }
   }
 
+  /** Replaces the matching account in the list. */
   private replace(user: User): void {
     this.users.update((list) => list.map((u) => (u.id === user.id ? user : u)));
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

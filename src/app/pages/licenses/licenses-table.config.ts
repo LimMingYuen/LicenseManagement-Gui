@@ -2,10 +2,11 @@ import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.model
 import { License } from '../../models/license.models';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
-/** Each license type gets its own tone so the three read apart at a glance. */
+/** Maps a license type to its badge tone. */
 const typeTone = (display: string): BadgeTone =>
   display === 'Machine' ? 'info' : display === 'Robot' ? 'success' : 'neutral';
 
+/** Maps a license status to its badge tone. */
 const statusTone = (display: string): BadgeTone => {
   switch (display) {
     case 'Active':
@@ -20,6 +21,7 @@ const statusTone = (display: string): BadgeTone => {
   }
 };
 
+/** Builds the license register table config. */
 export function buildLicensesTableConfig(): DataTableConfig<License> {
   return {
     title: 'Licenses',
@@ -33,8 +35,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
         width: '175px',
         columnFilter: true,
         columnFilterType: 'option',
-        // Listed rather than derived, for the same reason the Type options are: a product
-        // with no licenses yet still has to be selectable.
         columnFilterOptions: [
           { value: 'QES KUKA AMR', label: 'QES KUKA AMR' },
           { value: 'OMRON DI Gateway', label: 'OMRON DI Gateway' },
@@ -50,9 +50,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
         width: '120px',
         columnFilter: true,
         columnFilterType: 'option',
-        // Listed explicitly rather than derived from the data: the Gateway option has to be
-        // offered even when no gateway license exists yet. The desktop app omitted it
-        // entirely, which made gateway licenses unfilterable.
         columnFilterOptions: [
           { value: 'Machine', label: 'Machine', tone: 'info' },
           { value: 'Robot', label: 'Robot', tone: 'success' },
@@ -85,8 +82,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
         width: '150px',
         columnFilter: true,
         columnFilterType: 'text',
-        // Robot licenses always name their machine; gateway licenses optionally do. A
-        // machine license is its own machine, so the cell would only repeat Target ID.
         transform: (value: string | null) => value || '—',
       },
       {
@@ -174,7 +169,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
     defaultSort: { column: 'issuedAt', direction: 'desc' },
     empty: { message: 'No licenses issued yet', icon: 'inventory_2' },
     rowClickable: true,
-    // Revoked licenses stay on record - they read back rather than disappearing.
     rowMutedWhen: (row) => row.isRevoked,
   };
 }

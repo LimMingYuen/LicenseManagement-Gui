@@ -2,15 +2,13 @@ import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.model
 import { Application, supportedKinds } from '../../models/application.models';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
+/** Maps the status text to its badge tone. */
 const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'success' : 'danger');
 
-/** An application with no licenses is the normal state of a newly created one, not a fault. */
+/** Maps the license count text to its badge tone. */
 const licenseTone = (display: string): BadgeTone => (display === 'None' ? 'neutral' : 'info');
 
-/**
- * Built per signed-in role rather than exported flat: everything that writes is SuperAdmin-only,
- * so an Operator gets a read-only list rather than buttons that fail at the API.
- */
+/** Builds the applications table config for the signed-in role. */
 export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableConfig<Application> {
   return {
     title: 'Applications',
@@ -39,8 +37,6 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
         header: 'Issues',
         sortable: false,
         width: '220px',
-        // Reads off the whole row rather than the one flag the key names — the three
-        // supports* columns are one fact as far as an operator is concerned.
         transform: (_value: boolean, row: Application) => supportedKinds(row).join(', ') || '—',
       },
       {
@@ -118,7 +114,6 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
         type: 'icon',
         tooltip: 'Delete — only possible with no licenses',
         hidden: () => !isSuperAdmin,
-        // The API refuses this too; disabling it here explains why before the click.
         disabled: (row) => row.licenseCount > 0,
       },
     ],

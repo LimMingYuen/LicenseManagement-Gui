@@ -1,54 +1,35 @@
 /** What a license binds to. Mirrors the API's LicenseRecordType. */
 export type LicenseKind = 'Machine' | 'Robot' | 'Gateway';
 
-/**
- * The stable key of a product family, e.g. "QES-KUKA-AMR".
- *
- * A plain string rather than a union: applications are rows in the database now, created
- * and named from the Applications page, so the set is not knowable at compile time.
- */
+/** Stable key of a product family, e.g. "QES-KUKA-AMR". */
 export type LicenseApplicationKey = string;
 
 /** Commercial tier. Robot licenses have no trial. */
 export type LicenseTier = 'PERPETUAL' | 'SUBSCRIPTION' | 'TRIAL';
 
-/**
- * Lifecycle state, computed server-side so the register and the dashboard cannot
- * disagree about what "expiring" means.
- */
+/** Lifecycle state, computed by the server. */
 export type LicenseStatus = 'Active' | 'Expiring' | 'Expired' | 'Revoked';
 
 export interface License {
   id: number;
-  /** The GUID inside the signed payload; stable across export/import. */
+  /** GUID inside the signed payload. */
   licenseId: string;
   type: LicenseKind;
-  /** The product family this license was issued under. Stored, not derived from . */
+  /** Product family the license was issued under. */
   applicationId: number;
   application: LicenseApplicationKey;
   applicationName: string;
   /** Machine ID, robot ID or device ID depending on `type`. */
   targetId: string;
-  /**
-   * The machine this license hangs off in the catalog. Required for Robot licenses and
-   * part of their signed payload; optional and registry-only for Gateway licenses; always
-   * null for Machine licenses, which are their own machine (see `targetId`).
-   */
+  /** Machine the license belongs to in the catalog; null for Machine licenses. */
   machineId: string | null;
-  /**
-   * The machine register row this license hangs off - the authoritative link, where
-   * `machineId` above is only the string that was signed. Null for desktop imports that
-   * could not be attached to a customer-owned machine.
-   */
+  /** Machine register row the license is linked to; null for unattached desktop imports. */
   machineRefId: number | null;
-  /** The machine's human label, when it has one. */
+  /** Human-readable machine label, if set. */
   machineName: string | null;
-  /**
-   * The customer row this license belongs to. Null for rows that predate the customer
-   * register or were imported from the desktop app.
-   */
+  /** Owning customer row; null for legacy or desktop-imported records. */
   customerId: number | null;
-  /** The linked customer's current name, or the name frozen into the record when unlinked. */
+  /** Linked customer's current name, or the stored name when unlinked. */
   customerName: string;
   licenseType: LicenseTier;
   status: LicenseStatus;
@@ -63,13 +44,14 @@ export interface License {
   createdBy: string | null;
 }
 
-/** A license plus its signed file — returned by generate, and by the detail fetch. */
+/** A license together with its signed file. */
 export interface LicenseWithFile {
   license: License;
   licenseFileContent: string;
   fileName: string;
 }
 
+/** Dashboard counts and recent licenses. */
 export interface LicenseSummary {
   total: number;
   machineCount: number;
@@ -85,9 +67,8 @@ export interface LicenseSummary {
 
 /** Fields every generate form collects. */
 interface GenerateBase {
-  /** The application to issue under. Must be one that supports this license type. */
+  /** Application to issue under; must support this license type. */
   applicationId: number;
-  /** The customer to issue against. The portal always sends this rather than a name. */
   customerId: number;
   licenseType: LicenseTier;
   /** Required unless the tier is PERPETUAL. */
@@ -106,10 +87,7 @@ export interface GenerateRobotRequest extends GenerateBase {
 
 export interface GenerateGatewayRequest extends GenerateBase {
   deviceId: string;
-  /**
-   * Optional machine the device is sited against. Groups the license in the catalog and
-   * is deliberately not written into the signed payload.
-   */
+  /** Optional machine for catalog grouping; not part of the signed payload. */
   machineId: string | null;
 }
 
@@ -122,7 +100,7 @@ export interface LicenseListQuery {
 
 // ---- Catalog: Application -> Customer -> Machine -> licenses ---------------------------
 
-/** Status tally for one node of the catalog. Rolls up from the leaves. */
+/** Status tally for one catalog node, rolled up from its licenses. */
 export interface CatalogCounts {
   total: number;
   active: number;
@@ -131,39 +109,33 @@ export interface CatalogCounts {
   revoked: number;
 }
 
-/** Level 3. Every license bound to one machine. */
+/** Catalog level 3: every license bound to one machine. */
 export interface MachineNode {
-  /** The machine ID, or a placeholder label when `isUnassigned`. */
+  /** Machine ID, or a placeholder label when `isUnassigned`. */
   machineId: string;
-  /**
-   * The machine register row these licenses are linked to. Null for the unassigned bucket
-   * and for desktop imports, which still group on the machine ID string alone.
-   */
+  /** Machine register row; null for the unassigned bucket and desktop imports. */
   machineRefId: number | null;
-  /** The machine's human label, when it has one. */
+  /** Human-readable machine label, if set. */
   name: string | null;
   /** True for the bucket holding licenses that name no machine. */
   isUnassigned: boolean;
-  /**
-   * True when robots or gateways point at this machine but no machine license was ever
-   * issued for it — a binding that is only a typed-in string.
-   */
+  /** True when robots or gateways reference this machine but it has no machine license. */
   isOrphaned: boolean;
   /** Machine license first, then robots, then gateways. */
   licenses: License[];
   counts: CatalogCounts;
 }
 
-/** Level 2. One customer's machines within one application. */
+/** Catalog level 2: one customer's machines within one application. */
 export interface CustomerNode {
-  /** Null for licenses that predate the customer register; those get no manage link. */
+  /** Null for licenses that predate the customer register. */
   customerId: number | null;
   customerName: string;
   machines: MachineNode[];
   counts: CatalogCounts;
 }
 
-/** Level 1. One product family. Present even when it holds no licenses. */
+/** Catalog level 1: one product family, present even without licenses. */
 export interface ApplicationNode {
   id: number;
   key: LicenseApplicationKey;

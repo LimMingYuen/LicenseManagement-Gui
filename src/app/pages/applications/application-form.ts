@@ -10,18 +10,11 @@ import { ApplicationService } from '../../services/application.service';
 import { describeError } from '../../shared/utils/http-error';
 
 export interface ApplicationFormData {
-  /** null = create a new application, otherwise edit this one. */
+  /** Null to create a new application, otherwise the one to edit. */
   application: Application | null;
 }
 
-/**
- * Create/edit dialog for a product family.
- *
- * The three "issues" checkboxes are the point of the form: they decide which generate pages
- * offer this application. The payload formats themselves are still code — each is a signed
- * byte layout a device verifies — so what is chosen here is which of the three existing
- * formats this product is allowed to use, not a new one.
- */
+/** Dialog that creates or edits an application. */
 @Component({
   selector: 'app-application-form',
   imports: [
@@ -115,14 +108,6 @@ export interface ApplicationFormData {
     </form>
   `,
   styles: `
-    /* Fields sit side by side and drop to one column only when the dialog is
-       narrower than two comfortable inputs.
-
-       align-items matters: stretched, a field grows to the row's height, and
-       since the hint and error text below it are a fixed size, the extra
-       height lands on the input box itself — so the two boxes only matched
-       when both happened to show the same number of subscript lines. Aligned
-       to the top they keep their own height and the boxes always agree. */
     .form-row {
       display: flex;
       flex-wrap: wrap;
@@ -135,8 +120,6 @@ export interface ApplicationFormData {
       }
     }
 
-    /* The three types are one choice made across three tickboxes, so they read
-       as a row rather than a stack. */
     .checkbox-row {
       display: flex;
       flex-wrap: wrap;
@@ -149,7 +132,7 @@ export class ApplicationForm {
   private readonly applications = inject(ApplicationService);
   private readonly dialogRef = inject<MatDialogRef<ApplicationForm, Application>>(MatDialogRef);
 
-  /** null = create a new application, otherwise the one being edited. */
+  /** Null when creating a new application. */
   private readonly application = inject<ApplicationFormData>(MAT_DIALOG_DATA).application;
 
   protected readonly editing = this.application !== null;
@@ -174,7 +157,6 @@ export class ApplicationForm {
       return;
     }
 
-    // Editing: the key is the identity other things quote, so it is shown but not editable.
     this.form.controls.key.disable();
     this.form.patchValue({
       key: existing.key,
@@ -186,18 +168,19 @@ export class ApplicationForm {
     });
   }
 
+  /** Whether at least one license type is ticked. */
   protected anyTypeSelected(): boolean {
     const v = this.form.getRawValue();
     return v.supportsMachine || v.supportsRobot || v.supportsGateway;
   }
 
+  /** Validates the form and creates or updates the application. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
       return;
     }
 
-    // Mirrors the server rule: an application issuing nothing could never be used.
     if (!this.anyTypeSelected()) {
       this.form.markAllAsTouched();
       this.error.set('Select at least one license type this application can issue.');

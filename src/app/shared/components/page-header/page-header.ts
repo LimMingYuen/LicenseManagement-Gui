@@ -3,16 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-/**
- * The one page header. Pale brand bar, title on the left, controls anchored
- * right — every page and the data table render this rather than their own copy.
- *
- * The right-hand side is a single unnamed slot: pass whatever the page needs
- * (buttons, pills, status indicators) and page-header.scss sizes it to the
- * 34px / 13px control rhythm. There is no action-config model here on purpose —
- * the data table keeps its own `headerActions` config and simply projects the
- * buttons it builds from it.
- */
+/** Renders the shared page header with a title and a projected slot for right-aligned controls. */
 @Component({
   selector: 'app-page-header',
   standalone: true,
@@ -28,7 +19,7 @@ export class PageHeaderComponent {
   /** Second line under the title. Omit for a single-line bar. */
   @Input() subtitle?: string;
 
-  /** Renders a pill after the title. Pass a formatted string. */
+  /** Pre-formatted value shown as a pill after the title. */
   @Input() count?: string | number | null;
 
   @Input() showBack = false;

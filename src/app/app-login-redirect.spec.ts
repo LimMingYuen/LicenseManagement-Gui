@@ -9,9 +9,11 @@ import { AuthService } from './services/auth.service';
 import { HealthService } from './services/health.service';
 import { User } from './models/user.models';
 
+/** Stands in for the login page. */
 @Component({ selector: 'app-login-stub', template: 'login' })
 class LoginStub {}
 
+/** Stands in for a guarded page. */
 @Component({ selector: 'app-page-stub', template: 'page' })
 class PageStub {}
 
@@ -25,12 +27,7 @@ const admin: User = {
   lastLoginAt: null,
 };
 
-/**
- * The login page inside the signed-in shell — sidebar, avatar, nav rail, and a sign-in form
- * in the middle of it. Both routes into that state are covered here: arriving at /login with
- * a session already restored, and the session coming back while the user is parked there
- * after an outage.
- */
+/** Covers a signed-in user arriving at, or stranded on, the login route. */
 describe('App · a signed-in user on the login route', () => {
   let fixture: ComponentFixture<App>;
   let router: Router;
@@ -46,7 +43,6 @@ describe('App · a signed-in user on the login route', () => {
   }
 
   beforeEach(async () => {
-    // Written before anything injects AuthService: it reads the store once, on construction.
     sessionStorage.setItem('lm.credentials', btoa('admin:secret'));
 
     await TestBed.configureTestingModule({
@@ -76,9 +72,6 @@ describe('App · a signed-in user on the login route', () => {
   });
 
   it('redirects to the return URL when the session was restored before the router moved', async () => {
-    // The order production runs in, and the one the old redirect could not survive: the
-    // session is verified by an app initializer, the shell's first change detection happens
-    // next (Router.url is still '/'), and only then does the router reach /login.
     const restored = auth.restoreSession();
     http.expectOne('/api/auth/me').flush(admin);
     await restored;
@@ -93,8 +86,6 @@ describe('App · a signed-in user on the login route', () => {
   });
 
   it('leaves /login once the credentials are verified again after an outage', async () => {
-    // The API is down, so the stored credentials cannot be checked and the guard parks the
-    // browser on /login. Nothing has rejected them — the session is unverified, not gone.
     await fixture.whenStable();
     http.expectOne('/api/auth/me').flush(null, { status: 502, statusText: 'Bad Gateway' });
 
@@ -105,8 +96,6 @@ describe('App · a signed-in user on the login route', () => {
     expect(shell().sidebar).toBeNull();
     expect(shell().login).not.toBeNull();
 
-    // The API answers again and the session comes back underneath a route that no guard is
-    // going to re-run. The shell has to notice on its own.
     const restored = auth.restoreSession();
     http.expectOne('/api/auth/me').flush(admin);
     await restored;

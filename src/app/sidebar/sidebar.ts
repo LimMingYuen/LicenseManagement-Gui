@@ -16,17 +16,11 @@ export interface NavItem {
   label: string;
   icon: string;
   route: string;
-  /** Passed to routerLinkActiveOptions so prefix paths do not double-highlight. */
+  /** Exact route matching, so prefix paths do not highlight together. */
   exact: boolean;
 }
 
-/**
- * The app shell: a collapsible icon rail on the left, the routed page beside it.
- * Ported from PENTA SMC AMR so both products share one navigation model.
- *
- * Items come from PAGE_REGISTRY and are filtered by role, so a non-SuperAdmin never
- * sees a link the route guard would bounce them off.
- */
+/** Renders the app shell with a collapsible navigation rail beside the routed page. */
 @Component({
   selector: 'app-sidebar',
   imports: [
@@ -48,11 +42,7 @@ export class SidebarComponent {
   protected readonly health = inject(HealthService);
   private readonly router = inject(Router);
 
-  /**
-   * The dot on the avatar used to be decorative — always green, whatever the server was
-   * doing. It now tracks the API, so the always-visible corner of the shell tells the truth
-   * even after the banner has been read and scrolled past.
-   */
+  /** Text describing the current API connection state. */
   protected readonly connectionLabel = computed(() => {
     switch (this.health.status()) {
       case 'online':
@@ -89,7 +79,7 @@ export class SidebarComponent {
 
   protected readonly userRole = computed(() => this.auth.currentUser()?.role ?? '');
 
-  /** Two-letter avatar initials, from the full name when there is one. */
+  /** Two-letter avatar initials, taken from the full name when present. */
   protected readonly initials = computed(() => {
     const user = this.auth.currentUser();
     const source = user?.fullName?.trim() || user?.username?.trim();
@@ -102,10 +92,12 @@ export class SidebarComponent {
     return letters.toUpperCase();
   });
 
+  /** Expands or collapses the navigation rail. */
   protected toggleSidebar(): void {
     this.collapsed.update((value) => !value);
   }
 
+  /** Signs out and navigates to the login page. */
   protected async logout(): Promise<void> {
     this.auth.logout();
     await this.router.navigateByUrl('/login');

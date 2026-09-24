@@ -89,8 +89,6 @@
             </div>
           </div>
 
-          <!-- Spelled out here because the dot is only a colour, and the banner is gone
-               once the connection recovers. -->
           <div class="profile-connection" [class]="'profile-connection--' + health.status()">
             <span class="profile-connection__dot"></span>
             <span>{{ connectionLabel() }}</span>

@@ -1,6 +1,3 @@
-<!-- The page scrolls inside this element rather than in the shared .page-scroll wrapper,
-     so the action bar below it can sit against the bottom of the window at every scroll
-     position without the sticky-inside-padding games a shared wrapper would need. -->
 <div class="gen-scroll">
   <div class="gen-page">
     @if (error(); as message) {
@@ -13,19 +10,11 @@
         <p class="card-note">{{ config().banner }}</p>
       </div>
 
-      <!-- Four groups rather than one flat grid: the fields fall into four questions —
-           what does it bind to, who is it for, how long does it last, and what should the
-           register remember — and grouping them lets the form use the full window width
-           without stretching any single control. -->
       <div class="group-grid">
         <fieldset class="group">
           <legend class="group-legend">Binding</legend>
 
           @for (field of config().fields; track field.key) {
-            <!-- A machine is picked from the customer's register rather than typed: this
-                 license attaches to a machine that must already be licensed, and typing that
-                 binding by hand is what used to produce robots bound to machines that did
-                 not exist. Everything else here is a new identifier, so it is typed. -->
             @if (field.control === 'machine') {
               <mat-form-field>
                 <mat-label>{{ field.label }}</mat-label>
@@ -80,8 +69,6 @@
         <fieldset class="group">
           <legend class="group-legend">Assignment</legend>
 
-          <!-- Which product this license belongs to. Only applications that issue this page's
-               license type are offered, so the API cannot refuse the pick. -->
           <mat-form-field>
             <mat-label>Application</mat-label>
             <mat-select
@@ -102,8 +89,6 @@
             }
           </mat-form-field>
 
-          <!-- Who the license is issued to. The list is managed on the Customers page —
-               this picker only chooses from it. -->
           <mat-form-field>
             <mat-label>Customer</mat-label>
             <mat-select
@@ -137,15 +122,11 @@
             </mat-select>
           </mat-form-field>
 
-          <!-- A perpetual license has no expiry, so the control is not just disabled: it is
-               absent, and the group says why rather than leaving a hole. -->
           @if (!isPerpetual()) {
             <mat-form-field #expiryField>
               <mat-label>Expiration date</mat-label>
               <input matInput [matDatepicker]="expiry" formControlName="expiresAt" />
               <mat-datepicker-toggle matIconSuffix [for]="expiry" />
-              <!-- The calendar opens as wide as the field it drops out of. The panel class
-                   marks it for the global rule that reads the measured width. -->
               <mat-datepicker #expiry panelClass="field-width-calendar" />
               <mat-hint>Required for {{ form.controls.licenseType.value }} licenses.</mat-hint>
             </mat-form-field>
@@ -168,9 +149,7 @@
       </div>
     </form>
 
-    <!-- Below the form: the signed result once there is one, and until then the licenses
-         this application issued most recently — the question an operator on this page asks
-         next, and the reason the space under a short form is worth filling. -->
+    <!-- Signed result, or recently issued licenses -->
     @if (result(); as generated) {
       <section class="card result-card">
         <p class="alert alert-success">
@@ -280,9 +259,7 @@
   </div>
 </div>
 
-<!-- The action bar is pinned to the bottom of the window: it is the live preview of what
-     will be signed and the only place the primary action lives, so it stays put however
-     long the form or the register below it grows. -->
+<!-- Action bar -->
 <div class="action-bar">
   <dl class="bar-summary">
     <div class="bar-item">

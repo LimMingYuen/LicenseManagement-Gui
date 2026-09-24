@@ -1,15 +1,10 @@
-/**
- * The catalog tree. Depth is carried by an indented rule down the left of each branch
- * rather than by padding alone, so a deep customer with many machines still reads as one
- * subtree when it scrolls past the header.
- */
 @use '../../page-scroll';
 
 .page {
   max-width: 84rem;
 }
 
-/* Filter bar --------------------------------------------------------------- */
+// Filter bar
 
 .filters {
   display: flex;
@@ -34,7 +29,7 @@
   height: var(--control-h);
 }
 
-/* Nodes -------------------------------------------------------------------- */
+// Nodes
 
 .app {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
@@ -101,7 +96,6 @@ button.node {
 }
 
 .node--machine {
-  /* Not a button: a machine has nothing to expand, its licenses are always shown. */
   gap: var(--sp-2);
   font-size: var(--fs-base);
 
@@ -117,10 +111,9 @@ button.node {
   flex: 0 0 auto;
 }
 
-/* Branches ----------------------------------------------------------------- */
+// Branches
 
 .branch {
-  /* The guide rule that makes depth legible. */
   border-left: 2px solid var(--brand-border-soft);
 }
 
@@ -145,7 +138,7 @@ button.node {
   color: var(--brand-text-subtle);
 }
 
-/* Leaves ------------------------------------------------------------------- */
+// Leaves
 
 .leaves {
   display: flex;
@@ -190,7 +183,6 @@ button.node {
   }
 }
 
-/* Revoked licenses stay on record — they read back rather than disappearing. */
 .leaf--muted {
   opacity: 0.6;
 }
@@ -207,7 +199,7 @@ button.node {
   font-size: var(--fs-sm);
 }
 
-/* Below the grid's natural width the columns stack rather than crush. */
+// Narrow screens: stacked leaf columns
 @media (max-width: 900px) {
   .leaf {
     grid-template-columns: auto minmax(0, 1fr);
@@ -215,7 +207,7 @@ button.node {
   }
 }
 
-/* Empty state -------------------------------------------------------------- */
+// Empty state
 
 .empty-state {
   display: flex;

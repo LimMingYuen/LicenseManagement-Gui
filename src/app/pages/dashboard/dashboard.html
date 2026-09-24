@@ -8,7 +8,7 @@
     @if (loading()) {
       <p class="muted">Loading…</p>
     } @else if (summary(); as s) {
-      <!-- Quick actions first: issuing a license is why anyone opens this app. -->
+      <!-- Quick actions -->
       <div class="quick-row">
         @for (action of quickActions; track action.route) {
           <a class="card quick" [routerLink]="action.route">

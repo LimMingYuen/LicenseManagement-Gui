@@ -3,7 +3,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { GenerateLicenseForm } from './generate-license-form';
 import { GATEWAY_CONFIG } from './generate-license.config';
 
-/** One page per license type — the form itself is shared. */
+/** Page that issues gateway licenses. */
 @Component({
   selector: 'app-gateway-license',
   imports: [PageHeaderComponent, GenerateLicenseForm],

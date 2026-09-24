@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { FormErrorStateMatcher } from '../../shared/utils/error-state';
 import { describeError } from '../../shared/utils/http-error';
 
+/** Page where the signed-in user changes their password. */
 @Component({
   selector: 'app-change-password',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
@@ -71,10 +72,7 @@ export class ChangePassword {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  /**
-   * The mismatch rule lives on the group, not on the confirm box, so Material would never
-   * paint that field as failing on its own. This hands it the group's verdict.
-   */
+  /** Shows the group-level mismatch error on the confirm field. */
   protected readonly confirmMatcher = new FormErrorStateMatcher('mismatch');
 
   protected readonly form = inject(FormBuilder).nonNullable.group(
@@ -86,6 +84,7 @@ export class ChangePassword {
     { validators: passwordsMatch },
   );
 
+  /** Changes the password and returns to the dashboard. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
@@ -108,6 +107,7 @@ export class ChangePassword {
   }
 }
 
+/** Reports a mismatch between the new password and its confirmation. */
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const next = group.get('newPassword')?.value;
   const confirmation = group.get('confirmPassword')?.value;
