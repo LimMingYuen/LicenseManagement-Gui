@@ -1,15 +1,17 @@
 import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.models';
 import { User } from '../../models/user.models';
+import { Role, SUPER_ADMIN_ROLE } from '../../models/role.models';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
 /** Maps a role to its badge tone. */
-const roleTone = (display: string): BadgeTone => (display === 'SuperAdmin' ? 'info' : 'neutral');
+const roleTone = (display: string): BadgeTone =>
+  display === SUPER_ADMIN_ROLE ? 'info' : 'neutral';
 
 /** Maps the status text to its badge tone. */
 const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'success' : 'danger');
 
-/** Builds the users table config, disabling deactivation of the signed-in account. */
-export function buildUsersTableConfig(selfId: number | null): DataTableConfig<User> {
+/** Builds the users table config, disabling deletion of the signed-in account. */
+export function buildUsersTableConfig(selfId: number | null, roles: Role[]): DataTableConfig<User> {
   return {
     title: 'Users',
     icon: 'people',
@@ -42,10 +44,11 @@ export function buildUsersTableConfig(selfId: number | null): DataTableConfig<Us
         width: '140px',
         columnFilter: true,
         columnFilterType: 'option',
-        columnFilterOptions: [
-          { value: 'SuperAdmin', label: 'Super Admin', tone: 'info' },
-          { value: 'Operator', label: 'Operator', tone: 'neutral' },
-        ],
+        columnFilterOptions: roles.map((r) => ({
+          value: r.name,
+          label: r.name,
+          tone: roleTone(r.name),
+        })),
       },
       {
         key: 'isActive',
@@ -74,6 +77,7 @@ export function buildUsersTableConfig(selfId: number | null): DataTableConfig<Us
       },
     ],
     actions: [
+      { action: 'view', label: 'View', icon: 'visibility', type: 'icon', tooltip: 'View user' },
       { action: 'edit', label: 'Edit', icon: 'edit', type: 'icon', tooltip: 'Edit user' },
       {
         action: 'reset-password',
@@ -83,21 +87,12 @@ export function buildUsersTableConfig(selfId: number | null): DataTableConfig<Us
         tooltip: 'Reset password',
       },
       {
-        action: 'deactivate',
-        label: 'Deactivate',
-        icon: 'person_off',
+        action: 'delete',
+        label: 'Delete',
+        icon: 'delete',
         type: 'icon',
-        tooltip: 'Deactivate account',
-        hidden: (row) => !row.isActive,
+        tooltip: 'Delete account',
         disabled: (row) => row.id === selfId,
-      },
-      {
-        action: 'activate',
-        label: 'Activate',
-        icon: 'how_to_reg',
-        type: 'icon',
-        tooltip: 'Activate account',
-        hidden: (row) => row.isActive,
       },
     ],
     headerActions: [

@@ -27,6 +27,20 @@ export const guestGuard: CanActivateFn = (route) => {
   return router.parseUrl(safeReturnUrl(route.queryParamMap.get('returnUrl')));
 };
 
+/** Allows signed-in users whose role grants the requested page, redirecting others to the dashboard. */
+export const pageGuard: CanActivateFn = (route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  const signedIn = authGuard(route, state);
+  if (signedIn !== true) {
+    return signedIn;
+  }
+
+  const path = state.url.split(/[?#]/)[0];
+  return auth.canAccessPage(path) ? true : router.createUrlTree(['/dashboard']);
+};
+
 /** Allows only signed-in SuperAdmin users and redirects others to the dashboard. */
 export const superAdminGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);

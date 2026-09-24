@@ -1,7 +1,10 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { User } from '../models/user.models';
+import { CurrentUser } from '../models/user.models';
+import { PAGE_REGISTRY } from '../config/page-registry';
+import { SUPER_ADMIN_ROLE } from '../models/role.models';
+import { PageService } from './page.service';
 
 const CREDENTIALS_KEY = 'lm.credentials';
 
@@ -12,18 +15,36 @@ const UNVERIFIED_STATUSES = new Set([502, 503, 504]);
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly pages = inject(PageService);
 
   private readonly credentials = signal<string | null>(sessionStorage.getItem(CREDENTIALS_KEY));
-  private readonly user = signal<User | null>(null);
+  private readonly user = signal<CurrentUser | null>(null);
 
   private restoring = false;
 
   readonly currentUser = this.user.asReadonly();
   readonly isAuthenticated = computed(() => this.user() !== null);
-  readonly isSuperAdmin = computed(() => this.user()?.role === 'SuperAdmin');
+  readonly isSuperAdmin = computed(() => this.user()?.role === SUPER_ADMIN_ROLE);
 
   /** Credentials are stored but not yet confirmed by the API. */
-  readonly isSessionUnverified = computed(() => this.credentials() !== null && this.user() === null);
+  readonly isSessionUnverified = computed(
+    () => this.credentials() !== null && this.user() === null,
+  );
+
+  /** Whether the signed-in account may open the page registered at the given path. */
+  canAccessPage(path: string): boolean {
+    const user = this.user();
+    if (!user) {
+      return false;
+    }
+
+    const page = PAGE_REGISTRY.find((p) => p.path === path);
+    if (page?.superAdminOnly) {
+      return this.isSuperAdmin();
+    }
+
+    return this.isSuperAdmin() || !!page?.alwaysAllowed || user.allowedPages.includes(path);
+  }
 
   /** Returns the Authorization header value, or null when signed out. */
   authorizationHeader(): string | null {
@@ -32,11 +53,11 @@ export class AuthService {
   }
 
   /** Signs in with the given credentials and stores them on success. */
-  async login(username: string, password: string): Promise<User> {
+  async login(username: string, password: string): Promise<CurrentUser> {
     const encoded = encodeCredentials(username, password);
 
     const user = await firstValueFrom(
-      this.http.post<User>('/api/auth/login', null, {
+      this.http.post<CurrentUser>('/api/auth/login', null, {
         headers: new HttpHeaders({ Authorization: `Basic ${encoded}` }),
       }),
     );
@@ -44,6 +65,7 @@ export class AuthService {
     sessionStorage.setItem(CREDENTIALS_KEY, encoded);
     this.credentials.set(encoded);
     this.user.set(user);
+    this.syncPages();
     return user;
   }
 
@@ -63,7 +85,8 @@ export class AuthService {
     this.restoring = true;
 
     try {
-      this.user.set(await firstValueFrom(this.http.get<User>('/api/auth/me')));
+      this.user.set(await firstValueFrom(this.http.get<CurrentUser>('/api/auth/me')));
+      this.syncPages();
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
 
@@ -72,6 +95,15 @@ export class AuthService {
       }
     } finally {
       this.restoring = false;
+    }
+  }
+
+  /** Pushes the page registry to the server when a SuperAdmin is signed in. */
+  private syncPages(): void {
+    if (this.isSuperAdmin()) {
+      this.pages.sync().catch(() => {
+        // Non-critical: the next SuperAdmin sign-in retries the sync.
+      });
     }
   }
 

@@ -7,12 +7,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { UserService } from '../../services/user.service';
-import { User, UserRole } from '../../models/user.models';
+import { User } from '../../models/user.models';
+import { Role } from '../../models/role.models';
 import { describeError } from '../../shared/utils/http-error';
+import { formatIsoDateTime } from '../../shared/utils/date-format';
 
 export interface UserFormData {
   /** Null to create a new account, otherwise the one to edit. */
   user: User | null;
+  /** Roles offered in the role picker. */
+  roles: Role[];
+  /** Shows the account without allowing changes. */
+  readonly?: boolean;
 }
 
 /** Dialog that creates or edits a user account. */
@@ -37,6 +43,13 @@ export interface UserFormData {
       }
 
       <mat-dialog-content>
+        @if (readonly) {
+          <mat-form-field>
+            <mat-label>Username</mat-label>
+            <input matInput type="text" formControlName="username" class="mono" />
+          </mat-form-field>
+        }
+
         @if (!editing) {
           <mat-form-field>
             <mat-label>Username</mat-label>
@@ -52,7 +65,12 @@ export interface UserFormData {
 
           <mat-form-field>
             <mat-label>Password</mat-label>
-            <input matInput type="password" formControlName="password" autocomplete="new-password" />
+            <input
+              matInput
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+            />
             <mat-hint>Communicate it out of band — it is not emailed.</mat-hint>
             <mat-error>A password is required.</mat-error>
           </mat-form-field>
@@ -66,32 +84,77 @@ export interface UserFormData {
         <mat-form-field>
           <mat-label>Role</mat-label>
           <mat-select formControlName="role">
-            <mat-option value="Operator">Operator — generate and view licenses</mat-option>
-            <mat-option value="SuperAdmin">Super Admin — full access, including users</mat-option>
+            @for (role of roles; track role.id) {
+              <mat-option [value]="role.name">
+                {{ role.name }}{{ role.description ? ' — ' + role.description : '' }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
 
         <mat-checkbox formControlName="isActive">Account is active</mat-checkbox>
+
+        @if (readonly && user) {
+          <dl class="meta">
+            <dt>Created</dt>
+            <dd>{{ formatDate(user.createdAt) }}</dd>
+            <dt>Last sign-in</dt>
+            <dd>{{ user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never' }}</dd>
+          </dl>
+        }
       </mat-dialog-content>
 
       <mat-dialog-actions>
-        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
-        <button type="submit" matButton="filled" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
+        @if (readonly) {
+          <button type="button" matButton="filled" mat-dialog-close>Close</button>
+        } @else {
+          <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
+          <button type="submit" matButton="filled" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
+          </button>
+        }
       </mat-dialog-actions>
     </form>
+  `,
+  styles: `
+    .meta {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: var(--sp-1) var(--sp-4);
+      margin: var(--sp-2) 0 0;
+      font-size: var(--fs-md);
+
+      dt {
+        color: var(--brand-text-muted);
+      }
+
+      dd {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+      }
+    }
   `,
 })
 export class UserForm {
   private readonly users = inject(UserService);
   private readonly dialogRef = inject<MatDialogRef<UserForm, User>>(MatDialogRef);
 
+  private readonly data = inject<UserFormData>(MAT_DIALOG_DATA);
+
   /** Null when creating a new account. */
-  private readonly user = inject<UserFormData>(MAT_DIALOG_DATA).user;
+  protected readonly user = this.data.user;
+
+  protected readonly readonly = this.data.readonly ?? false;
+  protected readonly formatDate = formatIsoDateTime;
+
+  protected readonly roles = this.data.roles;
 
   protected readonly editing = this.user !== null;
-  protected readonly title = this.editing ? `Edit ${this.user?.username}` : 'New user';
+  protected readonly title = this.readonly
+    ? this.user?.username
+    : this.editing
+      ? `Edit ${this.user?.username}`
+      : 'New user';
 
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -100,7 +163,7 @@ export class UserForm {
     username: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]+$/)]],
     password: ['', Validators.required],
     fullName: [''],
-    role: ['Operator' as UserRole, Validators.required],
+    role: ['Operator', Validators.required],
     isActive: [true],
   });
 
@@ -114,15 +177,20 @@ export class UserForm {
     this.form.controls.username.disable();
     this.form.controls.password.disable();
     this.form.patchValue({
+      username: existing.username,
       fullName: existing.fullName,
       role: existing.role,
       isActive: existing.isActive,
     });
+
+    if (this.readonly) {
+      this.form.disable();
+    }
   }
 
   /** Validates the form and creates or updates the account. */
   protected async submit(): Promise<void> {
-    if (this.form.invalid || this.saving()) {
+    if (this.readonly || this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
       return;
     }
