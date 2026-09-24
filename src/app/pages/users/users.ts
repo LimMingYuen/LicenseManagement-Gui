@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.models';
+import { Role } from '../../models/role.models';
+import { RoleService } from '../../services/role.service';
 import { UserService } from '../../services/user.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
@@ -23,26 +26,37 @@ import { buildUsersTableConfig } from './users-table.config';
 })
 export class Users {
   private readonly userService = inject(UserService);
+  private readonly roleService = inject(RoleService);
   private readonly auth = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
   protected readonly users = signal<User[]>([]);
+  protected readonly roles = signal<Role[]>([]);
   protected readonly loading = signal(true);
 
-  /** Built once, since the self-deactivation guard depends only on the signed-in user. */
-  protected readonly tableConfig = buildUsersTableConfig(this.auth.currentUser()?.id ?? null);
+  /** Initial table search from the ?search= query parameter. */
+  protected readonly initialSearch = signal(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('search') ?? '',
+  );
+
+  private readonly selfId = this.auth.currentUser()?.id ?? null;
+
+  /** Rebuilt when roles load, since the role filter lists them. */
+  protected readonly tableConfig = computed(() => buildUsersTableConfig(this.selfId, this.roles()));
 
   constructor() {
     void this.load();
   }
 
-  /** Loads all user accounts. */
+  /** Loads all user accounts and the roles they can be assigned. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
     try {
-      this.users.set(await this.userService.list());
+      const [users, roles] = await Promise.all([this.userService.list(), this.roleService.list()]);
+      this.users.set(users);
+      this.roles.set(roles);
     } catch (error) {
       this.notify(describeError(error, 'Could not load users.'), 'error');
     } finally {
@@ -59,15 +73,17 @@ export class Users {
       case 'refresh':
         void this.load();
         break;
+      case 'view':
+        if (event.row) void this.openView(event.row);
+        break;
       case 'edit':
         if (event.row) void this.openForm(event.row);
         break;
       case 'reset-password':
         if (event.row) void this.openPasswordReset(event.row);
         break;
-      case 'activate':
-      case 'deactivate':
-        if (event.row) void this.toggleActive(event.row);
+      case 'delete':
+        if (event.row) void this.remove(event.row);
         break;
     }
   }
@@ -75,7 +91,9 @@ export class Users {
   /** Opens the user dialog, creating a new account when given null. */
   private async openForm(user: User | null): Promise<void> {
     const saved = await firstValueFrom(
-      this.dialog.open(UserForm, dialogConfig<UserFormData>({ user })).afterClosed(),
+      this.dialog
+        .open(UserForm, dialogConfig<UserFormData>({ user, roles: this.roles() }))
+        .afterClosed(),
     );
 
     if (!saved) {
@@ -93,6 +111,15 @@ export class Users {
     }
   }
 
+  /** Opens the account in a read-only dialog. */
+  private async openView(user: User): Promise<void> {
+    await firstValueFrom(
+      this.dialog
+        .open(UserForm, dialogConfig<UserFormData>({ user, roles: this.roles(), readonly: true }))
+        .afterClosed(),
+    );
+  }
+
   /** Opens the password reset dialog for an account. */
   private async openPasswordReset(user: User): Promise<void> {
     const done = await firstValueFrom(
@@ -105,17 +132,18 @@ export class Users {
     }
   }
 
-  /** Toggles the account's active status. */
-  private async toggleActive(user: User): Promise<void> {
+  /** Permanently deletes the account after confirmation. */
+  private async remove(user: User): Promise<void> {
+    if (!confirm(`Delete ${user.username}? This cannot be undone.`)) {
+      return;
+    }
+
     try {
-      const updated = await this.userService.setActive(user.id, !user.isActive);
-      this.replace(updated);
-      this.notify(
-        `${updated.username} was ${updated.isActive ? 'activated' : 'deactivated'}.`,
-        'success',
-      );
+      await this.userService.remove(user.id);
+      this.users.update((list) => list.filter((u) => u.id !== user.id));
+      this.notify(`${user.username} was deleted.`, 'success');
     } catch (error) {
-      this.notify(describeError(error, 'Could not change the account status.'), 'error');
+      this.notify(describeError(error, 'Could not delete this account.'), 'error');
     }
   }
 

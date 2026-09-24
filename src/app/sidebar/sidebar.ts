@@ -62,9 +62,7 @@ export class SidebarComponent {
 
   /** Navigation items the signed-in account is allowed to see. */
   protected readonly navItems = computed<NavItem[]>(() => {
-    const isSuperAdmin = this.auth.isSuperAdmin();
-
-    return PAGE_REGISTRY.filter((page) => !page.superAdminOnly || isSuperAdmin).map((page) => ({
+    return PAGE_REGISTRY.filter((page) => this.auth.canAccessPage(page.path)).map((page) => ({
       label: page.name,
       icon: page.icon,
       route: page.path,

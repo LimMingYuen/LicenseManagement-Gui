@@ -7,7 +7,7 @@ import { App } from './app';
 import { authGuard, guestGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
 import { HealthService } from './services/health.service';
-import { User } from './models/user.models';
+import { CurrentUser } from './models/user.models';
 
 /** Stands in for the login page. */
 @Component({ selector: 'app-login-stub', template: 'login' })
@@ -17,14 +17,16 @@ class LoginStub {}
 @Component({ selector: 'app-page-stub', template: 'page' })
 class PageStub {}
 
-const admin: User = {
+const admin: CurrentUser = {
   id: 1,
   username: 'admin',
   fullName: 'Default Admin',
+  roleId: 1,
   role: 'SuperAdmin',
   isActive: true,
   createdAt: '2026-08-01T00:00:00Z',
   lastLoginAt: null,
+  allowedPages: [],
 };
 
 /** Covers a signed-in user arriving at, or stranded on, the login route. */
@@ -68,6 +70,7 @@ describe('App · a signed-in user on the login route', () => {
   afterEach(() => {
     TestBed.inject(HealthService).stop();
     sessionStorage.clear();
+    http.match('/api/pages/sync').forEach((request) => request.flush(null));
     http.verify();
   });
 

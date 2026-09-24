@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { superAdminGuard, authGuard, guestGuard } from './guards/auth.guard';
+import { superAdminGuard, authGuard, guestGuard, pageGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,47 +17,47 @@ export const routes: Routes = [
   {
     path: 'licenses/catalog',
     title: 'License catalog · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/catalog/catalog').then((m) => m.LicenseCatalogPage),
   },
   {
     path: 'licenses/machine',
     title: 'Machine license · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/machine-license').then((m) => m.MachineLicense),
   },
   {
     path: 'licenses/robot',
     title: 'Robot license · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/robot-license').then((m) => m.RobotLicense),
   },
   {
     path: 'licenses/gateway',
     title: 'Gateway license · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/gateway-license').then((m) => m.GatewayLicense),
   },
   {
     path: 'licenses',
     title: 'Licenses · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () => import('./pages/licenses/licenses').then((m) => m.Licenses),
   },
   {
     path: 'customers',
     title: 'Customers · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () => import('./pages/customers/customers').then((m) => m.Customers),
   },
   {
     path: 'applications',
     title: 'Applications · License Management',
-    canActivate: [authGuard],
+    canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/applications/applications').then((m) => m.Applications),
   },
@@ -72,6 +72,12 @@ export const routes: Routes = [
     title: 'Users · License Management',
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/users/users').then((m) => m.Users),
+  },
+  {
+    path: 'roles',
+    title: 'Roles · License Management',
+    canActivate: [superAdminGuard],
+    loadComponent: () => import('./pages/roles/roles').then((m) => m.Roles),
   },
   {
     path: 'account/password',

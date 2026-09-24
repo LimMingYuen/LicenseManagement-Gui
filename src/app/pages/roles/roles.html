@@ -1,8 +1,7 @@
 <div class="page-fill">
   <app-data-table
-    [data]="users()"
-    [config]="tableConfig()"
-    [globalFilter]="initialSearch()"
+    [data]="roles()"
+    [config]="tableConfig"
     [loading]="loading()"
     (action)="handleAction($event)"
   >

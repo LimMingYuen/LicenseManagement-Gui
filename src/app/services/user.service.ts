@@ -28,9 +28,9 @@ export class UserService {
     return firstValueFrom(this.http.put<User>(`${this.baseUrl}/${id}`, request));
   }
 
-  /** Activates or deactivates a user. */
-  setActive(id: number, isActive: boolean): Promise<User> {
-    return firstValueFrom(this.http.post<User>(`${this.baseUrl}/${id}/status`, { isActive }));
+  /** Permanently deletes a user. */
+  remove(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }
 
   /** Sets a new password for a user. */
