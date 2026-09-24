@@ -14,8 +14,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
   },
-  // The generate pages and the catalog sit under /licenses/* but are matched exactly, so
-  // the register at /licenses is unaffected by their order here.
   {
     path: 'licenses/catalog',
     title: 'License catalog · License Management',

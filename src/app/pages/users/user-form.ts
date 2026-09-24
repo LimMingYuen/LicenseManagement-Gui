@@ -11,17 +11,11 @@ import { User, UserRole } from '../../models/user.models';
 import { describeError } from '../../shared/utils/http-error';
 
 export interface UserFormData {
-  /** null = create a new account, otherwise edit this one. */
+  /** Null to create a new account, otherwise the one to edit. */
   user: User | null;
 }
 
-/**
- * Create/edit dialog. The same form serves both; on edit the username and password
- * fields drop out — username is the identity key and passwords go through reset.
- *
- * The password typed here is the account's real password: nothing marks it temporary
- * and the user is never forced to change it. Hand it over out of band.
- */
+/** Dialog that creates or edits a user account. */
 @Component({
   selector: 'app-user-form',
   imports: [
@@ -93,7 +87,7 @@ export class UserForm {
   private readonly users = inject(UserService);
   private readonly dialogRef = inject<MatDialogRef<UserForm, User>>(MatDialogRef);
 
-  /** null = create a new account, otherwise the one being edited. */
+  /** Null when creating a new account. */
   private readonly user = inject<UserFormData>(MAT_DIALOG_DATA).user;
 
   protected readonly editing = this.user !== null;
@@ -117,7 +111,6 @@ export class UserForm {
       return;
     }
 
-    // Editing: identity and credential fields are out of scope for this form.
     this.form.controls.username.disable();
     this.form.controls.password.disable();
     this.form.patchValue({
@@ -127,6 +120,7 @@ export class UserForm {
     });
   }
 
+  /** Validates the form and creates or updates the account. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();

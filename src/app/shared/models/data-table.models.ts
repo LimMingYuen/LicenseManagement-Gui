@@ -1,10 +1,3 @@
-/**
- * DataTable (v2) configuration types.
- *
- * Forked from table.models.ts so the v2 component can evolve independently
- * without affecting pages still using app-generic-table.
- */
-
 import { TemplateRef } from '@angular/core';
 
 export type DataColumnFilterType = 'text' | 'option' | 'range' | 'date';
@@ -21,34 +14,29 @@ export type BadgeTone =
 export interface DataSelectOption {
   value: string;
   label: string;
-  /** Optional count rendered to the right of the option label. */
+  /** Count rendered to the right of the option label. */
   count?: number;
-  /** Optional tone for a leading status dot (e.g. info/success). */
+  /** Tone of a leading status dot. */
   tone?: BadgeTone;
 }
 
 export interface DateRangePreset {
-  /** Preset chip label, e.g. "Today", "Last 4h". */
   label: string;
-  /** Returns the [from, to] window when the chip is picked. */
+  /** Returns the [from, to] window applied when the chip is picked. */
   range: () => { from: Date | null; to: Date | null };
 }
 
-/**
- * Active filter state — what the table is currently filtering by.
- * Distinct from the draft state inside an open popover, which is staged
- * until the user clicks Apply.
- */
+/** Applied filter state of one column, separate from the draft staged in an open popover. */
 export interface DataColumnFilterEntry {
   type: DataColumnFilterType;
-  /** text. */
+  /** Value of a 'text' filter. */
   value?: string;
-  /** option (multi-select). */
+  /** Selected values of an 'option' filter. */
   values?: string[];
-  /** range (numeric). */
+  /** Bounds of a 'range' filter. */
   min?: number;
   max?: number;
-  /** date (ISO strings). */
+  /** ISO bounds of a 'date' filter. */
   from?: string;
   to?: string;
 }
@@ -59,37 +47,34 @@ export interface DataColumnConfig<T> {
   sortable?: boolean;
   /** Included in the global search predicate. */
   filterable?: boolean;
-  /** CSS width (e.g. '120px', '12%'). */
+  /** CSS width such as '120px' or '12%'. */
   width?: string;
   headerClass?: string;
   cellClass?: string;
-  /** Custom cell template — wins over cellType. */
+  /** Custom cell template; takes precedence over cellType. */
   template?: TemplateRef<any>;
-  /** Built-in cell renderer. Defaults to 'text'. */
+  /** Built-in cell renderer; defaults to 'text'. */
   cellType?: DataCellType;
-  /** Display transform for the cell (and for select/global filter matching). */
+  /** Display transform, also used for option and global filter matching. */
   transform?: (value: any, row: T) => string;
-  /**
-   * Map a cell value to a badge tone. Only used when cellType === 'badge'.
-   * Receives the *transformed* display string.
-   */
+  /** Maps the transformed display string to a badge tone when cellType is 'badge'. */
   badgeTone?: (display: string, row: T) => BadgeTone;
 
-  /** Whether this column has a header-icon filter popover. */
+  /** Enables a header-icon filter popover for the column. */
   columnFilter?: boolean;
   columnFilterType?: DataColumnFilterType;
 
-  /** Options for 'option' filter; auto-derived from data if omitted. */
+  /** Options for an 'option' filter; derived from the data when omitted. */
   columnFilterOptions?: DataSelectOption[];
 
-  /** Bounds for 'range' filter; auto-derived from data if omitted. */
+  /** Bounds for a 'range' filter; derived from the data when omitted. */
   rangeMin?: number;
   rangeMax?: number;
   rangeStep?: number;
-  /** Suffix shown after numbers in the range popover, e.g. '%', ' totes'. */
+  /** Suffix shown after numbers in the range popover, such as '%'. */
   rangeUnit?: string;
 
-  /** Presets for 'date' filter. */
+  /** Preset chips for a 'date' filter. */
   datePresets?: DateRangePreset[];
 }
 
@@ -142,9 +127,8 @@ export interface DataTableSelectionConfig<T = any> {
 
 export interface DataTableConfig<T> {
   title: string;
-  /** Material icon rendered before the title. Omit for a title-only header. */
+  /** Material icon rendered before the title. */
   icon?: string;
-  /** Optional subtitle line under the title. */
   subtitle?: string;
   columns: DataColumnConfig<T>[];
   actions?: DataActionConfig<T>[];
@@ -153,7 +137,7 @@ export interface DataTableConfig<T> {
   filter?: DataFilterConfig;
   empty?: DataEmptyConfig;
   selection?: DataTableSelectionConfig<T>;
-  /** Default sort applied on mount. */
+  /** Sort applied on mount. */
   defaultSort?: {
     column: keyof T;
     direction: 'asc' | 'desc';

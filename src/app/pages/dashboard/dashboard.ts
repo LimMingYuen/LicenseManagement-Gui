@@ -16,7 +16,7 @@ import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
-/** Landing page: the state of the register at a glance, and the way into issuing. */
+/** Landing page with license stats, the expiry watchlist and quick actions. */
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -40,7 +40,7 @@ export class Dashboard {
   protected readonly summary = signal<LicenseSummary | null>(null);
   protected readonly loading = signal(true);
 
-  /** Read-only from here — revoking lives on the register and the catalog. */
+  /** Opens the read-only license detail dialog. */
   protected openDetail(license: License): void {
     this.dialog.open(
       LicenseDetailComponent,
@@ -75,6 +75,7 @@ export class Dashboard {
 
   protected formatDate = formatIsoDateTime;
 
+  /** Loads the license summary. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -87,7 +88,7 @@ export class Dashboard {
     }
   }
 
-  /** How long a watchlist entry has left. "Due" covers today and anything already past. */
+  /** Formats the time left before a watchlist entry expires. */
   protected expiryLabel(value: string | null): string {
     if (!value) return 'Perpetual';
 
@@ -95,10 +96,12 @@ export class Dashboard {
     return days <= 0 ? 'Due' : `${days}d left`;
   }
 
+  /** Maps a license type to its pill tone. */
   protected typeTone(type: License['type']): string {
     return type === 'Machine' ? 'info' : type === 'Robot' ? 'success' : 'neutral';
   }
 
+  /** Maps a license status to its pill tone. */
   protected statusTone(status: License['status']): string {
     switch (status) {
       case 'Active':
@@ -113,6 +116,7 @@ export class Dashboard {
     }
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

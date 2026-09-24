@@ -1,8 +1,5 @@
 @use '@angular/material' as mat;
 
-// Header cell padding. Shared with .dt-th__anchor, which has to cancel it out
-// to cover the whole cell (Chrome resolves inset:0 against a table cell's
-// content box, not its padding box).
 $th-pad-y: 10px;
 $th-pad-x: 12px;
 
@@ -24,22 +21,16 @@ $th-pad-x: 12px;
   width: 100%;
   margin: 0;
   border: 1px solid var(--brand-border);
-  // Square: the card is edge-to-edge inside the router outlet with no gutter,
-  // so a radius here reads as a notch against the sidebar, not as a card.
   border-radius: 0;
   box-shadow: none;
   overflow: hidden;
 
-  // mat-card defaults: drop the elevation + padding it injects.
   --mdc-elevated-card-container-color: var(--brand-surface);
   --mdc-elevated-card-container-shape: 0;
   padding: 0 !important;
 }
 
 // -------- Header --------
-// The bar itself is <app-page-header>. All that is left here is the search
-// field, which the table projects into it — a mat-form-field needs this many
-// MDC overrides to sit at the bar's --control-h.
 .dt-search {
   width: 260px;
   max-width: 100%;
@@ -83,7 +74,6 @@ $th-pad-x: 12px;
       color: var(--brand-text-muted);
     }
     &[disabled] {
-      // keep the search icon looking like a plain affordance, not a greyed-out disabled button
       opacity: 1;
       cursor: default;
       .mat-icon { color: var(--brand-text-muted); }
@@ -125,9 +115,6 @@ $th-pad-x: 12px;
   width: 100%;
   background: var(--brand-surface);
 
-  // Material's .mdc-data-table__header-cell explicitly sets a white bg, so
-  // bg is the one declaration that needs !important to take. Everything
-  // else here wins by selector specificity alone.
   ::ng-deep th.mat-mdc-header-cell {
     position: sticky;
     top: 0;
@@ -164,7 +151,7 @@ $th-pad-x: 12px;
   .dt-actions-cell { text-align: right; white-space: nowrap; }
 }
 
-// Active (filtered) column header — accent treatment per SMC design.
+// Filtered column header
 .dt-table ::ng-deep th.mat-mdc-header-cell.dt-th--filtered {
   background: var(--brand-primary-pale) !important;
   border-bottom: 2px solid var(--brand-primary);
@@ -177,11 +164,6 @@ $th-pad-x: 12px;
 
   &__label { display: inline; }
 
-  // Invisible overlay origin covering the header cell — the filter popover is
-  // anchored to this rather than to the icon button, so it opens at the
-  // column's own left edge and below the header row. The sticky th is the
-  // containing block; the negative inset cancels its padding so the anchor
-  // spans the full column. Never hit-tested: the icon button opens the menu.
   &__anchor {
     position: absolute;
     inset: -$th-pad-y (-$th-pad-x);
@@ -218,7 +200,6 @@ $th-pad-x: 12px;
 }
 
 // -------- Badge cell --------
-// SMC design: square-ish pill (radius 4), dot + label, base-color text on tint bg.
 .dt-badge {
   display: inline-flex;
   align-items: center;
@@ -277,9 +258,6 @@ $th-pad-x: 12px;
     0 2px 4px rgba(11, 26, 43, 0.04) !important;
 }
 
-// The panel's width is set per-column in alignPopoverToColumn(); the body just
-// fills whatever it gets. The panel's own min-width (matching
-// POPOVER_MIN_WIDTH) is the floor if that never runs.
 .dt-popover {
   width: 100%;
   display: flex;
@@ -417,7 +395,7 @@ $th-pad-x: 12px;
     font-size: var(--fs-sm);
   }
 
-  // Range — histogram, track, inputs
+  // Range
   &__histogram {
     position: relative;
     display: flex;
@@ -511,7 +489,7 @@ $th-pad-x: 12px;
   &__range-unit { color: var(--brand-text-subtle); font-size: var(--fs-sm); margin-left: 4px; }
   &__range-sep  { color: var(--brand-text-subtle); padding: 0 4px 6px; align-self: center; }
 
-  // Date + time — labelled rows
+  // Date and time
   &__datetime {
     display: flex;
     flex-direction: column;
@@ -534,7 +512,6 @@ $th-pad-x: 12px;
     .dt-popover__field--time { flex: 0 0 108px; }
   }
 
-  // Last popover body has no footer — give it a touch more bottom padding.
   &__body:last-child { padding-bottom: 12px; }
 }
 

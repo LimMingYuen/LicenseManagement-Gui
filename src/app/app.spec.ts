@@ -70,7 +70,6 @@ describe('App', () => {
   it('replaces the whole shell when the API cannot be reached', async () => {
     await settleProbe((request) => request.error(new ProgressEvent('error'), { status: 0 }));
 
-    // Not a banner over the app: nothing behind it is safe to click during an outage.
     expect(shell().serverUnavailable).not.toBeNull();
     expect(shell().sidebar).toBeNull();
     expect(shell().outlet).toBeNull();
@@ -93,7 +92,6 @@ describe('App', () => {
 
     await settleProbe((request) => request.flush(healthy));
 
-    // No reload, no retry click — the poll that cleared the state re-rendered the shell.
     expect(shell().serverUnavailable).toBeNull();
     expect(shell().outlet).not.toBeNull();
   });

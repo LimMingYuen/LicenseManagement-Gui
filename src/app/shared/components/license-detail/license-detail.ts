@@ -19,16 +19,7 @@ export interface LicenseDetailData {
   license: License;
 }
 
-/**
- * Read-only view of one license, including the signed file body.
- *
- * Revoking is the caller's job, not this dialog's: the register and the catalog each
- * confirm it their own way and own the snackbar. This emits `revoked` and stays open;
- * the caller pushes the updated row back through `update()` so the pills refresh.
- *
- * The file body is fetched on open rather than carried in the list payload — a signed
- * license is a few KB and the register can hold thousands of rows.
- */
+/** Displays one license with its signed file and offers copy, download and revoke actions. */
 @Component({
   selector: 'app-license-detail',
   imports: [MatIconModule, MatDialogModule, MatButtonModule],
@@ -60,8 +51,6 @@ export interface LicenseDetailData {
         <dt>Application</dt>
         <dd>{{ license().applicationName }}</dd>
 
-        <!-- Robot licenses always name their machine; gateway licenses optionally do.
-             A machine license is its own machine, so the row would only repeat above. -->
         @if (license().type !== 'Machine') {
           <dt>Machine ID</dt>
           <dd class="mono">{{ license().machineId || '—' }}</dd>
@@ -194,21 +183,19 @@ export class LicenseDetailComponent {
     });
   }
 
-  /**
-   * Replaces the license on show — the caller pushes the row back after revoking it, so the
-   * open dialog is not left displaying the pre-revocation state.
-   */
+  /** Replaces the displayed license with an updated copy. */
   update(license: License): void {
     this.license.set(license);
   }
 
-  /** Closes the dialog from outside, e.g. when the caller navigates away from the row. */
+  /** Closes the dialog. */
   close(): void {
     this.dialogRef.close();
   }
 
   protected formatDate = formatIsoDateTime;
 
+  /** Returns the label for the target ID row based on the license type. */
   protected targetLabel(): string {
     switch (this.license().type) {
       case 'Robot':
@@ -220,10 +207,12 @@ export class LicenseDetailComponent {
     }
   }
 
+  /** Returns the pill tone for a license type. */
   protected typeTone(type: License['type']): string {
     return type === 'Machine' ? 'info' : type === 'Robot' ? 'success' : 'neutral';
   }
 
+  /** Returns the pill tone for a license status. */
   protected statusTone(status: License['status']): string {
     switch (status) {
       case 'Active':
@@ -238,6 +227,7 @@ export class LicenseDetailComponent {
     }
   }
 
+  /** Loads the signed license file for the given license. */
   private async load(id: number): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -253,17 +243,18 @@ export class LicenseDetailComponent {
     }
   }
 
+  /** Copies the license file content to the clipboard. */
   protected async copy(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.fileContent());
       this.copied.set(true);
       setTimeout(() => this.copied.set(false), 2000);
     } catch {
-      // Clipboard access is blocked outside a secure context; the file is still on screen.
       this.error.set('Could not copy — select the text and copy manually.');
     }
   }
 
+  /** Downloads the signed license file. */
   protected async download(): Promise<void> {
     this.downloading.set(true);
 

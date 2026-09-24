@@ -5,16 +5,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HealthService } from '../../services/health.service';
 import { AppLogoComponent } from '../../shared/components/app-logo/app-logo';
 
-/**
- * The screen the app falls back to when the API is not usable.
- *
- * It replaces the shell rather than warning above it: the API goes down as a whole, so
- * every table behind a banner would be stale data the user can still click on. Blocking
- * is the honest state — nothing here can be saved until the server is back.
- *
- * Nobody has to reload. {@link HealthService} keeps probing on a fast cadence while this
- * is on screen, so the app returns by itself the moment the API answers again.
- */
+/** Full-screen fallback shown while the API is unreachable or unhealthy. */
 @Component({
   selector: 'app-server-unavailable',
   imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, AppLogoComponent],
@@ -31,8 +22,6 @@ export class ServerUnavailable {
     if (this.health.isBrowserOffline()) {
       return 'wifi_off';
     }
-    // A fault is the server answering that something it needs is broken — a different
-    // problem from silence, and a different thing to go and fix.
     return this.health.status() === 'unhealthy' ? 'error_outline' : 'cloud_off';
   });
 
@@ -57,7 +46,7 @@ export class ServerUnavailable {
     return 'The License Management API is not responding. It may be starting up, stopped, or blocked by the network.';
   });
 
-  /** What the server itself said is broken. Empty unless it was well enough to answer. */
+  /** Failing health checks reported by the server. */
   protected readonly failures = computed(() =>
     this.health
       .failingChecks()
@@ -69,6 +58,7 @@ export class ServerUnavailable {
     return checkedAt ? `Last checked at ${checkedAt.toLocaleTimeString()}` : '';
   });
 
+  /** Runs a health check immediately. */
   protected retry(): void {
     void this.health.check();
   }

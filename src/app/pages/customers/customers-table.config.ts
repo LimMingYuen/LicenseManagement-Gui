@@ -2,18 +2,13 @@ import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.model
 import { Customer } from '../../models/customer.models';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
+/** Maps the status text to its badge tone. */
 const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'success' : 'danger');
 
-/**
- * A customer with no licenses reads as neutral rather than as a problem — it is the normal
- * state of one created ahead of the first order.
- */
+/** Maps the license count text to its badge tone. */
 const licenseTone = (display: string): BadgeTone => (display === 'None' ? 'neutral' : 'info');
 
-/**
- * Built per signed-in role rather than exported flat: merge and delete rewrite or discard
- * history, so they are hidden outright from Operators instead of failing at the API.
- */
+/** Builds the customers table config for the signed-in role. */
 export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfig<Customer> {
   return {
     title: 'Customers',
@@ -103,7 +98,6 @@ export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfi
         type: 'icon',
         tooltip: 'Delete — only possible with no licenses',
         hidden: () => !isSuperAdmin,
-        // The API refuses this too; disabling it here explains why before the click.
         disabled: (row) => row.licenseCount > 0,
       },
     ],

@@ -9,14 +9,11 @@ import { UserService } from '../../services/user.service';
 import { describeError } from '../../shared/utils/http-error';
 
 export interface PasswordResetData {
-  /** The account whose password is being set. */
+  /** Account whose password is reset. */
   user: User;
 }
 
-/**
- * Super-admin-initiated password reset. Sets the account's real password — there is no
- * temporary password and the target is never forced to change it.
- */
+/** Dialog in which a SuperAdmin sets a new password for an account. */
 @Component({
   selector: 'app-password-reset',
   imports: [
@@ -66,6 +63,7 @@ export class PasswordReset {
     newPassword: ['', Validators.required],
   });
 
+  /** Sets the new password and closes the dialog. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();

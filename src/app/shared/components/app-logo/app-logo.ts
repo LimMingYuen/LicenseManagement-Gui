@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-/**
- * The app mark: a brand-blue shield with a keyhole cut into it — access control
- * over an entitlement, which is what this product manages.
- *
- * Geometry is kept identical to public/logo.svg (the favicon) so the tab icon
- * and the in-app mark are the same drawing. Change one, change both.
- */
+/** Renders the app mark, a shield with a keyhole, matching the public/logo.svg favicon. */
 @Component({
   selector: 'app-logo',
   standalone: true,
@@ -15,13 +9,10 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppLogoComponent {
-  /** Rendered edge length in px. The mark is square. */
+  /** Edge length in px of the square mark. */
   @Input() size = 32;
 
-  /**
-   * Draw the shield in `currentColor` with the keyhole knocked out, for placing
-   * the mark on a coloured tile or a dark bar. Default is the blue gradient.
-   */
+  /** Draws the mark in currentColor with the keyhole cut out, for coloured backgrounds. */
   @Input() mono = false;
 
   @Input() label = 'License Management';

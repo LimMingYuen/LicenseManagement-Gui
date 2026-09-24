@@ -1,9 +1,4 @@
-/**
- * Format a date string as ISO 8601: YYYY-MM-DD HH:mm:ss (local wall time).
- *
- * Used by table column transforms to display dates in the
- * format required by RCS-2000 integration.
- */
+/** Formats a date string as local `YYYY-MM-DD HH:mm:ss`. */
 export function formatIsoDateTime(value: string): string {
   const d = new Date(value);
   if (isNaN(d.getTime())) return value;
@@ -11,6 +6,7 @@ export function formatIsoDateTime(value: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+/** Formats a date string as a short relative time such as `5 min ago`. */
 export function formatRelativeTime(value: string | null | undefined): string {
   if (!value) return 'Never';
   const t = new Date(value).getTime();

@@ -30,19 +30,10 @@ import { dialogConfig } from '../../../shared/utils/dialog';
 import { describeError } from '../../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../../shared/utils/date-format';
 
-/** A node key, so expansion survives a reload and a search. */
+/** Stable key of a tree node, used to track expansion. */
 type NodeKey = string;
 
-/**
- * The license catalog: Application → Customer → Machine → licenses.
- *
- * The register at /licenses answers "show me every license"; this page answers "what has
- * this customer got deployed, and on which machine". The server folds the tree (see
- * LicenseCatalogService) so the roll-up counts cannot disagree with the dashboard.
- *
- * Filtering happens here rather than server-side: the tree is fetched whole for the counts
- * anyway, and narrowing it in the browser keeps every keystroke instant.
- */
+/** Page that shows licenses as an Application → Customer → Machine tree. */
 @Component({
   selector: 'app-license-catalog',
   imports: [
@@ -67,16 +58,13 @@ export class LicenseCatalogPage {
   protected readonly catalog = signal<LicenseCatalog | null>(null);
   protected readonly loading = signal(true);
 
-  /** The open detail dialog, kept so a revoke can push the updated license back into it. */
+  /** Open detail dialog, updated in place after a revoke. */
   private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<LicenseStatus | 'All'>('All');
 
-  /**
-   * Collapsed rather than expanded nodes are tracked, so a newly issued license appears
-   * without the operator having to re-open the branch it landed in.
-   */
+  /** Keys of collapsed nodes; every other node is open. */
   private readonly collapsed = signal<ReadonlySet<NodeKey>>(new Set());
 
   protected readonly statusOptions: readonly (LicenseStatus | 'All')[] = [
@@ -93,6 +81,7 @@ export class LicenseCatalogPage {
     void this.load();
   }
 
+  /** Loads the license catalog tree. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -105,6 +94,7 @@ export class LicenseCatalogPage {
     }
   }
 
+  /** Opens the license detail dialog. */
   protected openDetail(license: License): void {
     const ref = this.dialog.open(
       LicenseDetailComponent,
@@ -119,15 +109,7 @@ export class LicenseCatalogPage {
     });
   }
 
-  /**
-   * Revoking from the detail modal. Confirmed for the same reason the register confirms it:
-   * the customer already holds the signed file, and this registry is the only thing that
-   * says it is no longer valid.
-   *
-   * The tree is reloaded rather than patched in place — every roll-up count above the
-   * license changes, and recomputing them here would be a second implementation of
-   * LicenseCatalogService that could disagree with it.
-   */
+  /** Revokes a license after confirmation and reloads the tree. */
   protected async revoke(license: License): Promise<void> {
     const data: ConfirmationDialogData = {
       title: 'Revoke license?',
@@ -159,11 +141,7 @@ export class LicenseCatalogPage {
 
   // ---- Filtering ------------------------------------------------------------------------
 
-  /**
-   * The tree with non-matching licenses pruned, and any branch left empty removed with
-   * them — except applications, which always show so an unlicensed product is visible
-   * rather than merely absent.
-   */
+  /** Catalog tree pruned to matching licenses; applications are always kept. */
   protected readonly view = computed<ApplicationNode[]>(() => {
     const source = this.catalog()?.applications ?? [];
     const term = this.search().trim().toLowerCase();
@@ -202,7 +180,7 @@ export class LicenseCatalogPage {
     () => this.search().trim().length > 0 || this.statusFilter() !== 'All',
   );
 
-  /** Licenses surviving the filter. Shown so a narrowed tree still states its size. */
+  /** Number of licenses that match the filters. */
   protected readonly matchCount = computed(() =>
     this.view().reduce(
       (total, app) =>
@@ -215,34 +193,40 @@ export class LicenseCatalogPage {
     ),
   );
 
+  /** Resets the search and status filters. */
   protected clearFilters(): void {
     this.search.set('');
     this.statusFilter.set('All');
   }
 
+  /** Updates the search term from the input. */
   protected onSearch(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
   }
 
+  /** Updates the status filter. */
   protected onStatus(value: LicenseStatus | 'All'): void {
     this.statusFilter.set(value);
   }
 
   // ---- Expansion ------------------------------------------------------------------------
 
+  /** Returns the node key of an application. */
   protected appKey(app: ApplicationNode): NodeKey {
     return app.key;
   }
 
+  /** Returns the node key of a customer within an application. */
   protected customerKey(app: ApplicationNode, customer: CustomerNode): NodeKey {
     return `${app.key}|${customer.customerName}`;
   }
 
-  /** A filtered tree is shown fully open — the operator asked to see the matches. */
+  /** Whether a node is expanded; a filtered tree is always fully open. */
   protected isOpen(key: NodeKey): boolean {
     return this.filtered() || !this.collapsed().has(key);
   }
 
+  /** Expands or collapses a node. */
   protected toggle(key: NodeKey): void {
     this.collapsed.update((set) => {
       const next = new Set(set);
@@ -251,10 +235,12 @@ export class LicenseCatalogPage {
     });
   }
 
+  /** Expands every node. */
   protected expandAll(): void {
     this.collapsed.set(new Set());
   }
 
+  /** Collapses every application and customer node. */
   protected collapseAll(): void {
     const keys = this.view().flatMap((app) => [
       app.key,
@@ -266,14 +252,17 @@ export class LicenseCatalogPage {
 
   // ---- Presentation ---------------------------------------------------------------------
 
+  /** Returns the display label of a machine node. */
   protected machineLabel(machine: MachineNode): string {
     return machine.isUnassigned ? 'Unassigned devices' : machine.machineId;
   }
 
+  /** Maps a license type to its pill tone. */
   protected typeTone(type: License['type']): string {
     return type === 'Machine' ? 'info' : type === 'Robot' ? 'success' : 'neutral';
   }
 
+  /** Maps a license status to its pill tone. */
   protected statusTone(status: License['status']): string {
     switch (status) {
       case 'Active':
@@ -288,10 +277,12 @@ export class LicenseCatalogPage {
     }
   }
 
+  /** Formats an expiry date, or "Perpetual" when there is none. */
   protected expiryLabel(value: string | null): string {
     return value ? this.formatDate(value) : 'Perpetual';
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

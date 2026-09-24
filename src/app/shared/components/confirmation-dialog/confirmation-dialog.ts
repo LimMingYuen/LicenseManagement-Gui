@@ -14,6 +14,7 @@ export interface ConfirmationDialogData {
   confirmColor?: 'primary' | 'accent' | 'warn';
 }
 
+/** Displays a confirmation or notice dialog that closes with `true` on confirm. */
 @Component({
   selector: 'app-confirmation-dialog',
   standalone: true,
@@ -113,6 +114,7 @@ export class ConfirmationDialogComponent {
   data = inject<ConfirmationDialogData>(MAT_DIALOG_DATA);
 
 
+  /** Returns the CSS class that colours the dialog icon by severity. */
   getIconClass(): string {
     const icon = this.data.icon || 'check_circle';
     if (icon === 'warning' || icon === 'warning_amber') {

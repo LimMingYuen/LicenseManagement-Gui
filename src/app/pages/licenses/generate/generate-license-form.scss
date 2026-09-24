@@ -1,20 +1,9 @@
-/**
- * The generate form is a full-width console rather than a centred document: the four field
- * groups span the window, the register panel fills the space beneath them, and the preview
- * lives in a bar pinned to the bottom edge.
- *
- * The component owns the scroll itself — see the note at the top of the template — so it
- * lays itself out as a flex column: a scrolling body, then the bar.
- */
 :host {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
 
-  /* The breakpoints below are container queries, not media queries: what decides how many
-     groups fit is the width this component was given, which is the window less the nav
-     rail — not the window itself. */
   container: gen / inline-size;
 }
 
@@ -37,7 +26,7 @@
   margin-bottom: 0;
 }
 
-/* Cards ------------------------------------------------------------------- */
+// Cards
 
 .card-head {
   display: flex;
@@ -61,9 +50,6 @@
   color: var(--brand-text-muted);
 }
 
-/* The binding rule used to be a full-width warning block above the fields. It is a
-   standing fact about this license type, not a warning, so it reads as a note beside
-   the title instead of a band of yellow across the page. */
 .card-note {
   margin: 0;
   flex: 1 1 auto;
@@ -77,7 +63,7 @@
   padding: var(--sp-4) var(--sp-5) var(--sp-5);
 }
 
-/* Field groups ------------------------------------------------------------ */
+// Field groups
 
 .group-grid {
   display: grid;
@@ -86,8 +72,6 @@
   align-items: stretch;
 }
 
-/* Four across only when there is room for each group to hold a full-width control.
-   Below that they pair off, and below that they stack. */
 @container gen (max-width: 78rem) {
   .group-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -122,9 +106,6 @@
   color: var(--brand-text-subtle);
 }
 
-/* Controls sit on white inside the tinted group so they still read as inputs.
-   The outlined field paints nothing behind itself, so the fill goes on the
-   wrapper Material draws the notched outline around. */
 .group ::ng-deep .mat-mdc-text-field-wrapper {
   background: var(--brand-surface);
   border-radius: var(--r-md);
@@ -137,8 +118,6 @@
   color: var(--brand-text-subtle);
 }
 
-/* The notes box grows to whatever height the row was given by the tallest group, so the
-   four panels bottom out together instead of leaving one short. */
 .notes-field {
   flex: 1 1 auto;
 
@@ -147,7 +126,7 @@
   }
 }
 
-/* Recently issued --------------------------------------------------------- */
+// Recently issued
 
 .recent-scroll {
   overflow-x: auto;
@@ -222,7 +201,7 @@
   color: var(--brand-danger-text);
 }
 
-/* A text button that reads as a link — used for the per-row re-download. */
+// Link-style button for the per-row re-download
 .link {
   padding: 0;
   border: 0;
@@ -245,7 +224,7 @@
   }
 }
 
-/* Result ------------------------------------------------------------------ */
+// Result
 
 .result-card {
   border-color: var(--brand-success);
@@ -269,7 +248,7 @@
   }
 }
 
-/* Action bar -------------------------------------------------------------- */
+// Action bar
 
 .action-bar {
   flex: 0 0 auto;
@@ -292,8 +271,6 @@
   overflow: hidden;
 }
 
-/* Each pair is its own column, separated by a rule rather than by gap alone so the row
-   reads as a summary strip and not as a sentence. */
 .bar-item {
   display: flex;
   flex-direction: column;
@@ -325,7 +302,6 @@
   }
 }
 
-/* The signature never changes, so it is the first thing to go when the bar runs short. */
 @container gen (max-width: 72rem) {
   .bar-item--sig {
     display: none;
@@ -348,7 +324,6 @@
   color: var(--brand-success-text);
 }
 
-/* The bar's own action reads a size up from the buttons inside the form. */
 .btn-action {
   flex: 0 0 auto;
   --mat-button-filled-container-height: 38px;
@@ -375,8 +350,7 @@
   }
 }
 
-/* Result-panel helpers. These used to come from the shared page-scroll partial via the
-   page component, where view encapsulation kept them from ever reaching this template. */
+// Result panel helpers
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -398,9 +372,7 @@
   overflow-wrap: anywhere;
 }
 
-/* The machine picker lists the ID first because that is what gets signed; a machine's
-   human label follows it as a subdued aside so the two never compete for the scan. The
-   options render in an overlay on <body>, so this rule is deliberately not nested. */
+// Machine picker option note
 .option-note {
   margin-left: var(--sp-1);
   color: var(--brand-text-muted);

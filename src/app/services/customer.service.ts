@@ -7,15 +7,13 @@ import {
   UpdateCustomerRequest,
 } from '../models/customer.models';
 
+/** Calls the customers API. */
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/customers';
 
-  /**
-   * @param includeInactive Retired customers stay in the management list so they can be
-   * reactivated, but the generate-form picker passes false — you cannot issue against them.
-   */
+  /** Lists customers, optionally filtered by search text and active state. */
   list(options?: { search?: string; includeInactive?: boolean }): Promise<Customer[]> {
     let params = new HttpParams();
 
@@ -30,28 +28,32 @@ export class CustomerService {
     return firstValueFrom(this.http.get<Customer[]>(this.baseUrl, { params }));
   }
 
+  /** Gets one customer by ID. */
   get(id: number): Promise<Customer> {
     return firstValueFrom(this.http.get<Customer>(`${this.baseUrl}/${id}`));
   }
 
+  /** Creates a customer. */
   create(request: CreateCustomerRequest): Promise<Customer> {
     return firstValueFrom(this.http.post<Customer>(this.baseUrl, request));
   }
 
+  /** Updates a customer. */
   update(id: number, request: UpdateCustomerRequest): Promise<Customer> {
     return firstValueFrom(this.http.put<Customer>(`${this.baseUrl}/${id}`, request));
   }
 
+  /** Activates or deactivates a customer. */
   setActive(id: number, isActive: boolean): Promise<Customer> {
     return firstValueFrom(this.http.post<Customer>(`${this.baseUrl}/${id}/status`, { isActive }));
   }
 
-  /** Moves every license onto {@link targetId} and deletes this customer. SuperAdmin only. */
+  /** Moves every license onto the target customer and deletes this one. */
   merge(id: number, targetId: number): Promise<Customer> {
     return firstValueFrom(this.http.post<Customer>(`${this.baseUrl}/${id}/merge`, { targetId }));
   }
 
-  /** Only succeeds for a customer with no licenses; the API refuses the rest. SuperAdmin only. */
+  /** Deletes a customer that has no licenses. */
   remove(id: number): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }

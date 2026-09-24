@@ -10,14 +10,14 @@ import { CustomerService } from '../../services/customer.service';
 import { describeError } from '../../shared/utils/http-error';
 
 export interface CustomerFormData {
-  /** null = create a new customer, otherwise edit this one. */
+  /** Null to create a new customer, otherwise the one to edit. */
   customer: Customer | null;
 
-  /** Prefills the name when opened from a generate form the operator has half-typed. */
+  /** Name to prefill when creating from a generate form. */
   initialName?: string;
 }
 
-/** Create/edit dialog for a customer. */
+/** Dialog that creates or edits a customer. */
 @Component({
   selector: 'app-customer-form',
   imports: [
@@ -68,7 +68,7 @@ export class CustomerForm {
   private readonly dialogRef = inject<MatDialogRef<CustomerForm, Customer>>(MatDialogRef);
   private readonly data = inject<CustomerFormData>(MAT_DIALOG_DATA);
 
-  /** null = create a new customer, otherwise the one being edited. */
+  /** Null when creating a new customer. */
   private readonly customer = this.data.customer;
 
   protected readonly editing = this.customer !== null;
@@ -86,8 +86,6 @@ export class CustomerForm {
     const existing = this.customer;
 
     if (!existing) {
-      // Create mode. Seeded from whatever the operator had already typed on the page that
-      // opened this, so they are not made to type the name twice.
       this.form.patchValue({ name: this.data.initialName ?? '' });
       return;
     }
@@ -98,6 +96,7 @@ export class CustomerForm {
     });
   }
 
+  /** Validates the form and creates or updates the customer. */
   protected async submit(): Promise<void> {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
@@ -110,8 +109,6 @@ export class CustomerForm {
     const value = this.form.getRawValue();
     const request = {
       name: value.name.trim(),
-      // These are no longer part of the dialog. On an edit the stored values are sent back
-      // untouched so dropping the inputs never silently wipes data someone entered earlier.
       code: this.customer?.code ?? null,
       contactName: this.customer?.contactName ?? null,
       contactEmail: this.customer?.contactEmail ?? null,

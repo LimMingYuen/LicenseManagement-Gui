@@ -17,14 +17,7 @@ import { saveBlob } from '../../shared/utils/download';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 import { firstValueFrom } from 'rxjs';
 
-/**
- * The RSA signing key.
- *
- * The desktop app's equivalent page also managed the application password, because there
- * the password was what decrypted the private key. Here the two are separate concerns:
- * sign-in credentials live on the Users page and /account/password, and the key is
- * unlocked by a server-side passphrase. So this page is only about the key itself.
- */
+/** Page that shows, generates, rotates and imports the RSA signing key. */
 @Component({
   selector: 'app-keys',
   imports: [
@@ -49,19 +42,14 @@ export class Keys {
   protected readonly working = signal(false);
   protected readonly copied = signal(false);
 
-  /** The chosen key file and the passphrase it was encrypted with, for import. */
   protected readonly importFile = signal<File | null>(null);
   protected readonly importPassphrase = signal('');
   protected readonly importing = signal(false);
 
-  /**
-   * Whether the rotation control is revealed. Rotation is behind a deliberate second step
-   * because a stray click there ends every license in the field, and adopting an existing key
-   * — the neighbouring card — is almost always what was actually wanted.
-   */
+  /** Whether the regenerate control is revealed. */
   protected readonly showRotation = signal(false);
 
-  /** e.g. "RSA-2048" - what generating a pair produces, per the server. */
+  /** Algorithm and size of a newly generated key pair, e.g. "RSA-2048". */
   protected readonly keyLabel = computed(() => {
     const specs = this.status()?.cryptoSpecs;
     return specs ? `${specs.keyAlgorithm}-${specs.keySize}` : '';
@@ -73,6 +61,7 @@ export class Keys {
 
   protected formatDate = formatIsoDateTime;
 
+  /** Loads the signing key status. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -85,6 +74,7 @@ export class Keys {
     }
   }
 
+  /** Copies the public key PEM to the clipboard. */
   protected async copyPublicKey(): Promise<void> {
     const pem = this.status()?.publicKeyPem;
     if (!pem) return;
@@ -98,6 +88,7 @@ export class Keys {
     }
   }
 
+  /** Downloads the public key as publickey.pem. */
   protected async exportForServer(): Promise<void> {
     try {
       saveBlob(await this.keys.downloadPublicKey(), 'publickey.pem');
@@ -107,15 +98,12 @@ export class Keys {
     }
   }
 
-  /** First-run generation. No confirmation needed — there is nothing to invalidate. */
+  /** Generates the first signing key pair. */
   protected async generate(): Promise<void> {
     await this.runKeyOperation('Signing key generated.');
   }
 
-  /**
-   * Rotation. Confirmed explicitly, and the message names how many licenses it strands,
-   * because that number is the whole cost of the operation.
-   */
+  /** Replaces the signing key with a new pair after confirmation. */
   protected async regenerate(): Promise<void> {
     const stranded = this.status()?.signedLicenseCount ?? 0;
 
@@ -146,18 +134,14 @@ export class Keys {
     }
   }
 
-  /** Remembers the chosen file. The input is cleared so re-picking the same file still fires. */
+  /** Stores the chosen key file and resets the file input. */
   protected onFileChosen(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.importFile.set(input.files?.[0] ?? null);
     input.value = '';
   }
 
-  /**
-   * Adopts an existing key pair. Continuity is the whole point: applications in the field
-   * carry a public key compiled into them, so a server that has generated its own pair signs
-   * licenses none of them will accept. Importing the original private key is the repair.
-   */
+  /** Imports an existing key pair as the active signing key. */
   protected async importKey(): Promise<void> {
     const file = this.importFile();
 
@@ -166,8 +150,6 @@ export class Keys {
       return;
     }
 
-    // Replacing a key that already exists cuts both ways - it can repair the installation or
-    // strand it - so the operator confirms with the stakes named.
     if (this.status()?.exists && !(await this.confirmReplace(file.name))) {
       return;
     }
@@ -188,10 +170,7 @@ export class Keys {
     }
   }
 
-  /**
-   * The file's fingerprint is not known until the server has read it, so the warning has to
-   * cover both outcomes honestly rather than predict one.
-   */
+  /** Asks the user to confirm replacing the current key with the chosen file. */
   private async confirmReplace(fileName: string): Promise<boolean> {
     const stranded = this.status()?.signedLicenseCount ?? 0;
 
@@ -216,10 +195,10 @@ export class Keys {
       this.dialog.open(ConfirmationDialogComponent, { data, width: '440px' }).afterClosed(),
     );
 
-    // Dismissing by backdrop or Escape resolves undefined, which is not consent.
     return confirmed === true;
   }
 
+  /** Describes a key import outcome for the snackbar. */
   private describeOutcome(outcome: KeyImportOutcome): string {
     switch (outcome) {
       case 'AlreadyActive':
@@ -231,6 +210,7 @@ export class Keys {
     }
   }
 
+  /** Generates a new key pair and reports the result. */
   private async runKeyOperation(successMessage: string): Promise<void> {
     this.working.set(true);
 
@@ -244,6 +224,7 @@ export class Keys {
     }
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

@@ -8,11 +8,13 @@ import {
   UpdateMachineRequest,
 } from '../models/machine.models';
 
+/** Calls the machines API. */
 @Injectable({ providedIn: 'root' })
 export class MachineService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/machines';
 
+  /** Lists machines matching the query. */
   list(query?: MachineListQuery): Promise<Machine[]> {
     let params = new HttpParams();
 
@@ -35,23 +37,27 @@ export class MachineService {
     return firstValueFrom(this.http.get<Machine[]>(this.baseUrl, { params }));
   }
 
+  /** Gets one machine by ID. */
   get(id: number): Promise<Machine> {
     return firstValueFrom(this.http.get<Machine>(`${this.baseUrl}/${id}`));
   }
 
+  /** Creates a machine. */
   create(request: CreateMachineRequest): Promise<Machine> {
     return firstValueFrom(this.http.post<Machine>(this.baseUrl, request));
   }
 
+  /** Updates a machine. */
   update(id: number, request: UpdateMachineRequest): Promise<Machine> {
     return firstValueFrom(this.http.put<Machine>(`${this.baseUrl}/${id}`, request));
   }
 
+  /** Activates or deactivates a machine. */
   setActive(id: number, isActive: boolean): Promise<Machine> {
     return firstValueFrom(this.http.post<Machine>(`${this.baseUrl}/${id}/status`, { isActive }));
   }
 
-  /** Only succeeds for a machine with no licenses; the API refuses the rest. SuperAdmin only. */
+  /** Deletes a machine that has no licenses. */
   remove(id: number): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }

@@ -3,22 +3,14 @@ import { LicenseService } from '../../../services/license.service';
 
 /** One identifier field on a generate form. */
 export interface GenerateFieldConfig {
-  /** Form control name; also the request property. */
+  /** Form control name, also used as the request property. */
   key: string;
   label: string;
   hint?: string;
-  /**
-   * How the field is collected. 'text' is a free-typed identifier - the machine or device
-   * this license will bind to, which by definition does not exist in the register yet.
-   *
-   * 'machine' is a picker over the customer's registered machines, used where the license
-   * must attach to a machine that is already licensed rather than name a new one. Typing
-   * that binding by hand is what let a robot end up bound to a machine that did not exist.
-   */
+  /** 'text' for a free-typed new identifier, 'machine' for a picker over licensed machines. */
   control?: 'text' | 'machine';
-  /** Identifiers render monospaced so operators can compare them character by character. */
   mono?: boolean;
-  /** Left blank without blocking submission. Only the gateway's parent machine is. */
+  /** Allows submission with the field left blank. */
   optional?: boolean;
   maxLength: number;
 }
@@ -27,22 +19,18 @@ export interface GenerateConfig {
   kind: LicenseKind;
   title: string;
   icon: string;
-  /** A note about how this license type binds, shown above the form. */
+  /** Note on how this license type binds, shown with the form title. */
   banner: string;
-  /** Label for the bound identifier, used in the preview and result panels. */
+  /** Label of the bound identifier in the preview and result panels. */
   targetLabel: string;
-  /** The control whose value is the bound identifier. */
+  /** Control whose value is the bound identifier. */
   targetKey: string;
   fields: GenerateFieldConfig[];
   tiers: LicenseTier[];
   submitLabel: string;
-  /** Which service call to make. Keeps the shared form free of a type switch. */
+  /** Calls the service endpoint for this license type. */
   submit: (service: LicenseService, value: Record<string, unknown>) => Promise<LicenseWithFile>;
 }
-
-// The customer is no longer one of these fields. It is a picker over the customer register,
-// rendered by the shared form itself, because all three license types need it and it carries
-// its own create-inline behaviour rather than being a plain text box.
 
 export const MACHINE_CONFIG: GenerateConfig = {
   kind: 'Machine',
@@ -97,7 +85,7 @@ export const ROBOT_CONFIG: GenerateConfig = {
       maxLength: 100,
     },
   ],
-  // No trial tier for robots - matches the desktop app.
+  // No trial tier for robots, matching the desktop app.
   tiers: ['PERPETUAL', 'SUBSCRIPTION'],
   submitLabel: 'Generate robot license',
   submit: (service, v) =>

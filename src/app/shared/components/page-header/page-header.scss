@@ -1,16 +1,3 @@
-/**
- * Shared page header. Values come from the data-table header bar, which is the
- * reference design: pale brand tint, 48px tall, dark title, controls right.
- *
- * The bar never rounds its own corners — the container that holds it does the
- * clipping (dt-card, tabs-card, the amr shell). Pages that need air below it
- * set `margin-bottom` on <app-page-header> themselves.
- */
-
-// Control height/font and the easing curve are shared tokens (:root in
-// src/styles.scss). --control-h in particular is load-bearing: the data-table
-// search field has to match it or it sits proud of the other controls.
-// Toggle segments inset by 3px so a selected one never touches the group edge.
 $segment-height: calc(var(--control-h) - 6px);
 
 :host {
@@ -121,12 +108,6 @@ $segment-height: calc(var(--control-h) - 6px);
 }
 
 // -------- Projected controls --------
-// Content arrives carrying the host page's encapsulation attribute, so these
-// have to be ::ng-deep. This is the whole point of the component: every page's
-// controls land on the bar at the same height without restating it.
-//
-// Sizing only — unlike a solid-accent bar, a pale one needs no colour override,
-// so these carry no !important and any page can just style its own control.
 .page-header__controls ::ng-deep {
 
   button:not(.mat-mdc-icon-button) {
@@ -159,8 +140,6 @@ $segment-height: calc(var(--control-h) - 6px);
     &:active:not([disabled]) { transform: scale(0.97); }
   }
 
-  // White group, primary selection inset by the group's own padding, so a
-  // selected segment never shares an edge with the bar.
   mat-button-toggle-group {
     border-radius: var(--r-md);
     overflow: hidden;
@@ -188,8 +167,6 @@ $segment-height: calc(var(--control-h) - 6px);
       color: inherit;
     }
 
-    // The text lives in this span with its own line-height and padding —
-    // styling the button alone leaves it low and doubles the side padding.
     .mat-button-toggle-label-content {
       line-height: $segment-height;
       padding: 0;

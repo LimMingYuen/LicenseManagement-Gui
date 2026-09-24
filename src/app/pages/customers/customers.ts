@@ -14,6 +14,7 @@ import { CustomerForm, CustomerFormData } from './customer-form';
 import { CustomerMerge, CustomerMergeData } from './customer-merge';
 import { buildCustomersTableConfig } from './customers-table.config';
 
+/** Page that lists and manages customers. */
 @Component({
   selector: 'app-customers',
   imports: [MatSnackBarModule, DataTableComponent],
@@ -31,7 +32,7 @@ export class Customers {
   protected readonly customers = signal<Customer[]>([]);
   protected readonly loading = signal(true);
 
-  /** Built once: which actions exist depends only on the signed-in role. */
+  /** Built once, since the available actions depend only on the signed-in role. */
   protected readonly tableConfig = buildCustomersTableConfig(
     this.auth.currentUser()?.role === 'SuperAdmin',
   );
@@ -40,11 +41,7 @@ export class Customers {
     void this.load();
   }
 
-  /**
-   * The whole list is fetched once and filtered in the table — the customer list is small
-   * enough that a round trip per keystroke buys nothing. Inactive rows are included so they
-   * can be reactivated; only the generate-form picker hides them.
-   */
+  /** Loads all customers, including inactive ones. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
@@ -57,6 +54,7 @@ export class Customers {
     }
   }
 
+  /** Dispatches a table action. */
   protected handleAction(event: DataActionEvent<Customer>): void {
     switch (event.action) {
       case 'add':
@@ -72,8 +70,6 @@ export class Customers {
         if (event.row) void this.openMerge(event.row);
         break;
       case 'licenses':
-        // The register's global search matches the customer name, so this lands on exactly
-        // this customer's licenses without the register needing a customer filter of its own.
         if (event.row) {
           void this.router.navigate(['/licenses'], {
             queryParams: { search: event.row.name },
@@ -90,7 +86,7 @@ export class Customers {
     }
   }
 
-  /** null = create. Resolves when the dialog closes; a saved row comes back as the result. */
+  /** Opens the customer dialog, creating a new customer when given null. */
   private async openForm(customer: Customer | null): Promise<void> {
     const saved = await firstValueFrom(
       this.dialog.open(CustomerForm, dialogConfig<CustomerFormData>({ customer })).afterClosed(),
@@ -111,6 +107,7 @@ export class Customers {
     }
   }
 
+  /** Opens the merge dialog and reloads the list after a merge. */
   private async openMerge(source: Customer): Promise<void> {
     const target = await firstValueFrom(
       this.dialog
@@ -122,11 +119,11 @@ export class Customers {
       return;
     }
 
-    // A merge changes two rows and deletes one, so the list is refetched rather than patched.
     void this.load();
     this.notify(`Merged into ${target.name}.`, 'success');
   }
 
+  /** Toggles the customer's active status. */
   private async toggleActive(customer: Customer): Promise<void> {
     try {
       const updated = await this.customerService.setActive(customer.id, !customer.isActive);
@@ -140,6 +137,7 @@ export class Customers {
     }
   }
 
+  /** Deletes the customer after confirmation. */
   private async remove(customer: Customer): Promise<void> {
     if (!confirm(`Delete ${customer.name}? This cannot be undone.`)) {
       return;
@@ -154,10 +152,12 @@ export class Customers {
     }
   }
 
+  /** Replaces the matching customer in the list. */
   private replace(customer: Customer): void {
     this.customers.update((list) => list.map((c) => (c.id === customer.id ? customer : c)));
   }
 
+  /** Shows a success or error snackbar. */
   private notify(message: string, tone: 'success' | 'error'): void {
     this.snackBar.open(message, 'Close', {
       duration: tone === 'error' ? 6000 : 3000,

@@ -2,16 +2,13 @@ import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.model
 import { User } from '../../models/user.models';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
 
-/** SuperAdmin reads as the privileged role, Operator as an ordinary one. */
+/** Maps a role to its badge tone. */
 const roleTone = (display: string): BadgeTone => (display === 'SuperAdmin' ? 'info' : 'neutral');
 
+/** Maps the status text to its badge tone. */
 const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'success' : 'danger');
 
-/**
- * Built per signed-in admin rather than exported flat: the deactivate action has
- * to know which row is the viewer's own account so it can disable it, and that
- * identity is only known at runtime.
- */
+/** Builds the users table config, disabling deactivation of the signed-in account. */
 export function buildUsersTableConfig(selfId: number | null): DataTableConfig<User> {
   return {
     title: 'Users',
@@ -138,7 +135,6 @@ export function buildUsersTableConfig(selfId: number | null): DataTableConfig<Us
       message: 'No users found',
       icon: 'people_outline',
     },
-    // Deactivated accounts stay in the list but read back — they cannot sign in.
     rowMutedWhen: (row) => !row.isActive,
   };
 }

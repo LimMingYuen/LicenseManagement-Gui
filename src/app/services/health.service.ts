@@ -5,31 +5,16 @@ import { BackendStatus, HealthReport } from '../models/health.models';
 
 export const HEALTH_URL = '/api/health';
 
-/** Quiet cadence while everything is fine — enough to notice an outage, cheap enough to ignore. */
+/** Poll interval while the API is online. */
 const POLL_WHEN_HEALTHY_MS = 30_000;
 
-/** Once something is wrong, poll hard: the point is to clear the banner the moment it recovers. */
+/** Poll interval while the API is down or degraded. */
 const POLL_WHEN_UNHEALTHY_MS = 5_000;
 
-/**
- * One dropped probe is a hiccup — a laptop waking up, a proxy recycling. Two in a row is an
- * outage. The exception is the very first probe: at startup there is no "last known good"
- * to protect, so a failure there is reported immediately rather than after another 5s.
- */
+/** Consecutive failures after startup before the API is reported unreachable. */
 const FAILURES_BEFORE_UNREACHABLE = 2;
 
-/**
- * Tracks whether the API is actually there.
- *
- * Before this existed the client only found out the backend was down by having a user action
- * fail, one action at a time. This polls {@link HEALTH_URL} instead, so the answer is already
- * known when the screen renders — including on the login page, where nothing else has ever
- * called the API yet.
- *
- * The probe is not the only input: {@link reportReachable} and {@link reportUnreachable} let
- * the auth interceptor fold the outcome of every real API call into the same state, so a
- * connection refused on a save is reflected instantly rather than up to 30 seconds later.
- */
+/** Tracks API reachability by polling the health endpoint and observing real API calls. */
 @Injectable({ providedIn: 'root' })
 export class HealthService {
   private readonly http = inject(HttpClient);
@@ -50,38 +35,27 @@ export class HealthService {
   readonly lastCheckedAt = this.checkedAt.asReadonly();
   readonly isChecking = this.probing.asReadonly();
 
-  /** The browser itself says there is no network. A different message than a dead API. */
   readonly isBrowserOffline = this.offline.asReadonly();
 
-  /** The API answered the last time we asked, whatever its dependencies are doing. */
+  /** The API answered the last request, regardless of its dependencies. */
   readonly isReachable = computed(() => {
     const status = this.state();
     return status === 'online' || status === 'degraded' || status === 'unhealthy';
   });
 
-  /**
-   * The API is not usable, so the shell steps aside for the server-unavailable screen.
-   * `degraded` is deliberately not included — the app still works, and the connection row
-   * in the profile menu is enough to say so without taking the whole screen away.
-   */
+  /** The API is unusable and the server-unavailable screen replaces the shell. */
   readonly isDown = computed(() => this.state() === 'unreachable' || this.state() === 'unhealthy');
 
-  /** The checks that are not Healthy, for the banner detail line. */
+  /** Health checks in the last report that are not Healthy. */
   readonly failingChecks = computed(() =>
     (this.report()?.checks ?? []).filter((check) => check.status !== 'Healthy'),
   );
 
   constructor() {
-    // Root service, so this only fires in tests — but a timer that outlives its TestBed
-    // keeps firing HTTP calls into a torn-down injector.
     inject(DestroyRef).onDestroy(() => this.stop());
   }
 
-  /**
-   * Begins polling. Called from an app initializer rather than the constructor: the auth
-   * interceptor injects this service, so a probe fired from inside the constructor would
-   * re-enter a half-built instance.
-   */
+  /** Starts polling and listening for network and visibility changes. */
   start(): void {
     if (this.started) {
       return;
@@ -95,6 +69,7 @@ export class HealthService {
     void this.check();
   }
 
+  /** Stops polling and removes the event listeners. */
   stop(): void {
     this.started = false;
     this.clearTimer();
@@ -103,7 +78,7 @@ export class HealthService {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
   }
 
-  /** Probe now. Safe to call from a retry button — overlapping calls collapse into one. */
+  /** Probes the health endpoint now unless a probe is already running. */
   async check(): Promise<void> {
     if (this.probing()) {
       return;
@@ -115,8 +90,6 @@ export class HealthService {
     try {
       this.applyReport(await firstValueFrom(this.http.get<HealthReport>(HEALTH_URL)));
     } catch (error) {
-      // An Unhealthy report comes back as 503 with the report still in the body: the API is
-      // up and telling us what is broken, which is not the same as no answer at all.
       const body = error instanceof HttpErrorResponse ? (error.error as HealthReport | null) : null;
 
       if (body && typeof body === 'object' && typeof body.status === 'string') {
@@ -131,10 +104,7 @@ export class HealthService {
     }
   }
 
-  /**
-   * A real API call succeeded. Whatever we thought, the API is clearly there — clear the
-   * banner without making the user wait for the next scheduled probe.
-   */
+  /** Records that a real API call reached the server. */
   reportReachable(): void {
     this.failures.set(0);
 
@@ -145,15 +115,13 @@ export class HealthService {
     }
   }
 
-  /**
-   * A real API call failed at the transport layer (status 0 — refused, DNS, CORS preflight).
-   * Counted like a failed probe so a single blip does not flash the banner.
-   */
+  /** Records that a real API call failed at the transport layer. */
   reportUnreachable(): void {
     this.registerFailure();
     this.scheduleNext();
   }
 
+  /** Stores a health report and derives the backend status from it. */
   private applyReport(report: HealthReport): void {
     this.report.set(report);
     this.failures.set(0);
@@ -162,11 +130,11 @@ export class HealthService {
     );
   }
 
+  /** Counts a failed probe or call and marks the API unreachable at the threshold. */
   private registerFailure(): void {
     const failures = this.failures() + 1;
     this.failures.set(failures);
 
-    // Nothing answered, so the last report describes a world that no longer exists.
     this.report.set(null);
 
     if (failures >= FAILURES_BEFORE_UNREACHABLE || this.state() === 'unknown') {
@@ -174,11 +142,10 @@ export class HealthService {
     }
   }
 
+  /** Schedules the next probe based on the current status. */
   private scheduleNext(): void {
     this.clearTimer();
 
-    // Polling a backend nobody is looking at, from a tab nobody is looking at, is pure noise.
-    // The visibilitychange handler probes again the moment the tab comes back.
     if (!this.started || document.hidden) {
       return;
     }
@@ -187,6 +154,7 @@ export class HealthService {
     this.timer = setTimeout(() => void this.check(), delay);
   }
 
+  /** Cancels the pending probe timer. */
   private clearTimer(): void {
     if (this.timer !== null) {
       clearTimeout(this.timer);
@@ -194,20 +162,22 @@ export class HealthService {
     }
   }
 
+  /** Probes as soon as the browser regains network access. */
   private readonly onBrowserOnline = (): void => {
     this.offline.set(false);
     void this.check();
   };
 
+  /** Marks the API unreachable as soon as the browser loses network access. */
   private readonly onBrowserOffline = (): void => {
     this.offline.set(true);
-    // No point probing through a network the browser knows is gone; say so directly.
     this.clearTimer();
     this.failures.set(FAILURES_BEFORE_UNREACHABLE);
     this.report.set(null);
     this.state.set('unreachable');
   };
 
+  /** Probes when the tab becomes visible again. */
   private readonly onVisibilityChange = (): void => {
     if (!document.hidden) {
       void this.check();

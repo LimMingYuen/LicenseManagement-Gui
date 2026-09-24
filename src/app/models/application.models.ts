@@ -1,23 +1,16 @@
 import { LicenseKind } from './license.models';
 
-/**
- * A product family licenses are issued under — the top level of the catalog.
- *
- * Applications used to be two hardcoded records in C#, with the one a license belonged to
- * derived from its payload type. They are rows now, and each declares which payload types
- * it can issue: an application that does not support robots never appears on the robot
- * generate form.
- */
+/** A product family that licenses are issued under. */
 export interface Application {
   id: number;
-  /** Stable identifier used in API filters, e.g. "QES-KUKA-AMR". Fixed at creation. */
+  /** Stable identifier, e.g. "QES-KUKA-AMR", fixed at creation. */
   key: string;
   name: string;
   supportsMachine: boolean;
   supportsRobot: boolean;
   supportsGateway: boolean;
   isActive: boolean;
-  /** How many licenses were issued under it. Zero is the only deletable state. */
+  /** Number of licenses issued under this application. */
   licenseCount: number;
   createdAt: string;
   createdBy: string | null;
@@ -33,10 +26,10 @@ export interface CreateApplicationRequest {
   isActive: boolean;
 }
 
-/** The key is absent: it is the identifier saved links quote, so it is fixed at creation. */
+/** Application update payload; the key cannot be changed. */
 export type UpdateApplicationRequest = Omit<CreateApplicationRequest, 'key'>;
 
-/** Whether an application may issue a given payload type. */
+/** Returns whether an application may issue the given payload type. */
 export function supportsKind(application: Application, kind: LicenseKind): boolean {
   switch (kind) {
     case 'Machine':
@@ -48,7 +41,7 @@ export function supportsKind(application: Application, kind: LicenseKind): boole
   }
 }
 
-/** The payload types an application issues, for display. */
+/** Returns the payload types an application issues. */
 export function supportedKinds(application: Application): LicenseKind[] {
   const kinds: LicenseKind[] = [];
 

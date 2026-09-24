@@ -9,21 +9,14 @@ import { CustomerService } from '../../services/customer.service';
 import { describeError } from '../../shared/utils/http-error';
 
 export interface CustomerMergeData {
-  /** The customer being folded away. */
+  /** Customer that is merged away and deleted. */
   source: Customer;
 
-  /** Every customer, including the source — filtered out below. */
+  /** Every customer, including the source. */
   all: Customer[];
 }
 
-/**
- * Folds one customer into another.
- *
- * This exists for the mess the old free-text customer field left behind: "Acme Corp" and
- * "Acme Corp." were two customers in the catalog with no way to reconcile them. Merging
- * moves the licenses and deletes the duplicate; the customer name inside each signed file
- * is left exactly as it was signed.
- */
+/** Dialog that merges one customer into another. */
 @Component({
   selector: 'app-customer-merge',
   imports: [
@@ -99,6 +92,7 @@ export class CustomerMerge {
     targetId: [0, Validators.required],
   });
 
+  /** Merges the source customer into the selected target. */
   protected async submit(): Promise<void> {
     const targetId = Number(this.form.controls.targetId.value);
 

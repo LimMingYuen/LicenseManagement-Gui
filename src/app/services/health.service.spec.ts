@@ -55,7 +55,6 @@ describe('HealthService', () => {
     http.expectOne(HEALTH_URL).flush(unhealthy, { status: 503, statusText: 'Service Unavailable' });
     await probe;
 
-    // The API answered — it is up, its database is not. Those need different words.
     expect(service.status()).toBe('unhealthy');
     expect(service.failingChecks()).toHaveLength(1);
   });

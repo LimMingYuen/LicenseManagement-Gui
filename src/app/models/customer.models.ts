@@ -1,10 +1,4 @@
-/**
- * The customer register.
- *
- * Customers used to exist only as a string typed into each generate form and re-grouped at
- * read time, which is why two spellings of one name became two customers with no way back.
- * They are rows now: created up front, renamed once, merged when they have drifted apart.
- */
+/** A customer in the register. */
 export interface Customer {
   id: number;
   name: string;
@@ -13,7 +7,7 @@ export interface Customer {
   contactEmail: string | null;
   notes: string | null;
   isActive: boolean;
-  /** How many licenses reference this customer. Zero is the only deletable state. */
+  /** Number of licenses that reference this customer. */
   licenseCount: number;
   createdAt: string;
   createdBy: string | null;

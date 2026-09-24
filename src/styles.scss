@@ -1,5 +1,4 @@
-// Angular Material 3 theming. Defines the --mat-sys-* variables every Material
-// control reads; the brand tokens below then pin the ones that must match SMC blue.
+// Angular Material 3 theme.
 @use '@angular/material' as mat;
 
 html {
@@ -13,11 +12,7 @@ html {
   ));
 }
 
-// =========================================================================
-// SMC BRAND THEME — shared with PENTA SMC AMR so the two apps read as one
-// product. Seed: #0074BE (SMC blue); everything else is a tint/shade of it
-// or a paired neutral. Reference these vars from any component .scss.
-// =========================================================================
+// SMC brand tokens, shared with PENTA SMC AMR.
 :root {
   // --- Primary brand blue (layered) ---
   --brand-primary:          #0074BE;
@@ -115,8 +110,6 @@ html {
   --dur-slow: 300ms;
 
   // --- Controls ---
-  // The page-header bar and the data-table search field must agree on these
-  // or the search box sits proud of the other controls.
   --control-h:  34px;
   --control-fs: 13px;
 
@@ -127,9 +120,6 @@ html {
   --mat-sys-on-primary-container: var(--brand-text-strong);
 
   // --- Legacy aliases -----------------------------------------------------
-  // The login / password / dialog screens were written against these names
-  // before the brand tokens landed. Aliasing rather than renaming keeps those
-  // templates working while every colour still resolves to one brand value.
   --surface:        var(--brand-surface);
   --surface-sunken: var(--brand-bg-alt);
   --border:         var(--brand-border);
@@ -182,7 +172,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Layout ------------------------------------------------------------------ */
+// Layout
 
 .page {
   max-width: 76rem;
@@ -217,18 +207,8 @@ body {
   margin-top: var(--sp-4);
 }
 
-/* Forms ------------------------------------------------------------------- */
+// Forms
 
-/* Every editable control in the app is an Angular Material control: a text box
-   is a <mat-form-field> with matInput, a picker is <mat-select>, a tickbox is
-   <mat-checkbox>. These rules dress that family in the brand and pull M3's
-   56px default down to the app's tighter rhythm, so a form reads at the same
-   scale as the page-header bar and the data table beside it.
-
-   The data-table's own fields are excluded: its search box sits inside the
-   page-header bar and its column filters sit inside a popover, so both are
-   sized as chrome against --control-h by data-table.scss rather than as form
-   fields. Everything else opts in by simply being a mat-form-field. */
 .mat-mdc-form-field:not(.dt-search, .dt-popover__field) {
   width: 100%;
 
@@ -253,36 +233,22 @@ body {
   --mat-form-field-subscript-text-size: var(--fs-sm);
   --mat-form-field-error-text-color: var(--brand-danger-text);
 
-  /* A hint is the old .field-hint: quieter than an error, quieter than the
-     value. Material gives hints and errors the same slot, so only the colour
-     separates them. */
   .mat-mdc-form-field-hint {
     color: var(--brand-text-subtle);
   }
 
-  /* A notes box starts taller than a single-line field and grows from there.
-     Only the min-height is set: --mat-form-field-container-height drives the
-     infix's min-height *and* the floating label's transform, which divides it —
-     so overriding it to `auto` here would leave Material computing
-     calc(auto / 2) and drop the label out of position. Material already gives
-     the control itself height:auto and resize:vertical. */
   textarea.mat-mdc-input-element {
     min-height: 4.5rem;
   }
 }
 
-/* A tickbox carries its own label, so all that is left is to bring it onto the
-   brand's type scale — M3 sets its own font and weight by default. */
 .mat-mdc-checkbox {
   --mat-checkbox-label-text-font: var(--font-sans);
   --mat-checkbox-label-text-size: var(--fs-base);
   --mat-checkbox-label-text-color: var(--brand-text);
 }
 
-/* A group of tickboxes or radios under one caption. mat-form-field owns the
-   label for a single control; this is the shape for the cases it does not
-   cover — a fieldset of tickboxes, a radio group, and the read-only license
-   text on the detail dialog. */
+// Captioned group of checkboxes or radios.
 .field {
   display: flex;
   flex-direction: column;
@@ -303,23 +269,13 @@ body {
   color: var(--brand-text-subtle);
 }
 
-/* The <mat-error> equivalent for those same groups: a rule that fails across a
-   set of controls rather than inside one, so no single field owns the message. */
 .field-invalid {
   font-size: var(--fs-sm);
   color: var(--brand-danger-text);
 }
 
-/* Buttons ----------------------------------------------------------------- */
+// Buttons
 
-/* Every button is an Angular Material button. Two appearances carry the whole
-   app: `matButton="filled"` for the one action a surface exists to perform, and
-   `matButton="outlined"` for everything standing beside it. `matButton` alone
-   (text) is left for the low-emphasis links inside the data table.
-
-   M3's own defaults are a 40px pill in its palette's outline colour; these
-   rules bring both onto the brand's border, radius and control type size so a
-   button reads as part of the same set as the field above it. */
 .mat-mdc-button-base {
   --mat-button-filled-container-height: 40px;
   --mat-button-filled-container-shape: var(--r-md);
@@ -342,8 +298,6 @@ body {
   --mat-button-text-label-text-weight: var(--fw-medium);
 }
 
-/* Secondary rows and section headers, where a full-height button would shout
-   over the heading it sits next to. */
 .mat-mdc-button-base.btn-sm {
   --mat-button-filled-container-height: 28px;
   --mat-button-outlined-container-height: 28px;
@@ -354,9 +308,6 @@ body {
   --mat-button-outlined-label-text-size: var(--fs-sm);
 }
 
-/* Revoke, regenerate the signing key, merge a customer away. Outlined rather
-   than filled: these are destructive, so they are never the button the eye
-   lands on first — they just say plainly what they are once read. */
 .mat-mdc-button-base.danger {
   --mat-button-outlined-outline-color: var(--brand-danger);
   --mat-button-outlined-label-text-color: var(--brand-danger-text);
@@ -364,7 +315,7 @@ body {
   --mat-button-outlined-ripple-color: var(--brand-danger-tint);
 }
 
-/* Feedback ---------------------------------------------------------------- */
+// Feedback
 
 .alert {
   margin: 0 0 var(--sp-4);
@@ -388,10 +339,7 @@ body {
   color: var(--brand-warning-text);
 }
 
-/* ==========================================
-   STATUS PILL — the one chip primitive, shared with PENTA.
-   Tones name meaning, not colour: --danger for a bad state, never --red.
-   ========================================== */
+// Status pill
 .pill {
   display: inline-flex;
   align-items: center;
@@ -421,8 +369,7 @@ body {
   }
 }
 
-/* Badges — the older chip family the form dialogs still use. Tones map onto
-   the same tints as .pill so a role reads the same on either. */
+// Badges
 .badge {
   display: inline-block;
   padding: 2px 10px;
@@ -441,8 +388,7 @@ body {
 .badge-warn     { background: var(--brand-warning-tint); color: var(--brand-warning-text); }
 .badge-self     { background: transparent; color: var(--brand-text-subtle); }
 
-/* Table — the plain HTML table primitive. Data-heavy pages use
-   <app-data-table> instead; this is for small static tables. */
+// Table
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -470,25 +416,13 @@ body {
   }
 }
 
-/* Actions row on a full-page form (change password). Dialogs get theirs from
-   mat-dialog-actions; this is the same shape for a card that is not a dialog. */
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--sp-2);
 }
 
-/* ==========================================
-   DIALOGS
-   Every dialog is a MatDialog: the CDK overlay renders on <body>, so nothing
-   inside the page — not the sidenav's stacking context, not the z-index the
-   CDK table writes inline onto its sticky header cells — can paint over it.
-   These rules dress Material's dialog in the brand. The title and the action
-   row are pinned; only mat-dialog-content scrolls.
-
-   Scoped to the .app-dialog panel class that dialogConfig() sets, so the
-   confirmation dialog — which brings its own centred layout — is left alone.
-   ========================================== */
+// Dialogs
 
 .app-dialog .mat-mdc-dialog-container {
   --mat-dialog-container-color: var(--brand-surface);
@@ -496,8 +430,6 @@ body {
   --mat-dialog-container-elevation-shadow: var(--shadow-lg);
 
   --mat-dialog-headline-padding: var(--sp-5) var(--sp-5) var(--sp-2);
-  // sp-3 rather than sp-1 up top: mat-dialog-content scrolls, so it clips anything that
-  // overflows it — and an outlined field's floating label sits above its own top edge.
   --mat-dialog-content-padding: var(--sp-3) var(--sp-5);
   --mat-dialog-with-actions-content-padding: var(--sp-3) var(--sp-5);
   --mat-dialog-actions-padding: var(--sp-4) var(--sp-5) var(--sp-5);
@@ -514,8 +446,6 @@ body {
   --mat-dialog-supporting-text-size: var(--fs-base);
   --mat-dialog-supporting-text-tracking: normal;
 
-  // MDC reserves a 40px inline box above the headline for the M3 baseline. With
-  // our own padding that reads as a gap, and the title floats off the top edge.
   .mat-mdc-dialog-title::before {
     display: none;
   }
@@ -526,12 +456,6 @@ body {
     gap: var(--sp-4);
   }
 
-  // Material zeroes the content's top padding whenever it directly follows the title
-  // (.mat-mdc-dialog-title + .mat-mdc-dialog-content), which outranks the padding token
-  // above. That leaves the scroller's top edge flush with the first field — and an
-  // outlined field's floating label sits above its own border, so the label was being
-  // sliced in half. Put the padding back, one class more specific than the rule that
-  // took it away. Only reachable when no alert sits between the two.
   .mat-mdc-dialog-title + .mat-mdc-dialog-content {
     padding-top: var(--sp-3);
   }
@@ -543,54 +467,25 @@ body {
   }
 }
 
-/* A <form> wrapping title/content/actions replaces them as the surface's flex
-   child, so it has to carry the column layout they expect. */
 .dialog-form {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* Pinned with the title rather than scrolled with the fields: a save that fails
-   must stay visible next to the button that failed. */
 .dialog-alert {
   flex: none;
   margin: 0 var(--sp-5) var(--sp-4);
 }
 
-/* ==========================================
-   DATEPICKER
-   The calendar opens in the CDK overlay on <body>, so it can only be reached
-   from here. Material gives it a fixed 296px, which reads as a narrow card
-   hanging under a much wider field.
-
-   Opted into per picker with panelClass="field-width-calendar" — the width the
-   rule uses is published by that field's component as --field-calendar-width,
-   because nothing in CSS can measure an element the overlay is not inside of.
-   Floored at 240px: below that Material's own min-width on the date grid takes
-   over and the cells start colliding with the month label.
-
-   The class lands on <mat-calendar>, not on the overlay pane, so this is where
-   the width has to go — the pane and the content card both shrink to it.
-
-   The height has to be released in the same breath. Material pins the calendar
-   at 296x354, but the date rows are not sized in pixels: each cell carries
-   vertical padding expressed as a percentage of the *width*, so a wider
-   calendar is a proportionally taller one. Leaving the 354px in place while
-   widening pushes the last two weeks straight out of the card.
-   ========================================== */
+// Datepicker
 
 .mat-datepicker-content .mat-calendar.field-width-calendar {
   width: max(var(--field-calendar-width, 296px), 240px);
   height: auto;
 }
 
-/* ==========================================
-   SNACKBARS
-   Snackbars render in the CDK overlay, outside every component's DOM, so
-   they can only be styled globally. Colors are keyed off the panelClass
-   passed to MatSnackBar.
-   ========================================== */
+// Snackbars
 
 .mat-mdc-snack-bar-container {
   border-radius: var(--r-md);
@@ -609,7 +504,7 @@ body {
 .warning-snackbar .mdc-snackbar__surface { background-color: var(--brand-warning) !important; }
 .info-snackbar    .mdc-snackbar__surface { background-color: var(--brand-primary) !important; }
 
-/* Scrollbars -------------------------------------------------------------- */
+// Scrollbars
 
 ::-webkit-scrollbar {
   width: 8px;

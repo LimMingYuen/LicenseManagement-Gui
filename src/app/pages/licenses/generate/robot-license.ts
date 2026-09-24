@@ -3,7 +3,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { GenerateLicenseForm } from './generate-license-form';
 import { ROBOT_CONFIG } from './generate-license.config';
 
-/** One page per license type — the form itself is shared. */
+/** Page that issues robot licenses. */
 @Component({
   selector: 'app-robot-license',
   imports: [PageHeaderComponent, GenerateLicenseForm],

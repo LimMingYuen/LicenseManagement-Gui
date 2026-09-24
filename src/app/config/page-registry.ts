@@ -1,26 +1,18 @@
-/**
- * Centralized page registry — the single source of truth for what the sidebar
- * shows. Adding a navigable page means adding a route in app.routes.ts and an
- * entry here; the sidebar derives its items from this list, so the two never
- * drift apart in the way a hand-maintained nav array does.
- */
-
+/** A navigable page shown in the sidebar. */
 export interface PageDefinition {
-  /** Route path (must match app.routes.ts). */
+  /** Route path matching app.routes.ts. */
   path: string;
   /** Display name shown in the sidebar. */
   name: string;
   /** Material icon name. */
   icon: string;
-  /** Hidden from non-SuperAdmin accounts. Mirrors the guard on the route. */
+  /** Hidden from non-SuperAdmin accounts. */
   superAdminOnly?: boolean;
-  /**
-   * Highlight this item only on an exact URL match. Needed where one page's path is a
-   * prefix of another's: /licenses would otherwise stay lit while /licenses/machine is open.
-   */
+  /** Highlights the item only on an exact URL match. */
   exact?: boolean;
 }
 
+/** Pages listed in the sidebar, in display order. */
 export const PAGE_REGISTRY: PageDefinition[] = [
   { path: '/dashboard', name: 'Dashboard', icon: 'dashboard' },
   { path: '/licenses/machine', name: 'Machine License', icon: 'precision_manufacturing' },
