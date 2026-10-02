@@ -195,8 +195,7 @@
   color: var(--brand-warning-text);
 }
 
-.pill--expired,
-.pill--revoked {
+.pill--expired {
   background: var(--brand-danger-tint);
   color: var(--brand-danger-text);
 }

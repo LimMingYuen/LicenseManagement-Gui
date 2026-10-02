@@ -74,9 +74,6 @@
               @if (app.counts.expired) {
                 <span class="pill pill--danger">{{ app.counts.expired }} expired</span>
               }
-              @if (app.counts.revoked) {
-                <span class="pill pill--danger">{{ app.counts.revoked }} revoked</span>
-              }
               <span class="pill pill--neutral">{{ app.counts.total }} total</span>
             </span>
           </button>
@@ -160,7 +157,6 @@
                             <button
                               type="button"
                               class="leaf"
-                              [class.leaf--muted]="license.isRevoked"
                               (click)="openDetail(license)"
                             >
                               <span class="pill" [class]="'pill--' + typeTone(license.type)">

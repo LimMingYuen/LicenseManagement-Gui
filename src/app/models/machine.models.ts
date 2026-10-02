@@ -9,7 +9,7 @@ export interface Machine {
   name: string | null;
   notes: string | null;
   isActive: boolean;
-  /** True when the machine holds an unrevoked machine license. */
+  /** True when the machine holds a machine license. */
   hasMachineLicense: boolean;
   licenseCount: number;
   robotCount: number;

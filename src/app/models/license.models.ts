@@ -8,7 +8,7 @@ export type LicenseApplicationKey = string;
 export type LicenseTier = 'PERPETUAL' | 'SUBSCRIPTION' | 'TRIAL';
 
 /** Lifecycle state, computed by the server. */
-export type LicenseStatus = 'Active' | 'Expiring' | 'Expired' | 'Revoked';
+export type LicenseStatus = 'Active' | 'Expiring' | 'Expired';
 
 export interface License {
   id: number;
@@ -37,9 +37,6 @@ export interface License {
   /** Null means perpetual. */
   expiresAt: string | null;
   notes: string | null;
-  isRevoked: boolean;
-  revokedAt: string | null;
-  revokedReason: string | null;
   createdAt: string;
   createdBy: string | null;
 }
@@ -60,7 +57,6 @@ export interface LicenseSummary {
   activeCount: number;
   expiringCount: number;
   expiredCount: number;
-  revokedCount: number;
   recent: License[];
   expiringSoon: License[];
 }
@@ -106,7 +102,6 @@ export interface CatalogCounts {
   active: number;
   expiring: number;
   expired: number;
-  revoked: number;
 }
 
 /** Catalog level 3: every license bound to one machine. */

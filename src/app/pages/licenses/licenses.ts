@@ -5,6 +5,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { License } from '../../models/license.models';
 import { LicenseService } from '../../services/license.service';
+import { AuthService } from '../../services/auth.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
 import { DataActionEvent } from '../../shared/models/data-table.models';
 import {
@@ -19,6 +20,7 @@ import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
 import { saveBlob } from '../../shared/utils/download';
 import { buildLicensesTableConfig } from './licenses-table.config';
+import { deleteMessage } from './delete-message';
 
 /** Page that lists the license register. */
 @Component({
@@ -37,12 +39,13 @@ export class Licenses {
   protected readonly rows = signal<License[]>([]);
   protected readonly loading = signal(true);
 
-  /** Open detail dialog, updated in place after a revoke. */
+  /** Open detail dialog, closed when its license is deleted. */
   private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   private readonly queryParams = inject(ActivatedRoute).snapshot.queryParamMap;
 
-  protected readonly tableConfig = buildLicensesTableConfig();
+  /** Built once, since the available actions depend only on the signed-in role. */
+  protected readonly tableConfig = buildLicensesTableConfig(inject(AuthService).isSuperAdmin());
 
   /** Initial table search from the ?search= query parameter. */
   protected readonly initialSearch = signal(this.queryParams.get('search') ?? '');
@@ -82,8 +85,8 @@ export class Licenses {
       case 'download':
         if (event.row) void this.download(event.row);
         break;
-      case 'revoke':
-        if (event.row) void this.revoke(event.row);
+      case 'delete':
+        if (event.row) void this.delete(event.row);
         break;
     }
   }
@@ -95,7 +98,7 @@ export class Licenses {
       dialogConfig<LicenseDetailData>({ license: row }, 'min(44rem, 96vw)'),
     );
 
-    ref.componentInstance.revoked.subscribe((license) => void this.revoke(license));
+    ref.componentInstance.deleted.subscribe((license) => void this.delete(license));
 
     this.detailRef = ref;
     ref.afterClosed().subscribe(() => {
@@ -113,15 +116,13 @@ export class Licenses {
     }
   }
 
-  /** Revokes a license after confirmation. */
-  protected async revoke(license: License): Promise<void> {
+  /** Deletes a license after confirmation. */
+  protected async delete(license: License): Promise<void> {
     const data: ConfirmationDialogData = {
-      title: 'Revoke license?',
-      message:
-        `This marks the ${license.type.toLowerCase()} license for ${license.customerName} ` +
-        `(${license.targetId}) as revoked. Verification will fail for this target.`,
-      icon: 'block',
-      confirmText: 'Revoke license',
+      title: 'Delete license?',
+      message: deleteMessage(license),
+      icon: 'delete',
+      confirmText: 'Delete license',
       cancelText: 'Cancel',
       showCancel: true,
       confirmColor: 'warn',
@@ -134,13 +135,13 @@ export class Licenses {
     if (!confirmed) return;
 
     try {
-      const updated = await this.licenses.revoke(license.id, null);
-      this.rows.update((list) => list.map((l) => (l.id === updated.id ? updated : l)));
-      this.detailRef?.componentInstance.update(updated);
+      await this.licenses.delete(license.id);
+      this.rows.update((list) => list.filter((l) => l.id !== license.id));
+      this.detailRef?.close();
 
-      this.notify(`License for ${updated.customerName} was revoked.`, 'success');
+      this.notify(`License for ${license.customerName} was deleted.`, 'success');
     } catch (error) {
-      this.notify(describeError(error, 'Could not revoke the license.'), 'error');
+      this.notify(describeError(error, 'Could not delete the license.'), 'error');
     }
   }
 
