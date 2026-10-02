@@ -22,5 +22,3 @@ export interface CreateCustomerRequest {
   notes: string | null;
   isActive: boolean;
 }
-
-export type UpdateCustomerRequest = CreateCustomerRequest;
