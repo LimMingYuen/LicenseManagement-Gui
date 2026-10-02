@@ -109,7 +109,6 @@ export class Dashboard {
       case 'Expiring':
         return 'warning';
       case 'Expired':
-      case 'Revoked':
         return 'danger';
       default:
         return 'neutral';

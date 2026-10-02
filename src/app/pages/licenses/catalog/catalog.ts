@@ -29,6 +29,7 @@ import {
 import { dialogConfig } from '../../../shared/utils/dialog';
 import { describeError } from '../../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../../shared/utils/date-format';
+import { deleteMessage } from '../delete-message';
 
 /** Stable key of a tree node, used to track expansion. */
 type NodeKey = string;
@@ -58,7 +59,7 @@ export class LicenseCatalogPage {
   protected readonly catalog = signal<LicenseCatalog | null>(null);
   protected readonly loading = signal(true);
 
-  /** Open detail dialog, updated in place after a revoke. */
+  /** Open detail dialog, closed when its license is deleted. */
   private detailRef: MatDialogRef<LicenseDetailComponent> | null = null;
 
   protected readonly search = signal('');
@@ -72,7 +73,6 @@ export class LicenseCatalogPage {
     'Active',
     'Expiring',
     'Expired',
-    'Revoked',
   ];
 
   protected readonly formatDate = formatIsoDateTime;
@@ -101,7 +101,7 @@ export class LicenseCatalogPage {
       dialogConfig<LicenseDetailData>({ license }, 'min(44rem, 96vw)'),
     );
 
-    ref.componentInstance.revoked.subscribe((row) => void this.revoke(row));
+    ref.componentInstance.deleted.subscribe((row) => void this.delete(row));
 
     this.detailRef = ref;
     ref.afterClosed().subscribe(() => {
@@ -109,15 +109,13 @@ export class LicenseCatalogPage {
     });
   }
 
-  /** Revokes a license after confirmation and reloads the tree. */
-  protected async revoke(license: License): Promise<void> {
+  /** Deletes a license after confirmation and reloads the tree. */
+  protected async delete(license: License): Promise<void> {
     const data: ConfirmationDialogData = {
-      title: 'Revoke license?',
-      message:
-        `This marks the ${license.type.toLowerCase()} license for ${license.customerName} ` +
-        `(${license.targetId}) as revoked. Verification will fail for this target.`,
-      icon: 'block',
-      confirmText: 'Revoke license',
+      title: 'Delete license?',
+      message: deleteMessage(license),
+      icon: 'delete',
+      confirmText: 'Delete license',
       cancelText: 'Cancel',
       showCancel: true,
       confirmColor: 'warn',
@@ -130,12 +128,12 @@ export class LicenseCatalogPage {
     if (!confirmed) return;
 
     try {
-      const updated = await this.licenses.revoke(license.id, null);
-      this.detailRef?.componentInstance.update(updated);
+      await this.licenses.delete(license.id);
+      this.detailRef?.close();
       await this.load();
-      this.notify(`License for ${updated.customerName} was revoked.`, 'success');
+      this.notify(`License for ${license.customerName} was deleted.`, 'success');
     } catch (error) {
-      this.notify(describeError(error, 'Could not revoke the license.'), 'error');
+      this.notify(describeError(error, 'Could not delete the license.'), 'error');
     }
   }
 
@@ -270,7 +268,6 @@ export class LicenseCatalogPage {
       case 'Expiring':
         return 'warning';
       case 'Expired':
-      case 'Revoked':
         return 'danger';
       default:
         return 'neutral';

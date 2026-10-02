@@ -14,15 +14,14 @@ const statusTone = (display: string): BadgeTone => {
     case 'Expiring':
       return 'warning';
     case 'Expired':
-    case 'Revoked':
       return 'danger';
     default:
       return 'neutral';
   }
 };
 
-/** Builds the license register table config. */
-export function buildLicensesTableConfig(): DataTableConfig<License> {
+/** Builds the license register table config; only a SuperAdmin gets the delete action. */
+export function buildLicensesTableConfig(isSuperAdmin: boolean): DataTableConfig<License> {
   return {
     title: 'Licenses',
     icon: 'inventory_2',
@@ -131,7 +130,6 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
           { value: 'Active', label: 'Active', tone: 'success' },
           { value: 'Expiring', label: 'Expiring', tone: 'warning' },
           { value: 'Expired', label: 'Expired', tone: 'danger' },
-          { value: 'Revoked', label: 'Revoked', tone: 'danger' },
         ],
       },
     ],
@@ -145,12 +143,12 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
         tooltip: 'Download license file',
       },
       {
-        action: 'revoke',
-        label: 'Revoke',
-        icon: 'block',
+        action: 'delete',
+        label: 'Delete',
+        icon: 'delete',
         type: 'icon',
-        tooltip: 'Revoke license',
-        hidden: (row) => row.isRevoked,
+        tooltip: 'Delete license',
+        hidden: () => !isSuperAdmin,
       },
     ],
     headerActions: [
@@ -169,6 +167,5 @@ export function buildLicensesTableConfig(): DataTableConfig<License> {
     defaultSort: { column: 'issuedAt', direction: 'desc' },
     empty: { message: 'No licenses issued yet', icon: 'inventory_2' },
     rowClickable: true,
-    rowMutedWhen: (row) => row.isRevoked,
   };
 }

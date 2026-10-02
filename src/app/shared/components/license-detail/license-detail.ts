@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { License } from '../../../models/license.models';
 import { LicenseService } from '../../../services/license.service';
+import { AuthService } from '../../../services/auth.service';
 import { describeError } from '../../utils/http-error';
 import { saveBlob } from '../../utils/download';
 import { formatIsoDateTime } from '../../utils/date-format';
@@ -19,7 +20,7 @@ export interface LicenseDetailData {
   license: License;
 }
 
-/** Displays one license with its signed file and offers copy, download and revoke actions. */
+/** Displays one license with its signed file and offers copy, download and delete actions. */
 @Component({
   selector: 'app-license-detail',
   imports: [MatIconModule, MatDialogModule, MatButtonModule],
@@ -73,14 +74,6 @@ export interface LicenseDetailData {
           <dt>Notes</dt>
           <dd>{{ license().notes }}</dd>
         }
-
-        @if (license().isRevoked) {
-          <dt>Revoked</dt>
-          <dd class="tnum">{{ license().revokedAt ? formatDate(license().revokedAt!) : '—' }}</dd>
-
-          <dt>Reason</dt>
-          <dd>{{ license().revokedReason || '—' }}</dd>
-        }
       </dl>
 
       <div class="field">
@@ -103,9 +96,9 @@ export interface LicenseDetailData {
       >
         {{ copied() ? 'Copied' : 'Copy' }}
       </button>
-      @if (!license().isRevoked) {
-        <button type="button" matButton="outlined" class="danger" (click)="revoked.emit(license())">
-          Revoke
+      @if (canDelete()) {
+        <button type="button" matButton="outlined" class="danger" (click)="deleted.emit(license())">
+          Delete
         </button>
       }
       <button
@@ -167,7 +160,11 @@ export class LicenseDetailComponent {
 
   protected readonly license = signal(inject<LicenseDetailData>(MAT_DIALOG_DATA).license);
 
-  readonly revoked = output<License>();
+  /** Only a SuperAdmin may delete licenses. */
+  protected readonly canDelete = inject(AuthService).isSuperAdmin;
+
+  /** Emits when the user asks to delete the license; the host confirms and deletes it. */
+  readonly deleted = output<License>();
 
   protected readonly fileContent = signal('');
   protected readonly fileName = signal('license.lic');
@@ -181,11 +178,6 @@ export class LicenseDetailComponent {
       const id = this.license().id;
       void this.load(id);
     });
-  }
-
-  /** Replaces the displayed license with an updated copy. */
-  update(license: License): void {
-    this.license.set(license);
   }
 
   /** Closes the dialog. */
@@ -220,7 +212,6 @@ export class LicenseDetailComponent {
       case 'Expiring':
         return 'warning';
       case 'Expired':
-      case 'Revoked':
         return 'danger';
       default:
         return 'neutral';

@@ -66,8 +66,8 @@ export class LicenseService {
     return firstValueFrom(this.http.post<LicenseWithFile>(`${this.baseUrl}/gateway`, request));
   }
 
-  /** Revokes a license with an optional reason. */
-  revoke(id: number, reason: string | null): Promise<License> {
-    return firstValueFrom(this.http.post<License>(`${this.baseUrl}/${id}/revoke`, { reason }));
+  /** Permanently deletes a license. SuperAdmin only. */
+  delete(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }
 }
