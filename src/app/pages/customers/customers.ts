@@ -116,11 +116,9 @@ export class Customers {
     const data: ConfirmationDialogData = {
       title: 'Delete customer?',
       message:
-        `This permanently removes ${customer.name} and its machines. ` +
-        (expired > 0
-          ? `Its ${expired} expired license(s) stay in the register under the customer name. `
-          : '') +
-        'This cannot be undone.',
+        `This permanently removes ${customer.name}, its machines` +
+        (expired > 0 ? ` and its ${expired} expired license(s)` : '') +
+        '. This cannot be undone.',
       icon: 'delete',
       confirmText: 'Delete customer',
       cancelText: 'Cancel',
