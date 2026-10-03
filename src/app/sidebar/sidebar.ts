@@ -1,16 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatMenuModule } from '@angular/material/menu';
 
 import { AuthService } from '../services/auth.service';
-import { HealthService } from '../services/health.service';
 import { PAGE_REGISTRY } from '../config/page-registry';
 import { AppLogoComponent } from '../shared/components/app-logo/app-logo';
+import { PageHeaderComponent } from '../shared/components/page-header/page-header';
 
 export interface NavItem {
   label: string;
@@ -20,7 +18,7 @@ export interface NavItem {
   exact: boolean;
 }
 
-/** Renders the app shell with a collapsible navigation rail beside the routed page. */
+/** Renders the app shell: a collapsible navigation rail beside the shared header and routed page. */
 @Component({
   selector: 'app-sidebar',
   imports: [
@@ -29,34 +27,15 @@ export interface NavItem {
     MatButtonModule,
     MatSidenavModule,
     MatTooltipModule,
-    MatDividerModule,
-    MatMenuModule,
     AppLogoComponent,
+    PageHeaderComponent,
   ],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
-  protected readonly auth = inject(AuthService);
-  protected readonly health = inject(HealthService);
-  private readonly router = inject(Router);
-
-  /** Text describing the current API connection state. */
-  protected readonly connectionLabel = computed(() => {
-    switch (this.health.status()) {
-      case 'online':
-        return 'Connected';
-      case 'degraded':
-        return 'Server degraded';
-      case 'unhealthy':
-        return 'Server fault';
-      case 'unreachable':
-        return 'Server unreachable';
-      default:
-        return 'Checking connection…';
-    }
-  });
+  private readonly auth = inject(AuthService);
 
   protected readonly collapsed = signal(true);
 
@@ -70,34 +49,8 @@ export class SidebarComponent {
     }));
   });
 
-  protected readonly userName = computed(() => {
-    const user = this.auth.currentUser();
-    return user?.fullName || user?.username || 'User';
-  });
-
-  protected readonly userRole = computed(() => this.auth.currentUser()?.role ?? '');
-
-  /** Two-letter avatar initials, taken from the full name when present. */
-  protected readonly initials = computed(() => {
-    const user = this.auth.currentUser();
-    const source = user?.fullName?.trim() || user?.username?.trim();
-    if (!source) {
-      return 'U';
-    }
-
-    const parts = source.split(/\s+/);
-    const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : source.slice(0, 2);
-    return letters.toUpperCase();
-  });
-
   /** Expands or collapses the navigation rail. */
   protected toggleSidebar(): void {
     this.collapsed.update((value) => !value);
-  }
-
-  /** Signs out and navigates to the login page. */
-  protected async logout(): Promise<void> {
-    this.auth.logout();
-    await this.router.navigateByUrl('/login');
   }
 }

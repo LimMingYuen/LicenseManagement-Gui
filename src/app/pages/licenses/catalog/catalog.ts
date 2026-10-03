@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header';
+import { PageHeaderActions } from '../../../shared/components/page-header/page-header-actions';
 import {
   LicenseDetailComponent,
   LicenseDetailData,
@@ -45,7 +45,7 @@ type NodeKey = string;
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    PageHeaderComponent,
+    PageHeaderActions,
   ],
   templateUrl: './catalog.html',
   styleUrl: './catalog.scss',

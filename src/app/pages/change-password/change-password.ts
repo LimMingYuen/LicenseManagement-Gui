@@ -15,8 +15,6 @@ import { describeError } from '../../shared/utils/http-error';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page narrow">
-      <h1>Change password</h1>
-
       <form class="card form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         @if (error(); as message) {
           <p class="alert alert-error" role="alert">{{ message }}</p>

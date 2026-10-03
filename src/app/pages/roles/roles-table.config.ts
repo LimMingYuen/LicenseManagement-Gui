@@ -7,8 +7,6 @@ const kindTone = (display: string): BadgeTone => (display === 'System' ? 'info' 
 /** Builds the roles table config. */
 export function buildRolesTableConfig(): DataTableConfig<Role> {
   return {
-    title: 'Roles',
-    icon: 'admin_panel_settings',
     columns: [
       {
         key: 'name',

@@ -1,31 +1,64 @@
-<div class="page-header">
-  @if (showBack) {
-    <button type="button"
-            class="page-header__back"
-            (click)="back.emit()"
-            [matTooltip]="backTooltip"
-            matTooltipPosition="below"
-            aria-label="Back">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-  }
+<header class="page-header">
+  <h1 class="page-header__title">
+    @if (page().icon; as icon) {
+      <mat-icon class="page-header__icon">{{ icon }}</mat-icon>
+    }
+    {{ page().heading }}
+    @if (slot.count() !== null) {
+      <span class="page-header__count tnum">{{ slot.count() }}</span>
+    }
+  </h1>
 
-  <div class="page-header__heading">
-    <h1 class="page-header__title">
-      @if (icon) {
-        <mat-icon class="page-header__icon">{{ icon }}</mat-icon>
-      }
-      {{ title }}
-      @if (count !== null && count !== undefined) {
-        <span class="page-header__count tnum">{{ count }}</span>
-      }
-    </h1>
-    @if (subtitle) {
-      <div class="page-header__subtitle">{{ subtitle }}</div>
+  <div class="page-header__controls">
+    @if (slot.template(); as controls) {
+      <ng-container [ngTemplateOutlet]="controls" />
     }
   </div>
 
-  <div class="page-header__controls">
-    <ng-content></ng-content>
-  </div>
-</div>
+  <button
+    type="button"
+    class="user-button"
+    [matMenuTriggerFor]="profileMenu"
+    [matTooltip]="connectionLabel()"
+    matTooltipPosition="below"
+    aria-label="Account menu"
+  >
+    <span class="user-avatar">
+      {{ initials() }}
+      <span
+        class="status-indicator"
+        [class]="'status-indicator--' + health.status()"
+        role="img"
+        [attr.aria-label]="connectionLabel()"
+      ></span>
+    </span>
+    <span class="user-name">{{ userName() }}</span>
+    <mat-icon class="user-chevron">expand_more</mat-icon>
+  </button>
+
+  <mat-menu #profileMenu="matMenu" xPosition="before" yPosition="below">
+    <div class="profile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ initials() }}</div>
+        <div class="profile-text">
+          <div class="profile-name">{{ userName() }}</div>
+          <div class="profile-status">{{ userRole() }}</div>
+        </div>
+      </div>
+
+      <div class="profile-connection" [class]="'profile-connection--' + health.status()">
+        <span class="profile-connection__dot"></span>
+        <span>{{ connectionLabel() }}</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item type="button" routerLink="/account/password">
+      <mat-icon>lock_reset</mat-icon>
+      <span>Change password</span>
+    </button>
+    <button mat-menu-item type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</header>

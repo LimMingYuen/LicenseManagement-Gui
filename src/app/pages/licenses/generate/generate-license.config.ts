@@ -17,8 +17,6 @@ export interface GenerateFieldConfig {
 
 export interface GenerateConfig {
   kind: LicenseKind;
-  title: string;
-  icon: string;
   /** Note on how this license type binds, shown with the form title. */
   banner: string;
   /** Label of the bound identifier in the preview and result panels. */
@@ -34,8 +32,6 @@ export interface GenerateConfig {
 
 export const MACHINE_CONFIG: GenerateConfig = {
   kind: 'Machine',
-  title: 'Machine License',
-  icon: 'precision_manufacturing',
   banner:
     'Machine licenses are bound to a single machine ID. Dashes are stripped, so MACHINE-001 ' +
     'and MACHINE001 produce the same binding.',
@@ -64,8 +60,6 @@ export const MACHINE_CONFIG: GenerateConfig = {
 
 export const ROBOT_CONFIG: GenerateConfig = {
   kind: 'Robot',
-  title: 'Robot License',
-  icon: 'smart_toy',
   banner:
     'Robot licenses are tied to both a robot ID and a machine. The robot will only operate ' +
     'on the machine picked here, and only machines already holding a license for this ' +
@@ -102,8 +96,6 @@ export const ROBOT_CONFIG: GenerateConfig = {
 
 export const GATEWAY_CONFIG: GenerateConfig = {
   kind: 'Gateway',
-  title: 'Gateway License',
-  icon: 'router',
   banner:
     'Gateway licenses are tied to one Android device via its device ID. The app will only ' +
     'run on that device. Naming a machine files the device under it in the catalog.',

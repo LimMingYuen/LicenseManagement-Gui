@@ -8,8 +8,6 @@ const licenseTone = (display: string): BadgeTone => (display === 'None' ? 'neutr
 /** Builds the customers table config. */
 export function buildCustomersTableConfig(): DataTableConfig<Customer> {
   return {
-    title: 'Customers',
-    icon: 'apartment',
     columns: [
       {
         key: 'name',

@@ -16,40 +16,8 @@ $segment-height: calc(var(--control-h) - 6px);
   background-color: var(--brand-primary-tint);
   border-bottom: 1px solid var(--brand-border);
 
-  &__back {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--control-h);
-    height: var(--control-h);
-    flex-shrink: 0;
-    padding: 0;
-    border: 0;
-    border-radius: var(--r-md);
-    background: transparent;
-    color: var(--brand-text-strong);
-    cursor: pointer;
-    transition: background-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
-
-    &:active { transform: scale(0.94); }
-
-    .mat-icon {
-      font-size: var(--fs-2xl);
-      width: 20px;
-      height: 20px;
-      line-height: 20px;
-    }
-  }
-
-  &__heading {
-    flex: 0 1 auto;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
   &__title {
+    flex: 0 1 auto;
     display: flex;
     align-items: center;
     gap: var(--sp-2);
@@ -83,12 +51,6 @@ $segment-height: calc(var(--control-h) - 6px);
     white-space: nowrap;
   }
 
-  &__subtitle {
-    font-size: var(--fs-xs);
-    color: var(--brand-text-muted);
-    margin-top: 1px;
-  }
-
   &__controls {
     display: flex;
     align-items: center;
@@ -103,9 +65,6 @@ $segment-height: calc(var(--control-h) - 6px);
 
 .tnum { font-variant-numeric: tabular-nums; }
 
-@media (hover: hover) and (pointer: fine) {
-  .page-header__back:hover { background-color: rgba(0, 0, 0, 0.06); }
-}
 
 // -------- Projected controls --------
 .page-header__controls ::ng-deep {
@@ -182,7 +141,7 @@ $segment-height: calc(var(--control-h) - 6px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-header__back:active,
+  .user-button:active,
   .page-header__controls ::ng-deep button:active,
   .page-header__controls ::ng-deep .mat-mdc-icon-button:active {
     transform: none;
@@ -192,5 +151,200 @@ $segment-height: calc(var(--control-h) - 6px);
 @media (max-width: 1280px) {
   .page-header__controls {
     margin-left: 0;
+  }
+}
+
+// -------- Account menu --------
+$status-online: var(--brand-success);
+$status-degraded: var(--brand-warning);
+$status-offline: var(--brand-danger);
+$status-unknown: var(--brand-text-subtle);
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+  height: var(--control-h);
+  padding: 0 6px 0 3px;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--r-pill);
+  background: var(--brand-surface);
+  color: var(--brand-text-strong);
+  font: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+
+  &:active { transform: scale(0.97); }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .user-button:hover { box-shadow: var(--shadow-primary); }
+}
+
+.user-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+  color: var(--brand-on-primary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.5px;
+}
+
+.status-indicator {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--brand-surface);
+  border-radius: 50%;
+  background-color: $status-unknown;
+  transition: background-color var(--dur-base) var(--ease-standard);
+
+  &--online { background-color: $status-online; }
+  &--degraded { background-color: $status-degraded; }
+
+  &--unhealthy,
+  &--unreachable {
+    background-color: $status-offline;
+    animation: status-pulse 1.6s var(--ease-standard) infinite;
+  }
+}
+
+@keyframes status-pulse {
+  50% { opacity: 0.35; }
+}
+
+.user-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--control-fs);
+  font-weight: var(--fw-medium);
+}
+
+.user-chevron {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--brand-text-muted);
+}
+
+@media (max-width: 720px) {
+  .user-name,
+  .user-chevron { display: none; }
+
+  .user-button { padding: 0 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-indicator--unhealthy,
+  .status-indicator--unreachable { animation: none; }
+}
+
+::ng-deep .mat-mdc-menu-panel {
+  background-color: white !important;
+  border-radius: var(--r-xl) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+
+  .mat-mdc-menu-content {
+    padding: var(--sp-2) !important;
+  }
+
+  .mat-mdc-menu-item {
+    border-radius: 24px !important;
+    margin: 4px 0 !important;
+
+    &:hover {
+      background-color: var(--brand-primary-tint) !important;
+    }
+  }
+}
+
+.profile-menu-header {
+  padding: var(--sp-4);
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+  box-shadow: var(--shadow-primary);
+  color: white;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.profile-text { flex: 1; }
+
+.profile-name {
+  margin-bottom: 2px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.profile-status {
+  font-size: var(--fs-sm);
+  color: var(--brand-text-muted);
+}
+
+.profile-connection {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  background-color: var(--brand-neutral-tint);
+  color: var(--brand-neutral-text);
+
+  &__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
+  &--online {
+    background-color: var(--brand-success-tint);
+    color: var(--brand-success-text);
+  }
+
+  &--degraded {
+    background-color: var(--brand-warning-tint);
+    color: var(--brand-warning-text);
+  }
+
+  &--unhealthy,
+  &--unreachable {
+    background-color: var(--brand-danger-tint);
+    color: var(--brand-danger-text);
   }
 }
