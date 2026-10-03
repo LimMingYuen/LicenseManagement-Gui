@@ -14,7 +14,10 @@
         @if (!collapsed()) {
           <span class="sidebar-brand">
             <app-logo class="sidebar-brand__mark" [size]="26" />
-            <span class="sidebar-title">License Management</span>
+            <span class="sidebar-title">
+              <span class="sidebar-title__line">License</span>
+              <span class="sidebar-title__line sidebar-title__line--sub">Management</span>
+            </span>
           </span>
         }
         <button
