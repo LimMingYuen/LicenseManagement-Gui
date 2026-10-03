@@ -92,6 +92,7 @@ export interface LicenseListQuery {
   type?: LicenseKind;
   status?: LicenseStatus;
   application?: LicenseApplicationKey;
+  customerId?: number;
 }
 
 // ---- Catalog: Application -> Customer -> Machine -> licenses ---------------------------
