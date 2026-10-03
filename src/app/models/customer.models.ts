@@ -9,6 +9,8 @@ export interface Customer {
   isActive: boolean;
   /** Number of licenses that reference this customer. */
   licenseCount: number;
+  /** Licenses that have not expired yet; a customer with any cannot be deleted. */
+  activeLicenseCount: number;
   createdAt: string;
   createdBy: string | null;
   updatedAt: string | null;

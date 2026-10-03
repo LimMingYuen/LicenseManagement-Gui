@@ -33,4 +33,9 @@ export class CustomerService {
   create(request: CreateCustomerRequest): Promise<Customer> {
     return firstValueFrom(this.http.post<Customer>(this.baseUrl, request));
   }
+
+  /** Deletes a customer with no active licenses. SuperAdmin only. */
+  remove(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+  }
 }

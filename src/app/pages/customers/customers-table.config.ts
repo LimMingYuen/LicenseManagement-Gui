@@ -5,8 +5,11 @@ import { formatIsoDateTime } from '../../shared/utils/date-format';
 /** Maps the license count text to its badge tone. */
 const licenseTone = (display: string): BadgeTone => (display === 'None' ? 'neutral' : 'info');
 
-/** Builds the customers table config. */
-export function buildCustomersTableConfig(): DataTableConfig<Customer> {
+/** Maps the active license count text to its badge tone. */
+const activeTone = (display: string): BadgeTone => (display === 'None' ? 'neutral' : 'success');
+
+/** Builds the customers table config for the signed-in role. */
+export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfig<Customer> {
   return {
     columns: [
       {
@@ -27,6 +30,15 @@ export function buildCustomersTableConfig(): DataTableConfig<Customer> {
         transform: (value: number) => (value === 0 ? 'None' : String(value)),
       },
       {
+        key: 'activeLicenseCount',
+        header: 'Active',
+        sortable: true,
+        cellType: 'badge',
+        badgeTone: activeTone,
+        width: '120px',
+        transform: (value: number) => (value === 0 ? 'None' : String(value)),
+      },
+      {
         key: 'createdAt',
         header: 'Created',
         sortable: true,
@@ -39,12 +51,20 @@ export function buildCustomersTableConfig(): DataTableConfig<Customer> {
     ],
     actions: [
       {
-        action: 'licenses',
-        label: 'View licenses',
-        icon: 'inventory_2',
+        action: 'view',
+        label: 'View',
+        icon: 'visibility',
         type: 'icon',
-        tooltip: 'Show this customer in the register',
-        disabled: (row) => row.licenseCount === 0,
+        tooltip: 'View customer details',
+      },
+      {
+        action: 'delete',
+        label: 'Delete',
+        icon: 'delete',
+        type: 'icon',
+        tooltip: 'Delete — only possible with no active licenses',
+        hidden: () => !isSuperAdmin,
+        disabled: (row) => row.activeLicenseCount > 0,
       },
     ],
     headerActions: [

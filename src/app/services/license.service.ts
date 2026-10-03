@@ -25,6 +25,7 @@ export class LicenseService {
     if (query.type) params = params.set('type', query.type);
     if (query.status) params = params.set('status', query.status);
     if (query.application) params = params.set('application', query.application);
+    if (query.customerId != null) params = params.set('customerId', query.customerId);
 
     return firstValueFrom(this.http.get<License[]>(this.baseUrl, { params }));
   }
