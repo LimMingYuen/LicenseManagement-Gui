@@ -11,8 +11,6 @@ const licenseTone = (display: string): BadgeTone => (display === 'None' ? 'neutr
 /** Builds the applications table config for the signed-in role. */
 export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableConfig<Application> {
   return {
-    title: 'Applications',
-    icon: 'apps',
     columns: [
       {
         key: 'name',

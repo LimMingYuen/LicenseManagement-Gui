@@ -23,8 +23,6 @@ const statusTone = (display: string): BadgeTone => {
 /** Builds the license register table config; only a SuperAdmin gets the delete action. */
 export function buildLicensesTableConfig(isSuperAdmin: boolean): DataTableConfig<License> {
   return {
-    title: 'Licenses',
-    icon: 'inventory_2',
     columns: [
       {
         key: 'applicationName',

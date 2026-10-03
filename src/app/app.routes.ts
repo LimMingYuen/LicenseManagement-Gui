@@ -1,5 +1,14 @@
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { superAdminGuard, authGuard, guestGuard, pageGuard } from './guards/auth.guard';
+import { PageHeading } from './shared/components/page-header/page-header';
+
+/** Route title and shell header data for a page. */
+function page(heading: string, icon: string): Pick<Route, 'title' | 'data'> {
+  return {
+    title: `${heading} · License Management`,
+    data: { heading, icon } satisfies PageHeading,
+  };
+}
 
 export const routes: Routes = [
   {
@@ -10,78 +19,78 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    title: 'Dashboard · License Management',
+    ...page('Dashboard', 'dashboard'),
     canActivate: [authGuard],
     loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
     path: 'licenses/catalog',
-    title: 'License catalog · License Management',
+    ...page('License Catalog', 'account_tree'),
     canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/catalog/catalog').then((m) => m.LicenseCatalogPage),
   },
   {
     path: 'licenses/machine',
-    title: 'Machine license · License Management',
+    ...page('Machine License', 'precision_manufacturing'),
     canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/machine-license').then((m) => m.MachineLicense),
   },
   {
     path: 'licenses/robot',
-    title: 'Robot license · License Management',
+    ...page('Robot License', 'smart_toy'),
     canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/robot-license').then((m) => m.RobotLicense),
   },
   {
     path: 'licenses/gateway',
-    title: 'Gateway license · License Management',
+    ...page('Gateway License', 'router'),
     canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/licenses/generate/gateway-license').then((m) => m.GatewayLicense),
   },
   {
     path: 'licenses',
-    title: 'Licenses · License Management',
+    ...page('Licenses', 'inventory_2'),
     canActivate: [pageGuard],
     loadComponent: () => import('./pages/licenses/licenses').then((m) => m.Licenses),
   },
   {
     path: 'customers',
-    title: 'Customers · License Management',
+    ...page('Customers', 'apartment'),
     canActivate: [pageGuard],
     loadComponent: () => import('./pages/customers/customers').then((m) => m.Customers),
   },
   {
     path: 'applications',
-    title: 'Applications · License Management',
+    ...page('Applications', 'apps'),
     canActivate: [pageGuard],
     loadComponent: () =>
       import('./pages/applications/applications').then((m) => m.Applications),
   },
   {
     path: 'keys',
-    title: 'RSA keys · License Management',
+    ...page('RSA Keys', 'key'),
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/keys/keys').then((m) => m.Keys),
   },
   {
     path: 'users',
-    title: 'Users · License Management',
+    ...page('Users', 'people'),
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/users/users').then((m) => m.Users),
   },
   {
     path: 'roles',
-    title: 'Roles · License Management',
+    ...page('Roles', 'admin_panel_settings'),
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/roles/roles').then((m) => m.Roles),
   },
   {
     path: 'account/password',
-    title: 'Change password · License Management',
+    ...page('Change password', 'lock_reset'),
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/change-password/change-password').then((m) => m.ChangePassword),

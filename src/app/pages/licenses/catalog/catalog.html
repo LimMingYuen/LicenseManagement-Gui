@@ -1,14 +1,10 @@
-<app-page-header
-  title="License Catalog"
-  icon="account_tree"
-  [count]="catalog()?.totals?.total ?? null"
->
+<ng-template appPageHeaderActions [count]="catalog()?.totals?.total ?? null">
   <button type="button" matButton="outlined" class="btn-sm" (click)="expandAll()">Expand all</button>
   <button type="button" matButton="outlined" class="btn-sm" (click)="collapseAll()">Collapse all</button>
   <button type="button" matButton="outlined" class="btn-sm" (click)="load()" [disabled]="loading()">
     {{ loading() ? 'Loading…' : 'Refresh' }}
   </button>
-</app-page-header>
+</ng-template>
 
 <div class="page-scroll">
   <div class="page">

@@ -51,60 +51,6 @@
         }
       </nav>
     </div>
-
-    <!-- User Profile at Bottom -->
-    <div class="sidebar-footer">
-      <button
-        class="user-profile-button"
-        type="button"
-        [matMenuTriggerFor]="profileMenu"
-        [matTooltip]="userName()"
-        matTooltipPosition="right"
-        aria-label="Account menu"
-      >
-        <div class="user-avatar-wrapper">
-          <div class="user-avatar">
-            <span class="user-initials">{{ initials() }}</span>
-          </div>
-        </div>
-        <div class="user-status">
-          <div
-            class="status-indicator"
-            [class]="'status-indicator--' + health.status()"
-            role="img"
-            [attr.aria-label]="connectionLabel()"
-          ></div>
-        </div>
-      </button>
-
-      <mat-menu #profileMenu="matMenu" xPosition="after" yPosition="above">
-        <div class="profile-menu-header">
-          <div class="profile-info">
-            <div class="profile-avatar">
-              <span class="profile-initials">{{ initials() }}</span>
-            </div>
-            <div class="profile-text">
-              <div class="profile-name">{{ userName() }}</div>
-              <div class="profile-status">{{ userRole() }}</div>
-            </div>
-          </div>
-
-          <div class="profile-connection" [class]="'profile-connection--' + health.status()">
-            <span class="profile-connection__dot"></span>
-            <span>{{ connectionLabel() }}</span>
-          </div>
-        </div>
-        <mat-divider></mat-divider>
-        <button mat-menu-item type="button" routerLink="/account/password">
-          <mat-icon>lock_reset</mat-icon>
-          <span>Change password</span>
-        </button>
-        <button mat-menu-item type="button" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>Sign out</span>
-        </button>
-      </mat-menu>
-    </div>
   </mat-sidenav>
 
   <!-- Main Content Area -->
@@ -113,6 +59,7 @@
     [class.main-content--sidebar-collapsed]="collapsed()"
     [class.main-content--sidebar-expanded]="!collapsed()"
   >
+    <app-page-header />
     <div class="page-content">
       <router-outlet></router-outlet>
     </div>

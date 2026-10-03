@@ -4,7 +4,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
 import {
   LicenseDetailComponent,
   LicenseDetailData,
@@ -24,7 +23,6 @@ import { formatIsoDateTime } from '../../shared/utils/date-format';
     MatIconModule,
     MatButtonModule,
     MatSnackBarModule,
-    PageHeaderComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

@@ -5,7 +5,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
-import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
 import {
   ConfirmationDialogComponent,
   ConfirmationDialogData,
@@ -26,7 +25,6 @@ import { firstValueFrom } from 'rxjs';
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
-    PageHeaderComponent,
   ],
   templateUrl: './keys.html',
   styleUrl: './keys.scss',

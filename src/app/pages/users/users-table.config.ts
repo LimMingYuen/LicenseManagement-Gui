@@ -13,8 +13,6 @@ const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'succ
 /** Builds the users table config, disabling deletion of the signed-in account. */
 export function buildUsersTableConfig(selfId: number | null, roles: Role[]): DataTableConfig<User> {
   return {
-    title: 'Users',
-    icon: 'people',
     columns: [
       {
         key: 'username',

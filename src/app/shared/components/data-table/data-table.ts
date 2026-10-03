@@ -34,7 +34,7 @@ import { MatTimepickerModule } from '@angular/material/timepicker';
 import { provideIsoDates } from '../../utils/iso-date';
 import { SelectionModel } from '@angular/cdk/collections';
 
-import { PageHeaderComponent } from '../page-header/page-header';
+import { PageHeaderActions } from '../page-header/page-header-actions';
 
 import {
   DataTableConfig,
@@ -149,7 +149,7 @@ export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
     MatCheckboxModule,
     MatDatepickerModule,
     MatTimepickerModule,
-    PageHeaderComponent
+    PageHeaderActions
 ],
   providers: [provideIsoDates()],
   templateUrl: './data-table.html',

@@ -1,11 +1,6 @@
 <mat-card class="dt-card" [class.dt-card--compact]="config.compact">
-  <!-- Header -->
-  <app-page-header
-      *ngIf="config.title || config.filter?.enabled || config.headerActions?.length"
-      [title]="config.title"
-      [icon]="config.icon"
-      [subtitle]="config.subtitle"
-      [count]="headerCount">
+  <!-- Rendered in the shell header -->
+  <ng-template appPageHeaderActions [count]="headerCount">
 
     <!-- Filters projected from the parent page -->
     <ng-content select="[dtAdditionalFilters]"></ng-content>
@@ -58,7 +53,7 @@
         <span>{{ a.label }}</span>
       </button>
     </ng-container>
-  </app-page-header>
+  </ng-template>
 
   <!-- Loading -->
   <div class="dt-loading" *ngIf="loading">

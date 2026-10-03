@@ -126,10 +126,6 @@ export interface DataTableSelectionConfig<T = any> {
 }
 
 export interface DataTableConfig<T> {
-  title: string;
-  /** Material icon rendered before the title. */
-  icon?: string;
-  subtitle?: string;
   columns: DataColumnConfig<T>[];
   actions?: DataActionConfig<T>[];
   headerActions?: DataHeaderActionConfig[];
