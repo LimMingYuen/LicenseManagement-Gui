@@ -198,3 +198,6 @@ npm test
 
 - A change that depends on a new or changed API contract needs the matching change in
   `LicenseManagement-Backend`.
+- Name feature branches `<type>/<short-kebab-description>` with a type of `feature`, `fix`, `refactor`,
+  `docs` or `chore` (for example `feature/role-page-permissions`). Never use generated names such as
+  `dreamy-goodall-sp7f53`. Use the same name in the backend repo when a change spans both.
