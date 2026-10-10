@@ -67,8 +67,8 @@ npm test
   `restoreSession()` runs as an app initializer. `authInterceptor` attaches the header to `/api`
   calls, logs out on a 401 and passes reachability to `HealthService`. When the server is
   unreachable, the session counts as *unverified*, not signed out.
-- **Page permissions** are enforced only in the SPA (sidebar + `pageGuard`); the API checks just
-  `[Authorize]` and the SuperAdmin role. Login and `/me` return `allowedPages`, and a SuperAdmin
+- **Page permissions** are enforced in the SPA (sidebar + `pageGuard`). The API enforces only the
+  RSA Keys, Users and Roles grants; elsewhere it checks just `[Authorize]` and the SuperAdmin role. Login and `/me` return `allowedPages`, and a SuperAdmin
   syncs the registry to `POST /api/pages/sync` after signing in or restoring a session.
 - Material form fields default to `outline` with dynamic subscript sizing (set in `app.config.ts`),
   so don't repeat those settings on each field.
@@ -152,7 +152,8 @@ npm test
     picker of already-licensed machines, not free text, so robots can't bind to unknown machines.
     Robots have no TRIAL tier, matching the desktop.
   - Page access: registry entries that are not `alwaysAllowed` (Dashboard) are permission pages,
-    including RSA Keys, Users and Roles, which the API also enforces; `getPermissionPages()` is what gets synced. Their routes use `pageGuard`, and
+    including RSA Keys, Users and Roles, which the API also enforces. `getPermissionPages()` is
+    what gets synced. Their routes use `pageGuard`, and
     `AuthService.canAccessPage` drives both the guard and the sidebar. Add a page to the registry and
     give its route `pageGuard`, or it is either unlisted or unguarded.
   - The Users page loads `/api/roles` with the users; its role filter and the `user-form` picker are
