@@ -35,27 +35,31 @@ export const routes: Routes = [
     ...page('Machine License', 'precision_manufacturing'),
     canActivate: [pageGuard],
     loadComponent: () =>
-      import('./pages/licenses/generate/machine-license').then((m) => m.MachineLicense),
+      import('./pages/licenses/generate/machine-license/machine-license').then(
+        (m) => m.MachineLicense,
+      ),
   },
   {
     path: 'licenses/robot',
     ...page('Robot License', 'smart_toy'),
     canActivate: [pageGuard],
     loadComponent: () =>
-      import('./pages/licenses/generate/robot-license').then((m) => m.RobotLicense),
+      import('./pages/licenses/generate/robot-license/robot-license').then((m) => m.RobotLicense),
   },
   {
     path: 'licenses/gateway',
     ...page('Gateway License', 'router'),
     canActivate: [pageGuard],
     loadComponent: () =>
-      import('./pages/licenses/generate/gateway-license').then((m) => m.GatewayLicense),
+      import('./pages/licenses/generate/gateway-license/gateway-license').then(
+        (m) => m.GatewayLicense,
+      ),
   },
   {
     path: 'licenses',
     ...page('Licenses', 'inventory_2'),
     canActivate: [pageGuard],
-    loadComponent: () => import('./pages/licenses/licenses').then((m) => m.Licenses),
+    loadComponent: () => import('./pages/licenses/list/licenses').then((m) => m.Licenses),
   },
   {
     path: 'customers',
@@ -67,8 +71,7 @@ export const routes: Routes = [
     path: 'applications',
     ...page('Applications', 'apps'),
     canActivate: [pageGuard],
-    loadComponent: () =>
-      import('./pages/applications/applications').then((m) => m.Applications),
+    loadComponent: () => import('./pages/applications/applications').then((m) => m.Applications),
   },
   {
     path: 'keys',

@@ -13,8 +13,12 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataActionEvent } from '../../shared/models/data-table.models';
 import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { CustomerDetail, CustomerDetailData, CustomerDetailResult } from './customer-detail';
-import { CustomerForm, CustomerFormData } from './customer-form';
+import {
+  CustomerDetail,
+  CustomerDetailData,
+  CustomerDetailResult,
+} from './customer-detail/customer-detail';
+import { CustomerForm, CustomerFormData } from './customer-form/customer-form';
 import { buildCustomersTableConfig } from './customers-table.config';
 
 /** Page that lists, creates, views and deletes customers. */

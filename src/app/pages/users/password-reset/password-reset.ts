@@ -4,9 +4,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { User } from '../../models/user.models';
-import { UserService } from '../../services/user.service';
-import { describeError } from '../../shared/utils/http-error';
+import { User } from '../../../models/user.models';
+import { UserService } from '../../../services/user.service';
+import { describeError } from '../../../shared/utils/http-error';
 
 export interface PasswordResetData {
   /** Account whose password is reset. */

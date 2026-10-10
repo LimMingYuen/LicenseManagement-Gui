@@ -6,11 +6,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { UserService } from '../../services/user.service';
-import { User } from '../../models/user.models';
-import { Role } from '../../models/role.models';
-import { describeError } from '../../shared/utils/http-error';
-import { formatIsoDateTime } from '../../shared/utils/date-format';
+import { UserService } from '../../../services/user.service';
+import { User } from '../../../models/user.models';
+import { Role } from '../../../models/role.models';
+import { describeError } from '../../../shared/utils/http-error';
+import { formatIsoDateTime } from '../../../shared/utils/date-format';
 
 export interface UserFormData {
   /** Null to create a new account, otherwise the one to edit. */

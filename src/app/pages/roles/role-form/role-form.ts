@@ -8,11 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Role, SUPER_ADMIN_ROLE } from '../../models/role.models';
-import { PageDto } from '../../models/page.models';
-import { PageService } from '../../services/page.service';
-import { RoleService } from '../../services/role.service';
-import { describeError } from '../../shared/utils/http-error';
+import { Role, SUPER_ADMIN_ROLE } from '../../../models/role.models';
+import { PageDto } from '../../../models/page.models';
+import { PageService } from '../../../services/page.service';
+import { RoleService } from '../../../services/role.service';
+import { describeError } from '../../../shared/utils/http-error';
 
 export interface RoleFormData {
   /** Null to create a new role, otherwise the one to edit. */

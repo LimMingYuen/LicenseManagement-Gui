@@ -4,9 +4,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Customer } from '../../models/customer.models';
-import { CustomerService } from '../../services/customer.service';
-import { describeError } from '../../shared/utils/http-error';
+import { Customer } from '../../../models/customer.models';
+import { CustomerService } from '../../../services/customer.service';
+import { describeError } from '../../../shared/utils/http-error';
 
 export interface CustomerFormData {
   /** Name to prefill. */

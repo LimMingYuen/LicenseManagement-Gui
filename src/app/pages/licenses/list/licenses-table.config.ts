@@ -1,6 +1,6 @@
-import { BadgeTone, DataTableConfig } from '../../shared/models/data-table.models';
-import { License } from '../../models/license.models';
-import { formatIsoDateTime } from '../../shared/utils/date-format';
+import { BadgeTone, DataTableConfig } from '../../../shared/models/data-table.models';
+import { License } from '../../../models/license.models';
+import { formatIsoDateTime } from '../../../shared/utils/date-format';
 
 /** Maps a license type to its badge tone. */
 const typeTone = (display: string): BadgeTone =>
@@ -150,7 +150,13 @@ export function buildLicensesTableConfig(isSuperAdmin: boolean): DataTableConfig
       },
     ],
     headerActions: [
-      { action: 'refresh', label: 'Refresh', icon: 'refresh', type: 'icon', tooltip: 'Reload licenses' },
+      {
+        action: 'refresh',
+        label: 'Refresh',
+        icon: 'refresh',
+        type: 'icon',
+        tooltip: 'Reload licenses',
+      },
       {
         action: 'add',
         label: 'New license',
@@ -160,7 +166,12 @@ export function buildLicensesTableConfig(isSuperAdmin: boolean): DataTableConfig
         tooltip: 'Generate a license',
       },
     ],
-    pagination: { pageSizeOptions: [25, 50, 100], pageSize: 25, showFirstLastButtons: true, enabled: true },
+    pagination: {
+      pageSizeOptions: [25, 50, 100],
+      pageSize: 25,
+      showFirstLastButtons: true,
+      enabled: true,
+    },
     filter: { placeholder: 'Search customer, target or license ID...', enabled: true },
     defaultSort: { column: 'issuedAt', direction: 'desc' },
     empty: { message: 'No licenses issued yet', icon: 'inventory_2' },

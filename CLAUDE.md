@@ -47,6 +47,10 @@ npm test
   `try/catch/finally` around a `loading` signal.
 - Every component, dialogs included, keeps its markup and styles in sibling `.html` and `.scss` files
   (`templateUrl` / `styleUrl`); never inline `template` or `styles` in the `.ts`.
+- **Folders:** every component gets its own folder named after it. A page's files sit at the root of
+  `pages/<area>/`, and its dialogs and sub-components go in sibling folders
+  (`pages/customers/customer-form/`). Table configs and helpers used by the page stay beside it;
+  helpers shared by several pages in an area sit at the area root (`licenses/delete-message.ts`).
 - **Adding a page:** add a lazy route in `app.routes.ts` spreading `...page(heading, icon)`, which
   sets the browser title and the shell header's heading and icon, and add an entry in
   `config/page-registry.ts`. The sidebar builds itself from the registry. Keep `superAdminOnly` in

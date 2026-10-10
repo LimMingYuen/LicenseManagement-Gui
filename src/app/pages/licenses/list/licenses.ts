@@ -3,24 +3,24 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
-import { License } from '../../models/license.models';
-import { LicenseService } from '../../services/license.service';
-import { AuthService } from '../../services/auth.service';
-import { DataTableComponent } from '../../shared/components/data-table/data-table';
-import { DataActionEvent } from '../../shared/models/data-table.models';
+import { License } from '../../../models/license.models';
+import { LicenseService } from '../../../services/license.service';
+import { AuthService } from '../../../services/auth.service';
+import { DataTableComponent } from '../../../shared/components/data-table/data-table';
+import { DataActionEvent } from '../../../shared/models/data-table.models';
 import {
   LicenseDetailComponent,
   LicenseDetailData,
-} from '../../shared/components/license-detail/license-detail';
+} from '../../../shared/components/license-detail/license-detail';
 import {
   ConfirmationDialogComponent,
   ConfirmationDialogData,
-} from '../../shared/components/confirmation-dialog/confirmation-dialog';
-import { dialogConfig } from '../../shared/utils/dialog';
-import { describeError } from '../../shared/utils/http-error';
-import { saveBlob } from '../../shared/utils/download';
+} from '../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { dialogConfig } from '../../../shared/utils/dialog';
+import { describeError } from '../../../shared/utils/http-error';
+import { saveBlob } from '../../../shared/utils/download';
 import { buildLicensesTableConfig } from './licenses-table.config';
-import { deleteMessage } from './delete-message';
+import { deleteMessage } from '../delete-message';
 
 /** Page that lists the license register. */
 @Component({

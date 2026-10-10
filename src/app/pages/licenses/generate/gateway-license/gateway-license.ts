@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { GenerateLicenseForm } from './generate-license-form';
-import { GATEWAY_CONFIG } from './generate-license.config';
+import { GenerateLicenseForm } from '../generate-license-form/generate-license-form';
+import { GATEWAY_CONFIG } from '../generate-license.config';
 
 /** Page that issues gateway licenses. */
 @Component({
@@ -8,7 +8,7 @@ import { GATEWAY_CONFIG } from './generate-license.config';
   imports: [GenerateLicenseForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './gateway-license.html',
-  styleUrl: './generate-page.scss',
+  styleUrl: '../generate-page.scss',
 })
 export class GatewayLicense {
   protected readonly config = GATEWAY_CONFIG;

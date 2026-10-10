@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { GenerateLicenseForm } from './generate-license-form';
-import { MACHINE_CONFIG } from './generate-license.config';
+import { GenerateLicenseForm } from '../generate-license-form/generate-license-form';
+import { MACHINE_CONFIG } from '../generate-license.config';
 
 /** Page that issues machine licenses. */
 @Component({
@@ -8,7 +8,7 @@ import { MACHINE_CONFIG } from './generate-license.config';
   imports: [GenerateLicenseForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './machine-license.html',
-  styleUrl: './generate-page.scss',
+  styleUrl: '../generate-page.scss',
 })
 export class MachineLicense {
   protected readonly config = MACHINE_CONFIG;

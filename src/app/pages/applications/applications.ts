@@ -10,7 +10,7 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataActionEvent } from '../../shared/models/data-table.models';
 import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { ApplicationForm, ApplicationFormData } from './application-form';
+import { ApplicationForm, ApplicationFormData } from './application-form/application-form';
 import { buildApplicationsTableConfig } from './applications-table.config';
 
 /** Page that lists and manages applications. */

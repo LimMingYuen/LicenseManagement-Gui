@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { Customer } from '../../models/customer.models';
-import { License } from '../../models/license.models';
-import { AuthService } from '../../services/auth.service';
-import { LicenseService } from '../../services/license.service';
-import { formatIsoDateTime } from '../../shared/utils/date-format';
-import { describeError } from '../../shared/utils/http-error';
+import { Customer } from '../../../models/customer.models';
+import { License } from '../../../models/license.models';
+import { AuthService } from '../../../services/auth.service';
+import { LicenseService } from '../../../services/license.service';
+import { formatIsoDateTime } from '../../../shared/utils/date-format';
+import { describeError } from '../../../shared/utils/http-error';
 
 export interface CustomerDetailData {
   customer: Customer;
