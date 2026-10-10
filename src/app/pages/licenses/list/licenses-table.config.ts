@@ -172,7 +172,7 @@ export function buildLicensesTableConfig(isSuperAdmin: boolean): DataTableConfig
       showFirstLastButtons: true,
       enabled: true,
     },
-    filter: { placeholder: 'Search customer, target or license ID...', enabled: true },
+    filter: { placeholder: 'Search', enabled: true },
     defaultSort: { column: 'issuedAt', direction: 'desc' },
     empty: { message: 'No licenses issued yet', icon: 'inventory_2' },
     rowClickable: true,

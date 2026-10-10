@@ -91,7 +91,7 @@ export function buildCustomersTableConfig(isSuperAdmin: boolean): DataTableConfi
       enabled: true,
     },
     filter: {
-      placeholder: 'Search customers...',
+      placeholder: 'Search',
       enabled: true,
     },
     defaultSort: {
