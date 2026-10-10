@@ -143,7 +143,7 @@ export function buildApplicationsTableConfig(isSuperAdmin: boolean): DataTableCo
       enabled: true,
     },
     filter: {
-      placeholder: 'Search name or key...',
+      placeholder: 'Search',
       enabled: true,
     },
     defaultSort: {

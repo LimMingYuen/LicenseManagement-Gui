@@ -117,7 +117,7 @@ export function buildUsersTableConfig(selfId: number | null, roles: Role[]): Dat
       enabled: true,
     },
     filter: {
-      placeholder: 'Search username or name...',
+      placeholder: 'Search',
       enabled: true,
     },
     defaultSort: {
