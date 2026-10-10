@@ -102,7 +102,7 @@ export function buildRolesTableConfig(): DataTableConfig<Role> {
       enabled: true,
     },
     filter: {
-      placeholder: 'Search role or description...',
+      placeholder: 'Search',
       enabled: true,
     },
     defaultSort: {

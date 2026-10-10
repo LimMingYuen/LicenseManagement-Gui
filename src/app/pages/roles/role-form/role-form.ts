@@ -11,6 +11,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { Role, SUPER_ADMIN_ROLE } from '../../../models/role.models';
 import { PageDto } from '../../../models/page.models';
 import { PageService } from '../../../services/page.service';
+import { AuthService } from '../../../services/auth.service';
 import { RoleService } from '../../../services/role.service';
 import { describeError } from '../../../shared/utils/http-error';
 
@@ -42,6 +43,7 @@ export interface RoleFormData {
 export class RoleForm {
   private readonly roles = inject(RoleService);
   private readonly pageService = inject(PageService);
+  private readonly auth = inject(AuthService);
   private readonly dialogRef = inject<MatDialogRef<RoleForm, Role>>(MatDialogRef);
 
   /** Null when creating a new role. */
@@ -58,6 +60,12 @@ export class RoleForm {
   protected readonly superAdminRole = SUPER_ADMIN_ROLE;
   protected readonly isSystem = this.role?.isSystem ?? false;
   protected readonly isSuperAdmin = this.role?.name === SUPER_ADMIN_ROLE;
+
+  /** Whether a non-SuperAdmin is editing the role they hold, whose page access they cannot change. */
+  protected readonly isOwnRole =
+    !this.auth.isSuperAdmin() && !!this.role && this.role.name === this.auth.currentUser()?.role;
+
+  protected readonly pagesLocked = this.readonly || this.isOwnRole;
   protected readonly title = this.readonly
     ? (this.role?.name ?? '')
     : this.role
@@ -154,7 +162,7 @@ export class RoleForm {
         : await this.roles.create(request);
       this.saved = result;
 
-      if (!this.isSuperAdmin) {
+      if (!this.isSuperAdmin && !this.isOwnRole) {
         const selected = this.selected();
         await this.roles.setPermissions(result.id, {
           pages: this.pages().map((p) => ({ pageId: p.id, canAccess: selected.has(p.id) })),

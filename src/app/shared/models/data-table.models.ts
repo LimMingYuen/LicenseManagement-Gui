@@ -224,6 +224,6 @@ export const DEFAULT_DATA_EMPTY: DataEmptyConfig = {
 };
 
 export const DEFAULT_DATA_FILTER: DataFilterConfig = {
-  placeholder: 'Search...',
+  placeholder: 'Search',
   enabled: true
 };

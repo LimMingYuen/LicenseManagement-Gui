@@ -34,6 +34,7 @@ $th-pad-x: 12px;
 .dt-search {
   width: 260px;
   max-width: 100%;
+  margin-inline: auto;
 
   ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
   ::ng-deep .mat-mdc-text-field-wrapper {
@@ -254,8 +255,8 @@ $th-pad-x: 12px;
   border-radius: var(--r-lg);
   border: 1px solid var(--brand-border);
   box-shadow:
-    0 12px 28px -8px rgba(11, 26, 43, 0.18),
-    0 2px 4px rgba(11, 26, 43, 0.04) !important;
+    0 12px 28px -8px rgba(11, 20, 43, 0.18),
+    0 2px 4px rgba(11, 20, 43, 0.04) !important;
 }
 
 .dt-popover {
@@ -438,7 +439,7 @@ $th-pad-x: 12px;
     border-radius: 50%;
     background: var(--brand-surface);
     border: 2px solid var(--brand-primary);
-    box-shadow: 0 1px 2px rgba(11, 26, 43, 0.15);
+    box-shadow: 0 1px 2px rgba(11, 20, 43, 0.15);
     cursor: grab;
   }
 

@@ -39,10 +39,6 @@ export class AuthService {
     }
 
     const page = PAGE_REGISTRY.find((p) => p.path === path);
-    if (page?.superAdminOnly) {
-      return this.isSuperAdmin();
-    }
-
     return this.isSuperAdmin() || !!page?.alwaysAllowed || user.allowedPages.includes(path);
   }
 

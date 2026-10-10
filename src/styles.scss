@@ -4,44 +4,44 @@
 html {
   @include mat.theme((
     color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: mat.$blue-palette,
+      tertiary: mat.$azure-palette,
     ),
     typography: Roboto,
     density: 0,
   ));
 }
 
-// SMC brand tokens, shared with PENTA SMC AMR.
+// SMC brand tokens; the primary blue matches the app icon.
 :root {
   // --- Primary brand blue (layered) ---
-  --brand-primary:          #0074BE;
-  --brand-primary-hover:    #005C99;
-  --brand-primary-active:   #004775;
-  --brand-primary-emphasis: #408FCD;
-  --brand-primary-soft:     #80B9DF;
-  --brand-primary-pale:     #DBEAF7;
-  --brand-primary-tint:     #E8EFF7;
-  --brand-primary-wash:     #F2F8FC;
+  --brand-primary:          #1D4ED8;
+  --brand-primary-hover:    #173EAD;
+  --brand-primary-active:   #123085;
+  --brand-primary-emphasis: #557AE2;
+  --brand-primary-soft:     #8EA7EC;
+  --brand-primary-pale:     #DFE6FA;
+  --brand-primary-tint:     #E8EDFB;
+  --brand-primary-wash:     #F3F6FD;
 
   --brand-on-primary:       #FFFFFF;
 
   // --- Neutrals (text + backgrounds) ---
   --brand-bg:               #FFFFFF;
-  --brand-bg-alt:           #F6F9FC;
+  --brand-bg-alt:           #F6F8FC;
   --brand-surface:          #FFFFFF;
-  --brand-surface-alt:      #F4F8FC;
+  --brand-surface-alt:      #F4F6FC;
 
-  --brand-text:             #1F3753;
-  --brand-text-strong:      #0B1A2B;
-  --brand-text-muted:       #5B6B7D;
-  --brand-text-subtle:      #97A6BA;
+  --brand-text:             #1F2D53;
+  --brand-text-strong:      #0B142B;
+  --brand-text-muted:       #5B647D;
+  --brand-text-subtle:      #97A0BA;
   --brand-text-on-dark:     #FFFFFF;
 
   // --- Lines / borders ---
-  --brand-border:           #DCE4EE;
-  --brand-border-soft:      #E9EFF6;
-  --brand-border-strong:    #CFD8E4;
+  --brand-border:           #DCE1EE;
+  --brand-border-soft:      #E9ECF6;
+  --brand-border-strong:    #CFD5E4;
 
   // --- Semantic (base / tint / text per status) ---
   --brand-success:          #2A8F66;
@@ -53,11 +53,11 @@ html {
   --brand-danger:           #C8463A;
   --brand-danger-tint:      #F5DDDA;
   --brand-danger-text:      #C8463A;
-  --brand-info:             #0074BE;
-  --brand-info-tint:        #DBEAF7;
-  --brand-info-text:        #0074BE;
-  --brand-neutral-tint:     #E5EBF2;
-  --brand-neutral-text:     #7C8A9C;
+  --brand-info:             #1D4ED8;
+  --brand-info-tint:        #DFE6FA;
+  --brand-info-text:        #1D4ED8;
+  --brand-neutral-tint:     #E5E8F2;
+  --brand-neutral-text:     #7C859C;
 
   // --- Spacing (4px grid) ---
   --sp-1: 4px;
@@ -95,12 +95,12 @@ html {
   --fw-bold:     700;
 
   // --- Elevation ---
-  --shadow-xs: 0 1px 2px rgba(11, 26, 43, 0.04);
+  --shadow-xs: 0 1px 2px rgba(11, 20, 43, 0.04);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 10px 34px rgba(11, 26, 43, 0.16);
-  --shadow-primary:        0 4px 12px rgba(0, 116, 190, 0.25);
-  --shadow-primary-strong: 0 6px 16px rgba(0, 116, 190, 0.35);
+  --shadow-lg: 0 10px 34px rgba(11, 20, 43, 0.16);
+  --shadow-primary:        0 4px 12px rgba(29, 78, 216, 0.25);
+  --shadow-primary-strong: 0 6px 16px rgba(29, 78, 216, 0.35);
 
   // --- Motion ---
   --ease-out:      cubic-bezier(0.23, 1, 0.32, 1);
