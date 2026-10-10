@@ -51,6 +51,7 @@ npm test
   `pages/<area>/`, and its dialogs and sub-components go in sibling folders
   (`pages/customers/customer-form/`). Table configs and helpers used by the page stay beside it;
   helpers shared by several pages in an area sit at the area root (`licenses/delete-message.ts`).
+  Shell components that are not routed (`sidebar`, `server-unavailable`) live in `layout/`.
 - **Adding a page:** add a lazy route in `app.routes.ts` spreading `...page(heading, icon)`, which
   sets the browser title and the shell header's heading and icon, and add an entry in
   `config/page-registry.ts`. The sidebar builds itself from the registry. Keep `superAdminOnly` in
