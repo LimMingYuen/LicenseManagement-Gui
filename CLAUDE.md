@@ -54,8 +54,7 @@ npm test
   Shell components that are not routed (`sidebar`, `server-unavailable`) live in `layout/`.
 - **Adding a page:** add a lazy route in `app.routes.ts` spreading `...page(heading, icon)`, which
   sets the browser title and the shell header's heading and icon, and add an entry in
-  `config/page-registry.ts`. The sidebar builds itself from the registry. Keep `superAdminOnly` in
-  the registry in step with `superAdminGuard` on the route.
+  `config/page-registry.ts`. The sidebar builds itself from the registry.
 - **Page header:** the shell renders one `app-page-header` (in `sidebar.html`) above the routed page.
   A page puts its controls in a single `<ng-template appPageHeaderActions [count]="...">`, which
   `PageHeaderSlot` shows in the header while the page is alive; `count` renders as a pill after the
@@ -152,12 +151,14 @@ npm test
     context the field initializer didn't reliably provide). A robot's machine is a `'machine'`
     picker of already-licensed machines, not free text, so robots can't bind to unknown machines.
     Robots have no TRIAL tier, matching the desktop.
-  - Page access: registry entries that are neither `superAdminOnly` nor `alwaysAllowed` (Dashboard)
-    are permission pages; `getPermissionPages()` is what gets synced. Their routes use `pageGuard`, and
+  - Page access: registry entries that are not `alwaysAllowed` (Dashboard) are permission pages,
+    including RSA Keys, Users and Roles, which the API also enforces; `getPermissionPages()` is what gets synced. Their routes use `pageGuard`, and
     `AuthService.canAccessPage` drives both the guard and the sidebar. Add a page to the registry and
     give its route `pageGuard`, or it is either unlisted or unguarded.
   - The Users page loads `/api/roles` with the users; its role filter and the `user-form` picker are
-    built from that list, so the table config is a `computed`. Roles → "Show users" opens
+    built from that list, so the table config is a `computed`. A non-SuperAdmin can't pick the
+    SuperAdmin role or edit, reset or delete SuperAdmin rows, and can't change their own role's page
+    access in `role-form`; the API refuses these too. Roles → "Show users" opens
     `/users?search=<role>` (global search).
   - Customers: the page lists customers with Licenses (total) and Active counts and offers create,
     View (`customer-detail`, details plus that customer's licenses) and, for a SuperAdmin, Delete.

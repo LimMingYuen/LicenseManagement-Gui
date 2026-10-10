@@ -99,12 +99,16 @@
             <tbody>
               @for (l of s.recent; track l.id) {
                 <tr class="row-clickable" (click)="openDetail(l)">
-                  <td><span class="pill" [class]="'pill--' + typeTone(l.type)">{{ l.type }}</span></td>
+                  <td>
+                    <span class="pill" [class]="'pill--' + typeTone(l.type)">{{ l.type }}</span>
+                  </td>
                   <td>{{ l.customerName }}</td>
                   <td class="mono">{{ l.targetId }}</td>
                   <td class="tnum">{{ formatDate(l.issuedAt) }}</td>
                   <td>
-                    <span class="pill" [class]="'pill--' + statusTone(l.status)">{{ l.status }}</span>
+                    <span class="pill" [class]="'pill--' + statusTone(l.status)">{{
+                      l.status
+                    }}</span>
                   </td>
                 </tr>
               }
@@ -113,12 +117,16 @@
         }
       </section>
 
-      @if (auth.isSuperAdmin()) {
+      @if (auth.canAccessPage('/keys') || auth.canAccessPage('/users')) {
         <section class="card">
           <h2 class="section-title">Administration</h2>
           <div class="actions">
-            <a matButton="outlined" routerLink="/keys">RSA keys</a>
-            <a matButton="outlined" routerLink="/users">Users</a>
+            @if (auth.canAccessPage('/keys')) {
+              <a matButton="outlined" routerLink="/keys">RSA keys</a>
+            }
+            @if (auth.canAccessPage('/users')) {
+              <a matButton="outlined" routerLink="/users">Users</a>
+            }
           </div>
         </section>
       }

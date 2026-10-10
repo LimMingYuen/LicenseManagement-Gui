@@ -6,8 +6,6 @@ export interface PageDefinition {
   name: string;
   /** Material icon name. */
   icon: string;
-  /** Hidden from non-SuperAdmin accounts. */
-  superAdminOnly?: boolean;
   /** Highlights the item only on an exact URL match. */
   exact?: boolean;
   /** Open to every signed-in account and never listed in role permissions. */
@@ -24,14 +22,16 @@ export const PAGE_REGISTRY: PageDefinition[] = [
   { path: '/licenses', name: 'All Licenses', icon: 'inventory_2', exact: true },
   { path: '/customers', name: 'Customers', icon: 'apartment' },
   { path: '/applications', name: 'Applications', icon: 'apps' },
-  { path: '/keys', name: 'RSA Keys', icon: 'key', superAdminOnly: true },
-  { path: '/users', name: 'Users', icon: 'people', superAdminOnly: true },
-  { path: '/roles', name: 'Roles', icon: 'admin_panel_settings', superAdminOnly: true },
+  { path: '/keys', name: 'RSA Keys', icon: 'key' },
+  { path: '/users', name: 'Users', icon: 'people' },
+  { path: '/roles', name: 'Roles', icon: 'admin_panel_settings' },
 ];
 
 /** Returns the pages a role can be granted, in sidebar order. */
 export function getPermissionPages(): { path: string; name: string; icon: string }[] {
-  return PAGE_REGISTRY.filter((page) => !page.superAdminOnly && !page.alwaysAllowed).map(
-    (page) => ({ path: page.path, name: page.name, icon: page.icon }),
-  );
+  return PAGE_REGISTRY.filter((page) => !page.alwaysAllowed).map((page) => ({
+    path: page.path,
+    name: page.name,
+    icon: page.icon,
+  }));
 }

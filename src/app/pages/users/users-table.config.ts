@@ -10,8 +10,14 @@ const roleTone = (display: string): BadgeTone =>
 /** Maps the status text to its badge tone. */
 const statusTone = (display: string): BadgeTone => (display === 'Active' ? 'success' : 'danger');
 
-/** Builds the users table config, disabling deletion of the signed-in account. */
-export function buildUsersTableConfig(selfId: number | null, roles: Role[]): DataTableConfig<User> {
+/** Builds the users table config, disabling actions the signed-in account may not take. */
+export function buildUsersTableConfig(
+  selfId: number | null,
+  roles: Role[],
+  isSuperAdmin: boolean,
+): DataTableConfig<User> {
+  const lockedRow = (row: User) => !isSuperAdmin && row.role === SUPER_ADMIN_ROLE;
+
   return {
     columns: [
       {
@@ -76,13 +82,21 @@ export function buildUsersTableConfig(selfId: number | null, roles: Role[]): Dat
     ],
     actions: [
       { action: 'view', label: 'View', icon: 'visibility', type: 'icon', tooltip: 'View user' },
-      { action: 'edit', label: 'Edit', icon: 'edit', type: 'icon', tooltip: 'Edit user' },
+      {
+        action: 'edit',
+        label: 'Edit',
+        icon: 'edit',
+        type: 'icon',
+        tooltip: 'Edit user',
+        disabled: lockedRow,
+      },
       {
         action: 'reset-password',
         label: 'Reset password',
         icon: 'lock_reset',
         type: 'icon',
         tooltip: 'Reset password',
+        disabled: lockedRow,
       },
       {
         action: 'delete',
@@ -90,7 +104,7 @@ export function buildUsersTableConfig(selfId: number | null, roles: Role[]): Dat
         icon: 'delete',
         type: 'icon',
         tooltip: 'Delete account',
-        disabled: (row) => row.id === selfId,
+        disabled: (row) => row.id === selfId || lockedRow(row),
       },
     ],
     headerActions: [

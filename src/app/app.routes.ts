@@ -1,5 +1,5 @@
 import { Route, Routes } from '@angular/router';
-import { superAdminGuard, authGuard, guestGuard, pageGuard } from './guards/auth.guard';
+import { authGuard, guestGuard, pageGuard } from './guards/auth.guard';
 import { PageHeading } from './shared/components/page-header/page-header';
 
 /** Route title and shell header data for a page. */
@@ -76,19 +76,19 @@ export const routes: Routes = [
   {
     path: 'keys',
     ...page('RSA Keys', 'key'),
-    canActivate: [superAdminGuard],
+    canActivate: [pageGuard],
     loadComponent: () => import('./pages/keys/keys').then((m) => m.Keys),
   },
   {
     path: 'users',
     ...page('Users', 'people'),
-    canActivate: [superAdminGuard],
+    canActivate: [pageGuard],
     loadComponent: () => import('./pages/users/users').then((m) => m.Users),
   },
   {
     path: 'roles',
     ...page('Roles', 'admin_panel_settings'),
-    canActivate: [superAdminGuard],
+    canActivate: [pageGuard],
     loadComponent: () => import('./pages/roles/roles').then((m) => m.Roles),
   },
   {
