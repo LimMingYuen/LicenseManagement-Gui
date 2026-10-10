@@ -168,6 +168,9 @@ npm test
     shows the snackbar, removes the row or reloads the catalog, and closes the dialog. The signed
     file is fetched when the dialog opens, not in list payloads; downloads use the detail fetch
     because it carries the stored file name.
+  - The Dashboard only reports license status: no navigation, issue or admin shortcuts. It loads the
+    full list from `/api/licenses` and counts in `license-status.ts`, so `/summary` is unused; rows
+    open the read-only detail dialog and the status chips filter in place.
   - The catalog reloads the whole tree after a delete so roll-up counts come from the server, and
     tracks collapsed (not expanded) nodes so a new license shows in an open branch.
   - Applications link to `/licenses?application=<key>`, filtered server-side by key because display
