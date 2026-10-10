@@ -12,7 +12,7 @@ import {
   QueryList,
   OnChanges,
   OnInit,
-  SimpleChanges
+  SimpleChanges,
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -52,7 +52,7 @@ import {
   BadgeTone,
   DEFAULT_DATA_PAGINATION,
   DEFAULT_DATA_EMPTY,
-  DEFAULT_DATA_FILTER
+  DEFAULT_DATA_FILTER,
 } from '../../models/data-table.models';
 
 /** Width bounds in px for a column filter popover. */
@@ -80,40 +80,7 @@ interface DraftFilter {
   imports: [MatButtonModule, MatIconModule, MatTooltipModule],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="mat-calendar-header">
-      <div class="mat-calendar-controls">
-        <button matButton type="button" class="mat-calendar-period-button"
-                (click)="currentPeriodClicked()"
-                [attr.aria-label]="periodButtonLabel">
-          <span aria-hidden="true">{{ periodButtonText }}</span>
-          <svg class="mat-calendar-arrow"
-               [class.mat-calendar-invert]="calendar.currentView !== 'month'"
-               viewBox="0 0 10 5" focusable="false" aria-hidden="true">
-            <polygon points="0,0 5,5 10,0"/>
-          </svg>
-        </button>
-        <div class="mat-calendar-spacer"></div>
-        <ng-content></ng-content>
-        <button matIconButton type="button" class="mat-calendar-previous-button"
-                [disabled]="!previousEnabled()" (click)="previousClicked()"
-                [matTooltip]="prevButtonLabel"
-                [attr.aria-label]="prevButtonLabel">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-          </svg>
-        </button>
-        <button matIconButton type="button" class="mat-calendar-next-button"
-                [disabled]="!nextEnabled()" (click)="nextClicked()"
-                [matTooltip]="nextButtonLabel"
-                [attr.aria-label]="nextButtonLabel">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  `,
+  templateUrl: './data-table-calendar-header.html',
 })
 export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
   /** Advances the calendar to the next view in the month, year, multi-year cycle. */
@@ -149,15 +116,13 @@ export class DtCalendarHeader<D> extends MatCalendarHeader<D> {
     MatCheckboxModule,
     MatDatepickerModule,
     MatTimepickerModule,
-    PageHeaderActions
-],
+    PageHeaderActions,
+  ],
   providers: [provideIsoDates()],
   templateUrl: './data-table.html',
-  styleUrl: './data-table.scss'
+  styleUrl: './data-table.scss',
 })
-export class DataTableComponent<T = any>
-  implements OnInit, OnChanges
-{
+export class DataTableComponent<T = any> implements OnInit, OnChanges {
   @Input() data: T[] = [];
   @Input() config!: DataTableConfig<T>;
   @Input() loading = false;
@@ -186,7 +151,9 @@ export class DataTableComponent<T = any>
       }
     });
   }
-  get paginator(): MatPaginator | undefined { return this._paginator; }
+  get paginator(): MatPaginator | undefined {
+    return this._paginator;
+  }
 
   @ViewChild(MatSort)
   set sort(s: MatSort | undefined) {
@@ -200,12 +167,14 @@ export class DataTableComponent<T = any>
         s.sort({
           id: this.config.defaultSort.column as string,
           start: this.config.defaultSort.direction,
-          disableClear: false
+          disableClear: false,
         });
       }
     });
   }
-  get sort(): MatSort | undefined { return this._sort; }
+  get sort(): MatSort | undefined {
+    return this._sort;
+  }
 
   @ViewChildren(MatMenuTrigger) menuTriggers!: QueryList<MatMenuTrigger>;
 
@@ -222,7 +191,9 @@ export class DataTableComponent<T = any>
     this._globalFilter = next;
     this.commitFilter();
   }
-  get globalFilter(): string { return this._globalFilter; }
+  get globalFilter(): string {
+    return this._globalFilter;
+  }
 
   /** Applied per-column filters that drive the data-source filter predicate. */
   appliedFilters: Record<string, DataColumnFilterEntry> = {};
@@ -269,7 +240,7 @@ export class DataTableComponent<T = any>
       bordered: this.config?.bordered ?? true,
       striped: this.config?.striped ?? false,
       hoverable: this.config?.hoverable ?? true,
-      showRowNumbers: this.config?.showRowNumbers ?? false
+      showRowNumbers: this.config?.showRowNumbers ?? false,
     };
   }
 
@@ -278,7 +249,7 @@ export class DataTableComponent<T = any>
     const keys: string[] = [];
     if (this.config.showRowNumbers) keys.push('__row');
     if (this.config.selection?.enabled) keys.push('__select');
-    keys.push(...this.config.columns.map(c => String(c.key)));
+    keys.push(...this.config.columns.map((c) => String(c.key)));
     if (this.config.actions?.length) keys.push('__actions');
     this.displayedColumns = keys;
   }
@@ -306,7 +277,7 @@ export class DataTableComponent<T = any>
       from: null,
       to: null,
       fromTime: null,
-      toTime: null
+      toTime: null,
     };
   }
 
@@ -317,12 +288,16 @@ export class DataTableComponent<T = any>
     this.dataSource.filterPredicate = (row: T, raw: string) => {
       if (!raw) return true;
       let state: DataCombinedFilterState;
-      try { state = JSON.parse(raw); } catch { return true; }
+      try {
+        state = JSON.parse(raw);
+      } catch {
+        return true;
+      }
 
       if (state.global) {
         const needle = state.global.toLowerCase();
-        const filterable = this.config.columns.filter(c => c.filterable);
-        const ok = filterable.some(col => {
+        const filterable = this.config.columns.filter((c) => c.filterable);
+        const ok = filterable.some((col) => {
           const v = (row as any)[col.key];
           if (v == null) return false;
           const display = col.transform
@@ -335,7 +310,7 @@ export class DataTableComponent<T = any>
 
       for (const [colKey, entry] of Object.entries(state.columns)) {
         if (!entry) continue;
-        const col = this.config.columns.find(c => String(c.key) === colKey);
+        const col = this.config.columns.find((c) => String(c.key) === colKey);
         if (!col) continue;
         const raw = (row as any)[col.key];
 
@@ -383,7 +358,7 @@ export class DataTableComponent<T = any>
   /** Installs the sort accessor that compares numbers, ISO dates and strings. */
   private installSortAccessor(): void {
     this.dataSource.sortingDataAccessor = (row: T, id: string) => {
-      const col = this.config.columns.find(c => String(c.key) === id);
+      const col = this.config.columns.find((c) => String(c.key) === id);
       const v = col ? (row as any)[col.key] : (row as any)[id];
       if (v == null) return '';
       if (typeof v === 'number') return v;
@@ -455,7 +430,7 @@ export class DataTableComponent<T = any>
       if (!panel) return;
       const width = Math.min(
         Math.max(th.getBoundingClientRect().width, POPOVER_MIN_WIDTH),
-        POPOVER_MAX_WIDTH
+        POPOVER_MAX_WIDTH,
       );
       panel.style.width = `${width}px`;
     });
@@ -530,14 +505,18 @@ export class DataTableComponent<T = any>
   }
   /** Reports whether two dates fall on the same calendar day. */
   private isSameCalendarDay(a: Date, b: Date): boolean {
-    return a.getFullYear() === b.getFullYear()
-        && a.getMonth() === b.getMonth()
-        && a.getDate() === b.getDate();
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
   }
 
   /** Closes any open filter popover. */
   private closeOpenMenus(): void {
-    this.menuTriggers?.forEach(t => { if (t.menuOpen) t.closeMenu(); });
+    this.menuTriggers?.forEach((t) => {
+      if (t.menuOpen) t.closeMenu();
+    });
   }
 
   /** Converts a draft filter into an applied filter entry. */
@@ -551,13 +530,13 @@ export class DataTableComponent<T = any>
         return {
           type: 'range',
           min: d.min == null || isNaN(d.min) ? undefined : d.min,
-          max: d.max == null || isNaN(d.max) ? undefined : d.max
+          max: d.max == null || isNaN(d.max) ? undefined : d.max,
         };
       case 'date':
         return {
           type: 'date',
           from: this.combineDateAndTime(d.from, d.fromTime, 'start'),
-          to: this.combineDateAndTime(d.to, d.toTime, 'end')
+          to: this.combineDateAndTime(d.to, d.toTime, 'end'),
         };
     }
   }
@@ -575,7 +554,7 @@ export class DataTableComponent<T = any>
   private combineDateAndTime(
     date: Date | null | undefined,
     time: Date | null | undefined,
-    edge: 'start' | 'end'
+    edge: 'start' | 'end',
   ): string | undefined {
     if (!date) return undefined;
     const out = new Date(date);
@@ -592,10 +571,14 @@ export class DataTableComponent<T = any>
   /** Reports whether a filter entry has no criteria. */
   private isEntryEmpty(entry: DataColumnFilterEntry): boolean {
     switch (entry.type) {
-      case 'text': return !entry.value;
-      case 'option': return !entry.values?.length;
-      case 'range': return entry.min == null && entry.max == null;
-      case 'date': return !entry.from && !entry.to;
+      case 'text':
+        return !entry.value;
+      case 'option':
+        return !entry.values?.length;
+      case 'range':
+        return entry.min == null && entry.max == null;
+      case 'date':
+        return !entry.from && !entry.to;
     }
   }
 
@@ -622,7 +605,7 @@ export class DataTableComponent<T = any>
     const needle = (this.draftFilters[key]?.selectSearch ?? '').toLowerCase().trim();
     const list = this.getOptionList(col);
     if (!needle) return list;
-    return list.filter(o => o.label.toLowerCase().includes(needle));
+    return list.filter((o) => o.label.toLowerCase().includes(needle));
   }
 
   trackOptionByValue = (_: number, opt: DataSelectOption): string => opt.value;
@@ -648,7 +631,8 @@ export class DataTableComponent<T = any>
     if (col.rangeMin != null && col.rangeMax != null) {
       return { min: col.rangeMin, max: col.rangeMax };
     }
-    let min = Infinity, max = -Infinity;
+    let min = Infinity,
+      max = -Infinity;
     for (const row of this.data || []) {
       const v = (row as any)[col.key];
       const n = typeof v === 'number' ? v : Number(v);
@@ -707,15 +691,14 @@ export class DataTableComponent<T = any>
   private commitFilter(): void {
     const state: DataCombinedFilterState = {
       global: this.globalFilter.trim().toLowerCase(),
-      columns: { ...this.appliedFilters }
+      columns: { ...this.appliedFilters },
     };
-    const hasFilter =
-      state.global.length > 0 || Object.keys(state.columns).length > 0;
+    const hasFilter = state.global.length > 0 || Object.keys(state.columns).length > 0;
     this.dataSource.filter = hasFilter ? JSON.stringify(state) : '';
     if (this.paginator) this.paginator.firstPage();
     this.filterChange.emit({
       global: this.globalFilter,
-      columnFilters: { ...this.appliedFilters }
+      columnFilters: { ...this.appliedFilters },
     });
   }
 
@@ -800,12 +783,14 @@ export class DataTableComponent<T = any>
   /** Reports whether every row on the current page is selected. */
   isAllCurrentPageSelected(): boolean {
     const p = this.getCurrentPageRows();
-    return p.length > 0 && p.every(r => this.selectionIds.isSelected(this.selectionKey(r)));
+    return p.length > 0 && p.every((r) => this.selectionIds.isSelected(this.selectionKey(r)));
   }
 
   /** Reports whether any row on the current page is selected. */
   isSomeCurrentPageSelected(): boolean {
-    return this.getCurrentPageRows().some(r => this.selectionIds.isSelected(this.selectionKey(r)));
+    return this.getCurrentPageRows().some((r) =>
+      this.selectionIds.isSelected(this.selectionKey(r)),
+    );
   }
 
   /** Selects or deselects every row on the current page within the selection limit. */
@@ -827,7 +812,7 @@ export class DataTableComponent<T = any>
   /** Drops selected IDs that are no longer in the data. */
   private pruneStaleSelection(): void {
     if (!this.config.selection?.enabled) return;
-    const valid = new Set((this.data || []).map(r => this.selectionKey(r)));
+    const valid = new Set((this.data || []).map((r) => this.selectionKey(r)));
     for (const id of [...this.selectionIds.selected]) {
       if (!valid.has(id)) this.selectionIds.deselect(id);
     }
@@ -838,7 +823,9 @@ export class DataTableComponent<T = any>
   private emitSelection(): void {
     if (!this.config.selection?.enabled) return;
     const k = this.config.selection.idKey ?? ('id' as keyof T);
-    const rows = (this.data || []).filter(r => this.selectionIds.isSelected(String((r as any)[k])));
+    const rows = (this.data || []).filter((r) =>
+      this.selectionIds.isSelected(String((r as any)[k])),
+    );
     this.selectionChange.emit(rows);
   }
 
@@ -875,17 +862,24 @@ export class DataTableComponent<T = any>
     if (!this.config.rowClickable) return;
     const t = ev.target as HTMLElement;
     if (
-      t.closest('button') || t.closest('a') || t.closest('input') ||
-      t.closest('mat-checkbox') || t.closest('.mat-mdc-checkbox') ||
-      t.closest('.mat-mdc-menu-trigger') || t.closest('.dt-filter-icon')
-    ) return;
+      t.closest('button') ||
+      t.closest('a') ||
+      t.closest('input') ||
+      t.closest('mat-checkbox') ||
+      t.closest('.mat-mdc-checkbox') ||
+      t.closest('.mat-mdc-menu-trigger') ||
+      t.closest('.dt-filter-icon')
+    )
+      return;
     this.rowClick.emit({ row, index });
   }
 
   // -------- view helpers --------
 
   /** Returns a column's key as a string. */
-  columnKey(col: DataColumnConfig<T>): string { return String(col.key); }
+  columnKey(col: DataColumnConfig<T>): string {
+    return String(col.key);
+  }
 
   /** Reports whether a column has an applied filter. */
   hasAppliedFilter(columnKey: string): boolean {
@@ -904,7 +898,9 @@ export class DataTableComponent<T = any>
 
   /** Reports whether filters are applied and match no rows. */
   shouldShowNoResults(): boolean {
-    return this.hasAnyFilter() && (this.dataSource.filteredData?.length ?? 0) === 0 && !this.loading;
+    return (
+      this.hasAnyFilter() && (this.dataSource.filteredData?.length ?? 0) === 0 && !this.loading
+    );
   }
 
   /** Returns the number of filtered rows. */

@@ -1,0 +1,19 @@
+<div class="confirmation-dialog">
+  <div class="dialog-icon">
+    <mat-icon [class]="getIconClass()">{{ data.icon || 'check_circle' }}</mat-icon>
+  </div>
+  <h2 mat-dialog-title>{{ data.title }}</h2>
+  <mat-dialog-content>
+    <p>{{ data.message }}</p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="center">
+    @if (data.showCancel) {
+      <button matButton="outlined" [mat-dialog-close]="false">
+        {{ data.cancelText || 'Cancel' }}
+      </button>
+    }
+    <button matButton="filled" class="confirm-btn" [mat-dialog-close]="true" cdkFocusInitial>
+      {{ data.confirmText || 'OK' }}
+    </button>
+  </mat-dialog-actions>
+</div>

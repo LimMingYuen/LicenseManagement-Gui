@@ -1,0 +1,98 @@
+<h2 mat-dialog-title>{{ customer.name }}</h2>
+
+@if (error(); as message) {
+  <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+}
+
+<mat-dialog-content>
+  <div class="detail-tags">
+    <span class="pill" [class]="customer.isActive ? 'pill--success' : 'pill--danger'">
+      {{ customer.isActive ? 'Active' : 'Inactive' }}
+    </span>
+  </div>
+
+  <dl class="pairs">
+    @if (customer.code) {
+      <dt>Code</dt>
+      <dd class="mono">{{ customer.code }}</dd>
+    }
+
+    @if (customer.contactName) {
+      <dt>Contact</dt>
+      <dd>{{ customer.contactName }}</dd>
+    }
+
+    @if (customer.contactEmail) {
+      <dt>Email</dt>
+      <dd>{{ customer.contactEmail }}</dd>
+    }
+
+    @if (customer.notes) {
+      <dt>Notes</dt>
+      <dd>{{ customer.notes }}</dd>
+    }
+
+    <dt>Licenses</dt>
+    <dd class="tnum">
+      {{ customer.licenseCount }} total, {{ customer.activeLicenseCount }} active
+    </dd>
+
+    <dt>Created</dt>
+    <dd class="tnum">{{ formatDate(customer.createdAt) }}</dd>
+
+    @if (customer.createdBy) {
+      <dt>Created by</dt>
+      <dd>{{ customer.createdBy }}</dd>
+    }
+
+    @if (customer.updatedAt) {
+      <dt>Updated</dt>
+      <dd class="tnum">{{ formatDate(customer.updatedAt) }}</dd>
+    }
+  </dl>
+
+  <div class="field">
+    <span class="field-label">Licenses</span>
+    @if (loading()) {
+      <p class="muted">Loading…</p>
+    } @else if (licenses().length === 0) {
+      <p class="muted">No licenses have been issued to this customer.</p>
+    } @else {
+      <ul class="license-list">
+        @for (license of licenses(); track license.id) {
+          <li>
+            <span class="pill" [class]="'pill--' + statusTone(license.status)">
+              {{ license.status }}
+            </span>
+            <span class="license-main">
+              <span>{{ license.applicationName }} · {{ license.type }}</span>
+              <span class="mono muted">{{ license.targetId }}</span>
+            </span>
+            <span class="tnum muted">
+              {{ license.expiresAt ? formatDate(license.expiresAt) : 'Perpetual' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (canDelete() && customer.activeLicenseCount > 0) {
+    <p class="muted">This customer cannot be deleted while it has active licenses.</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button type="button" matButton="outlined" mat-dialog-close>Close</button>
+  @if (canDelete()) {
+    <button
+      type="button"
+      matButton="outlined"
+      class="danger"
+      [disabled]="customer.activeLicenseCount > 0"
+      (click)="dialogRef.close('delete')"
+    >
+      Delete
+    </button>
+  }
+</mat-dialog-actions>

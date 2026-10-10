@@ -1,0 +1,62 @@
+.confirmation-dialog {
+  text-align: center;
+  padding: 16px;
+}
+
+.dialog-icon {
+  margin-bottom: 16px;
+
+  .success-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #4caf50;
+  }
+
+  .warning-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #ff9800;
+  }
+
+  .error-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #f44336;
+  }
+}
+
+h2[mat-dialog-title] {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+mat-dialog-content {
+  margin-bottom: 24px;
+
+  p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+mat-dialog-actions {
+  padding: 0;
+  margin: 0;
+  min-height: auto;
+
+  button {
+    min-width: 120px;
+    box-shadow: none !important;
+  }
+
+  .confirm-btn {
+    background-color: var(--mat-sys-primary);
+    color: #fff;
+  }
+}

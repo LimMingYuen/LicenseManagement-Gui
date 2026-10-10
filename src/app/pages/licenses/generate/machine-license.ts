@@ -7,7 +7,7 @@ import { MACHINE_CONFIG } from './generate-license.config';
   selector: 'app-machine-license',
   imports: [GenerateLicenseForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-generate-license-form [config]="config" />`,
+  templateUrl: './machine-license.html',
   styleUrl: './generate-page.scss',
 })
 export class MachineLicense {

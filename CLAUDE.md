@@ -45,6 +45,8 @@ npm test
 - Standalone components, `ChangeDetectionStrategy.OnPush`, signals for state, `inject()` for DI.
   Services return Promises through `firstValueFrom`, and pages use `async/await` with
   `try/catch/finally` around a `loading` signal.
+- Every component, dialogs included, keeps its markup and styles in sibling `.html` and `.scss` files
+  (`templateUrl` / `styleUrl`); never inline `template` or `styles` in the `.ts`.
 - **Adding a page:** add a lazy route in `app.routes.ts` spreading `...page(heading, icon)`, which
   sets the browser title and the shell header's heading and icon, and add an entry in
   `config/page-registry.ts`. The sidebar builds itself from the registry. Keep `superAdminOnly` in
