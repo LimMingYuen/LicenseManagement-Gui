@@ -1,123 +1,107 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   LicenseDetailComponent,
   LicenseDetailData,
 } from '../../shared/components/license-detail/license-detail';
-import { AuthService } from '../../services/auth.service';
 import { LicenseService } from '../../services/license.service';
-import { License, LicenseSummary } from '../../models/license.models';
+import { License, LicenseStatus } from '../../models/license.models';
+import { PillTone } from '../../shared/models/pill.models';
 import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
 import { formatIsoDateTime } from '../../shared/utils/date-format';
+import {
+  countByType,
+  countStatuses,
+  expiryLabel,
+  filterByStatus,
+  needingAttention,
+  percentOf,
+} from './license-status';
 
-/** Landing page with license stats, the expiry watchlist and quick actions. */
+/** One status tile, legend entry and filter chip. */
+interface StatusEntry {
+  status: LicenseStatus;
+  label: string;
+  tone: PillTone;
+  count: number;
+  percent: number;
+}
+
+/** Landing page that shows the status of every license in the register. */
 @Component({
   selector: 'app-dashboard',
-  imports: [
-    RouterLink,
-    MatIconModule,
-    MatButtonModule,
-    MatSnackBarModule,
-  ],
+  imports: [MatIconModule, MatSnackBarModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dashboard {
-  private readonly licenses = inject(LicenseService);
+  private readonly licenseService = inject(LicenseService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
-  protected readonly auth = inject(AuthService);
-
-  protected readonly summary = signal<LicenseSummary | null>(null);
+  protected readonly licenses = signal<License[]>([]);
   protected readonly loading = signal(true);
+  protected readonly statusFilter = signal<LicenseStatus | null>(null);
 
-  /** Opens the read-only license detail dialog. */
-  protected openDetail(license: License): void {
-    this.dialog.open(
-      LicenseDetailComponent,
-      dialogConfig<LicenseDetailData>({ license }, 'min(44rem, 96vw)'),
-    );
-  }
+  protected readonly counts = computed(() => countStatuses(this.licenses()));
+  protected readonly byType = computed(() => countByType(this.licenses()));
+  protected readonly attention = computed(() => needingAttention(this.licenses()));
+  protected readonly visible = computed(() => filterByStatus(this.licenses(), this.statusFilter()));
 
-  protected readonly quickActions = [
-    {
-      route: '/licenses/machine',
-      icon: 'precision_manufacturing',
-      title: 'Machine license',
-      description: "Bind a license to a customer's machine",
-    },
-    {
-      route: '/licenses/robot',
-      icon: 'smart_toy',
-      title: 'Robot license',
-      description: 'Bind a robot to its machine',
-    },
-    {
-      route: '/licenses/gateway',
-      icon: 'router',
-      title: 'Gateway license',
-      description: 'Bind an OMRON DI Gateway device',
-    },
-  ];
+  protected readonly statuses = computed<StatusEntry[]>(() => {
+    const c = this.counts();
+    return [
+      { status: 'Active', label: 'Active', tone: 'success', count: c.active },
+      { status: 'Expiring', label: 'Expiring in 30 days', tone: 'warning', count: c.expiring },
+      { status: 'Expired', label: 'Expired', tone: 'danger', count: c.expired },
+    ].map((entry) => ({ ...entry, percent: percentOf(entry.count, c.total) }) as StatusEntry);
+  });
+
+  protected readonly formatDate = formatIsoDateTime;
+  protected readonly expiryLabel = expiryLabel;
+  protected readonly percentOf = percentOf;
 
   constructor() {
     void this.load();
   }
 
-  protected formatDate = formatIsoDateTime;
-
-  /** Loads the license summary. */
+  /** Loads every license in the register. */
   protected async load(): Promise<void> {
     this.loading.set(true);
 
     try {
-      this.summary.set(await this.licenses.summary());
+      this.licenses.set(await this.licenseService.list());
     } catch (error) {
-      this.notify(describeError(error, 'Could not load the dashboard.'), 'error');
+      this.notify(describeError(error, 'Could not load the dashboard.'));
     } finally {
       this.loading.set(false);
     }
   }
 
-  /** Formats the time left before a watchlist entry expires. */
-  protected expiryLabel(value: string | null): string {
-    if (!value) return 'Perpetual';
-
-    const days = Math.ceil((new Date(value).getTime() - Date.now()) / 86_400_000);
-    return days <= 0 ? 'Due' : `${days}d left`;
+  /** Shows only licenses with the given status, or all when null. */
+  protected setFilter(status: LicenseStatus | null): void {
+    this.statusFilter.set(status);
   }
 
-  /** Maps a license type to its pill tone. */
-  protected typeTone(type: License['type']): string {
-    return type === 'Machine' ? 'info' : type === 'Robot' ? 'success' : 'neutral';
+  /** Opens the read-only license detail dialog. */
+  protected openDetail(license: License): void {
+    this.dialog.open(
+      LicenseDetailComponent,
+      dialogConfig<LicenseDetailData>({ license, hideDelete: true }, 'min(44rem, 96vw)'),
+    );
   }
 
   /** Maps a license status to its pill tone. */
-  protected statusTone(status: License['status']): string {
-    switch (status) {
-      case 'Active':
-        return 'success';
-      case 'Expiring':
-        return 'warning';
-      case 'Expired':
-        return 'danger';
-      default:
-        return 'neutral';
-    }
+  protected statusTone(status: LicenseStatus): PillTone {
+    return status === 'Active' ? 'success' : status === 'Expiring' ? 'warning' : 'danger';
   }
 
-  /** Shows a success or error snackbar. */
-  private notify(message: string, tone: 'success' | 'error'): void {
-    this.snackBar.open(message, 'Close', {
-      duration: tone === 'error' ? 6000 : 3000,
-      panelClass: [`${tone}-snackbar`],
-    });
+  /** Shows an error snackbar. */
+  private notify(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 6000, panelClass: ['error-snackbar'] });
   }
 }
