@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +19,8 @@ import { formatIsoDateTime } from '../../utils/date-format';
 
 export interface LicenseDetailData {
   license: License;
+  /** Hides the delete action for hosts that only display licenses. */
+  hideDelete?: boolean;
 }
 
 /** Displays one license with its signed file and offers copy, download and delete actions. */
@@ -25,10 +35,13 @@ export class LicenseDetailComponent {
   private readonly licenses = inject(LicenseService);
   private readonly dialogRef = inject<MatDialogRef<LicenseDetailComponent>>(MatDialogRef);
 
-  protected readonly license = signal(inject<LicenseDetailData>(MAT_DIALOG_DATA).license);
+  private readonly data = inject<LicenseDetailData>(MAT_DIALOG_DATA);
+  private readonly isSuperAdmin = inject(AuthService).isSuperAdmin;
 
-  /** Only a SuperAdmin may delete licenses. */
-  protected readonly canDelete = inject(AuthService).isSuperAdmin;
+  protected readonly license = signal(this.data.license);
+
+  /** Only a SuperAdmin may delete licenses, and only where the host offers it. */
+  protected readonly canDelete = computed(() => this.isSuperAdmin() && !this.data.hideDelete);
 
   /** Emits when the user asks to delete the license; the host confirms and deletes it. */
   readonly deleted = output<License>();

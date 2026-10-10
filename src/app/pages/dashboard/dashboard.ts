@@ -91,7 +91,7 @@ export class Dashboard {
   protected openDetail(license: License): void {
     this.dialog.open(
       LicenseDetailComponent,
-      dialogConfig<LicenseDetailData>({ license }, 'min(44rem, 96vw)'),
+      dialogConfig<LicenseDetailData>({ license, hideDelete: true }, 'min(44rem, 96vw)'),
     );
   }
 
