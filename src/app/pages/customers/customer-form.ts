@@ -24,31 +24,7 @@ export interface CustomerFormData {
     MatButtonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <h2 mat-dialog-title>New customer</h2>
-
-      @if (error(); as message) {
-        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
-      }
-
-      <mat-dialog-content>
-        <mat-form-field>
-          <mat-label>Customer name</mat-label>
-          <input matInput type="text" formControlName="name" maxlength="200" />
-          <mat-hint>Written into every license signed for this customer. Must be unique.</mat-hint>
-          <mat-error>A customer name is required.</mat-error>
-        </mat-form-field>
-      </mat-dialog-content>
-
-      <mat-dialog-actions>
-        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
-        <button type="submit" matButton="filled" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
-      </mat-dialog-actions>
-    </form>
-  `,
+  templateUrl: './customer-form.html',
 })
 export class CustomerForm {
   private readonly customers = inject(CustomerService);

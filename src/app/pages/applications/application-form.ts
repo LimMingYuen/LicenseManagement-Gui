@@ -26,107 +26,8 @@ export interface ApplicationFormData {
     MatButtonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <h2 mat-dialog-title>{{ title }}</h2>
-
-      @if (error(); as message) {
-        <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
-      }
-
-      <mat-dialog-content>
-        <div class="form-row">
-          <mat-form-field>
-            <mat-label>Application name</mat-label>
-            <input matInput type="text" formControlName="name" maxlength="200" />
-            <mat-error>An application name is required.</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Key</mat-label>
-            <input
-              matInput
-              type="text"
-              formControlName="key"
-              maxlength="100"
-              class="mono"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
-            <mat-hint>
-              @if (editing) {
-                Fixed after creation — API filters and saved links quote it.
-              } @else {
-                Letters, digits, dot, underscore and hyphen only. Cannot be changed later.
-              }
-            </mat-hint>
-            <mat-error>Letters, digits, dot, underscore or hyphen only.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <fieldset class="field">
-          <legend class="field-label">Issues these license types</legend>
-
-          <div class="checkbox-row">
-            <mat-checkbox formControlName="supportsMachine">
-              Machine — bound to a customer's machine ID
-            </mat-checkbox>
-
-            <mat-checkbox formControlName="supportsRobot">
-              Robot — a robot tied to a specific machine
-            </mat-checkbox>
-
-            <mat-checkbox formControlName="supportsGateway">
-              Gateway — an Android device fingerprint
-            </mat-checkbox>
-          </div>
-
-          <span class="field-hint">
-            Only the ticked types offer this application on their generate page. A type cannot
-            be switched off while licenses of that type already exist under it.
-          </span>
-          @if (!anyTypeSelected()) {
-            <span class="field-invalid">Select at least one license type.</span>
-          }
-        </fieldset>
-
-        <div class="field">
-          <mat-checkbox formControlName="isActive">Application is active</mat-checkbox>
-          <span class="field-hint">
-            Inactive applications keep their licenses and stay in the catalog, but nothing new
-            can be issued under them.
-          </span>
-        </div>
-      </mat-dialog-content>
-
-      <mat-dialog-actions>
-        <button type="button" matButton="outlined" mat-dialog-close>Cancel</button>
-        <button type="submit" matButton="filled" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
-      </mat-dialog-actions>
-    </form>
-  `,
-  styles: `
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: var(--sp-4);
-
-      mat-form-field {
-        flex: 1 1 16rem;
-        min-width: 0;
-      }
-    }
-
-    .checkbox-row {
-      display: flex;
-      flex-wrap: wrap;
-      column-gap: var(--sp-5);
-      row-gap: var(--sp-1);
-    }
-  `,
+  templateUrl: './application-form.html',
+  styleUrl: './application-form.scss',
 })
 export class ApplicationForm {
   private readonly applications = inject(ApplicationService);
@@ -142,7 +43,10 @@ export class ApplicationForm {
   protected readonly error = signal<string | null>(null);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    key: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]+$/), Validators.maxLength(100)]],
+    key: [
+      '',
+      [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]+$/), Validators.maxLength(100)],
+    ],
     name: ['', [Validators.required, Validators.maxLength(200)]],
     supportsMachine: [false],
     supportsRobot: [false],

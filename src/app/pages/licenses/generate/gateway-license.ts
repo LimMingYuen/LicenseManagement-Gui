@@ -7,7 +7,7 @@ import { GATEWAY_CONFIG } from './generate-license.config';
   selector: 'app-gateway-license',
   imports: [GenerateLicenseForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-generate-license-form [config]="config" />`,
+  templateUrl: './gateway-license.html',
   styleUrl: './generate-page.scss',
 })
 export class GatewayLicense {

@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>License details</h2>
+
+@if (error(); as message) {
+  <p class="alert alert-error dialog-alert" role="alert">{{ message }}</p>
+}
+
+<mat-dialog-content>
+  <div class="detail-tags">
+    <span class="pill" [class]="'pill--' + typeTone(license().type)">{{ license().type }}</span>
+    <span class="pill" [class]="'pill--' + statusTone(license().status)">{{
+      license().status
+    }}</span>
+    <span class="pill pill--outlined">{{ license().licenseType }}</span>
+  </div>
+
+  <dl class="pairs">
+    <dt>License ID</dt>
+    <dd class="mono">{{ license().licenseId }}</dd>
+
+    <dt>Customer</dt>
+    <dd>{{ license().customerName }}</dd>
+
+    <dt>{{ targetLabel() }}</dt>
+    <dd class="mono">{{ license().targetId }}</dd>
+
+    <dt>Application</dt>
+    <dd>{{ license().applicationName }}</dd>
+
+    @if (license().type !== 'Machine') {
+      <dt>Machine ID</dt>
+      <dd class="mono">{{ license().machineId || '—' }}</dd>
+    }
+
+    <dt>Issued</dt>
+    <dd class="tnum">{{ formatDate(license().issuedAt) }}</dd>
+
+    <dt>Expires</dt>
+    <dd class="tnum">
+      {{ license().expiresAt ? formatDate(license().expiresAt!) : 'Perpetual' }}
+    </dd>
+
+    @if (license().createdBy) {
+      <dt>Issued by</dt>
+      <dd>{{ license().createdBy }}</dd>
+    }
+
+    @if (license().notes) {
+      <dt>Notes</dt>
+      <dd>{{ license().notes }}</dd>
+    }
+  </dl>
+
+  <div class="field">
+    <span class="field-label">License file</span>
+    @if (loading()) {
+      <p class="muted">Loading…</p>
+    } @else {
+      <pre class="code-block mono">{{ fileContent() }}</pre>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button type="button" matButton="outlined" mat-dialog-close>Close</button>
+  <button type="button" matButton="outlined" [disabled]="!fileContent()" (click)="copy()">
+    {{ copied() ? 'Copied' : 'Copy' }}
+  </button>
+  @if (canDelete()) {
+    <button type="button" matButton="outlined" class="danger" (click)="deleted.emit(license())">
+      Delete
+    </button>
+  }
+  <button type="button" matButton="filled" [disabled]="downloading()" (click)="download()">
+    {{ downloading() ? 'Downloading…' : 'Download' }}
+  </button>
+</mat-dialog-actions>

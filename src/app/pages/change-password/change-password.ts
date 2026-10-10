@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,55 +19,7 @@ import { describeError } from '../../shared/utils/http-error';
   selector: 'app-change-password',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <section class="page narrow">
-      <form class="card form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        @if (error(); as message) {
-          <p class="alert alert-error" role="alert">{{ message }}</p>
-        }
-
-        <mat-form-field>
-          <mat-label>Current password</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="currentPassword"
-            autocomplete="current-password"
-          />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>New password</mat-label>
-          <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
-          <mat-error>A password is required.</mat-error>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Confirm new password</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="confirmPassword"
-            autocomplete="new-password"
-            [errorStateMatcher]="confirmMatcher"
-          />
-          <mat-error>
-            @if (form.hasError('mismatch')) {
-              Passwords do not match.
-            } @else {
-              A password is required.
-            }
-          </mat-error>
-        </mat-form-field>
-
-        <footer class="form-actions">
-          <button type="submit" matButton="filled" [disabled]="saving()">
-            {{ saving() ? 'Saving…' : 'Change password' }}
-          </button>
-        </footer>
-      </form>
-    </section>
-  `,
+  templateUrl: './change-password.html',
 })
 export class ChangePassword {
   protected readonly auth = inject(AuthService);
