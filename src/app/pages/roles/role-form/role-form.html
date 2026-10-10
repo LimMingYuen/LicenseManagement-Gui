@@ -49,7 +49,8 @@
           @if (isSuperAdmin) {
             <p class="notice">
               <mat-icon>verified_user</mat-icon>
-              {{ superAdminRole }} always opens every page, including RSA Keys, Users and Roles.
+              {{ superAdminRole }} always opens every page and manages
+              {{ superAdminRole }} accounts.
             </p>
           } @else if (loadingPages()) {
             <div class="loading"><mat-spinner diameter="32" /></div>
@@ -59,6 +60,13 @@
               No pages registered yet. They are added when a {{ superAdminRole }} signs in.
             </p>
           } @else {
+            @if (isOwnRole) {
+              <p class="notice">
+                <mat-icon>lock</mat-icon>
+                This is your own role, so another account must change its page access.
+              </p>
+            }
+
             <div class="page-list">
               <div class="page-row page-row--all">
                 <mat-icon class="page-icon">select_all</mat-icon>
@@ -70,7 +78,7 @@
                 </div>
                 <mat-slide-toggle
                   aria-label="All pages"
-                  [disabled]="readonly"
+                  [disabled]="pagesLocked"
                   [checked]="allSelected()"
                   (change)="toggleAll($event.checked)"
                 />
@@ -85,7 +93,7 @@
                   </div>
                   <mat-slide-toggle
                     [attr.aria-label]="page.name"
-                    [disabled]="readonly"
+                    [disabled]="pagesLocked"
                     [checked]="selected().has(page.id)"
                     (change)="toggle(page.id, $event.checked)"
                   />
@@ -94,8 +102,8 @@
             </div>
 
             <span class="field-hint">
-              Dashboard and Change password are open to every account. RSA Keys, Users and Roles
-              stay {{ superAdminRole }}-only.
+              Dashboard and Change password are open to every account. Only a
+              {{ superAdminRole }} can create, edit or delete {{ superAdminRole }} accounts.
             </span>
           }
         </div>

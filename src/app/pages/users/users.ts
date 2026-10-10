@@ -5,7 +5,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.models';
-import { Role } from '../../models/role.models';
+import { Role, SUPER_ADMIN_ROLE } from '../../models/role.models';
 import { RoleService } from '../../services/role.service';
 import { UserService } from '../../services/user.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
@@ -43,7 +43,16 @@ export class Users {
   private readonly selfId = this.auth.currentUser()?.id ?? null;
 
   /** Rebuilt when roles load, since the role filter lists them. */
-  protected readonly tableConfig = computed(() => buildUsersTableConfig(this.selfId, this.roles()));
+  protected readonly tableConfig = computed(() =>
+    buildUsersTableConfig(this.selfId, this.roles(), this.auth.isSuperAdmin()),
+  );
+
+  /** Roles the signed-in account may assign; only a SuperAdmin may assign SuperAdmin. */
+  private readonly assignableRoles = computed(() =>
+    this.auth.isSuperAdmin()
+      ? this.roles()
+      : this.roles().filter((r) => r.name !== SUPER_ADMIN_ROLE),
+  );
 
   constructor() {
     void this.load();
@@ -92,7 +101,7 @@ export class Users {
   private async openForm(user: User | null): Promise<void> {
     const saved = await firstValueFrom(
       this.dialog
-        .open(UserForm, dialogConfig<UserFormData>({ user, roles: this.roles() }))
+        .open(UserForm, dialogConfig<UserFormData>({ user, roles: this.assignableRoles() }))
         .afterClosed(),
     );
 
