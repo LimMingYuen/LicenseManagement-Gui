@@ -5,9 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Application } from '../../models/application.models';
-import { ApplicationService } from '../../services/application.service';
-import { describeError } from '../../shared/utils/http-error';
+import { Application } from '../../../models/application.models';
+import { ApplicationService } from '../../../services/application.service';
+import { describeError } from '../../../shared/utils/http-error';
 
 export interface ApplicationFormData {
   /** Null to create a new application, otherwise the one to edit. */

@@ -9,7 +9,7 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataActionEvent } from '../../shared/models/data-table.models';
 import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { RoleForm, RoleFormData } from './role-form';
+import { RoleForm, RoleFormData } from './role-form/role-form';
 import { buildRolesTableConfig } from './roles-table.config';
 
 /** Page that lists and manages user roles. */

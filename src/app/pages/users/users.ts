@@ -12,8 +12,8 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataActionEvent } from '../../shared/models/data-table.models';
 import { dialogConfig } from '../../shared/utils/dialog';
 import { describeError } from '../../shared/utils/http-error';
-import { UserForm, UserFormData } from './user-form';
-import { PasswordReset, PasswordResetData } from './password-reset';
+import { UserForm, UserFormData } from './user-form/user-form';
+import { PasswordReset, PasswordResetData } from './password-reset/password-reset';
 import { buildUsersTableConfig } from './users-table.config';
 
 /** Page that lists and manages user accounts. */

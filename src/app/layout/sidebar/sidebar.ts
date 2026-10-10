@@ -5,10 +5,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { AuthService } from '../services/auth.service';
-import { PAGE_REGISTRY } from '../config/page-registry';
-import { AppLogoComponent } from '../shared/components/app-logo/app-logo';
-import { PageHeaderComponent } from '../shared/components/page-header/page-header';
+import { AuthService } from '../../services/auth.service';
+import { PAGE_REGISTRY } from '../../config/page-registry';
+import { AppLogoComponent } from '../../shared/components/app-logo/app-logo';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
 
 export interface NavItem {
   label: string;

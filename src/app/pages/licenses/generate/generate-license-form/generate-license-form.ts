@@ -18,18 +18,23 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { LicenseService } from '../../../services/license.service';
-import { CustomerService } from '../../../services/customer.service';
-import { ApplicationService } from '../../../services/application.service';
-import { MachineService } from '../../../services/machine.service';
-import { Application } from '../../../models/application.models';
-import { Customer } from '../../../models/customer.models';
-import { Machine } from '../../../models/machine.models';
-import { License, LicenseKind, LicenseTier, LicenseWithFile } from '../../../models/license.models';
-import { describeError } from '../../../shared/utils/http-error';
-import { saveText } from '../../../shared/utils/download';
-import { provideIsoDates, toIsoDate } from '../../../shared/utils/iso-date';
-import { GenerateConfig } from './generate-license.config';
+import { LicenseService } from '../../../../services/license.service';
+import { CustomerService } from '../../../../services/customer.service';
+import { ApplicationService } from '../../../../services/application.service';
+import { MachineService } from '../../../../services/machine.service';
+import { Application } from '../../../../models/application.models';
+import { Customer } from '../../../../models/customer.models';
+import { Machine } from '../../../../models/machine.models';
+import {
+  License,
+  LicenseKind,
+  LicenseTier,
+  LicenseWithFile,
+} from '../../../../models/license.models';
+import { describeError } from '../../../../shared/utils/http-error';
+import { saveText } from '../../../../shared/utils/download';
+import { provideIsoDates, toIsoDate } from '../../../../shared/utils/iso-date';
+import { GenerateConfig } from '../generate-license.config';
 
 /** License generation form shared by the Machine, Robot and Gateway pages. */
 @Component({
@@ -323,9 +328,7 @@ export class GenerateLicenseForm {
       return;
     }
 
-    const missing = this.config().fields.find(
-      (f) => !f.optional && !String(v[f.key] ?? '').trim(),
-    );
+    const missing = this.config().fields.find((f) => !f.optional && !String(v[f.key] ?? '').trim());
 
     if (missing) {
       this.form.markAllAsTouched();
